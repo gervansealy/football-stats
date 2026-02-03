@@ -218,6 +218,12 @@ class FootballDatabase {
             }
         });
 
+        document.getElementById('game-details-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'game-details-modal') {
+                this.closeGameDetailsModal();
+            }
+        });
+
         const closeVideoBtn = document.getElementById('close-video-player');
         if (closeVideoBtn) {
             closeVideoBtn.addEventListener('click', (e) => {
@@ -522,6 +528,11 @@ class FootballDatabase {
         }
 
         this.games.push(gameData);
+        
+        // Calculate and save standings snapshot at this point
+        this.recalculateStatsUpToGame(gameData.id);
+        gameData.standingsSnapshot = this.getStandingsSnapshot();
+        
         this.saveData('games', this.games);
         this.populateYearFilters();
         this.recalculateAllStats();
@@ -1047,6 +1058,198 @@ class FootballDatabase {
         modal.classList.remove('active');
     }
 
+    recalculateStatsUpToGame(gameId) {
+        this.players.forEach(player => {
+            player.stats = {
+                gamesPlayed: 0,
+                wins: 0,
+                draws: 0,
+                losses: 0,
+                cleanSheets: 0,
+                goalsScored: 0,
+                captainWins: 0,
+                captainDraws: 0,
+                captainLosses: 0
+            };
+        });
+
+        const yearGames = this.getGamesByYear(this.selectedYear);
+        const sortedGames = [...yearGames].sort((a, b) => new Date(a.date) - new Date(b.date));
+        
+        for (let game of sortedGames) {
+            game.playerStats.forEach(stat => {
+                const player = this.players.find(p => p.id === stat.playerId);
+                if (player) {
+                    player.stats.gamesPlayed++;
+                    if (stat.win) player.stats.wins++;
+                    if (stat.draw) player.stats.draws++;
+                    if (stat.loss) player.stats.losses++;
+                    if (stat.cleanSheet) player.stats.cleanSheets++;
+                    if (stat.captainWin) player.stats.captainWins++;
+                    if (stat.captainDraw) player.stats.captainDraws++;
+                    if (stat.captainLoss) player.stats.captainLosses++;
+                    player.stats.goalsScored += stat.goals;
+                }
+            });
+            
+            if (game.id === gameId) break;
+        }
+    }
+
+    getStandingsSnapshot() {
+        const sortedPlayers = [...this.players].sort((a, b) => {
+            const aCalc = this.calculateStats(a);
+            const bCalc = this.calculateStats(b);
+            return bCalc.points - aCalc.points;
+        });
+
+        return sortedPlayers.map((player, index) => {
+            const calc = this.calculateStats(player);
+            return {
+                rank: index + 1,
+                playerId: player.id,
+                playerName: `${player.firstName} ${player.lastName}`,
+                gamesPlayed: player.stats.gamesPlayed,
+                wins: player.stats.wins,
+                draws: player.stats.draws,
+                losses: player.stats.losses,
+                cleanSheets: player.stats.cleanSheets,
+                goalsScored: player.stats.goalsScored,
+                captainWins: player.stats.captainWins,
+                captainDraws: player.stats.captainDraws,
+                captainLosses: player.stats.captainLosses,
+                wlRatio: calc.wlRatio,
+                winPercent: calc.winPercent,
+                points: calc.points
+            };
+        });
+    }
+
+    showGameDetails(gameId) {
+        const game = this.games.find(g => g.id === gameId);
+        if (!game) return;
+
+        const gameDate = new Date(game.date);
+        const dateString = gameDate.toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+
+        const modal = document.getElementById('game-details-modal');
+        const body = document.getElementById('game-details-body');
+
+        body.innerHTML = `
+            <h2>Game Details - ${dateString}</h2>
+            ${this.isEditor ? `
+                <div class="profile-actions-top">
+                    <button class="btn-edit" onclick="database.editGame('${game.id}')">Edit Game</button>
+                    <button class="btn-delete" onclick="database.deleteGame('${game.id}')">Delete Game</button>
+                </div>
+            ` : ''}
+            
+            <div class="game-details-grid">
+                <div class="game-details-section">
+                    <h4>Player Stats</h4>
+                    <div class="game-players">
+                        ${game.playerStats.map(stat => {
+                            const player = this.players.find(p => p.id === stat.playerId);
+                            if (!player) return '';
+                            
+                            const stats = [];
+                            if (stat.win) stats.push('✅ Win');
+                            if (stat.draw) stats.push('🤝 Draw');
+                            if (stat.loss) stats.push('❌ Loss');
+                            if (stat.cleanSheet) stats.push('🧤 Clean Sheet');
+                            if (stat.goals > 0) stats.push(`⚽ ${stat.goals} Goal${stat.goals > 1 ? 's' : ''}`);
+                            if (stat.captainWin) stats.push('👑 Captain Win');
+                            if (stat.captainDraw) stats.push('👑 Captain Draw');
+                            if (stat.captainLoss) stats.push('👑 Captain Loss');
+                            
+                            return `
+                                <div class="game-player-item">
+                                    <h5>${player.firstName} ${player.lastName}</h5>
+                                    <p>${stats.join(' • ')}</p>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+
+                <div class="game-details-section">
+                    <h4>Standings After This Game</h4>
+                    ${game.standingsSnapshot ? `
+                        <div class="table-container">
+                            <table style="font-size: 0.85rem;">
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Player</th>
+                                        <th>GP</th>
+                                        <th>W</th>
+                                        <th>D</th>
+                                        <th>L</th>
+                                        <th>Pts</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${game.standingsSnapshot.map(s => `
+                                        <tr>
+                                            <td>${s.rank}</td>
+                                            <td>${s.playerName}</td>
+                                            <td>${s.gamesPlayed}</td>
+                                            <td>${s.wins}</td>
+                                            <td>${s.draws}</td>
+                                            <td>${s.losses}</td>
+                                            <td><strong>${s.points}</strong></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    ` : '<p class="empty-state">Standings snapshot not available for this game</p>'}
+                </div>
+            </div>
+        `;
+
+        modal.classList.add('active');
+    }
+
+    closeGameDetailsModal() {
+        const modal = document.getElementById('game-details-modal');
+        modal.classList.remove('active');
+    }
+
+    async migrateExistingGames() {
+        if (!confirm('This will add standings snapshots to all existing games. This only needs to be done once. Continue?')) {
+            return;
+        }
+
+        // Sort all games by date
+        const allGamesSorted = [...this.games].sort((a, b) => new Date(a.date) - new Date(b.date));
+        
+        let updated = 0;
+        
+        for (let game of allGamesSorted) {
+            if (!game.standingsSnapshot) {
+                // Calculate standings up to this game
+                this.recalculateStatsUpToGame(game.id);
+                game.standingsSnapshot = this.getStandingsSnapshot();
+                updated++;
+            }
+        }
+
+        if (updated > 0) {
+            await this.saveData('games', this.games);
+            alert(`Successfully added standings snapshots to ${updated} game(s)!`);
+            this.recalculateAllStats();
+            this.updateStandings();
+        } else {
+            alert('All games already have standings snapshots!');
+        }
+    }
+
     async deleteHighlight(playerId, videoIndex) {
         if (!confirm('Are you sure you want to delete this video highlight?')) return;
 
@@ -1098,49 +1301,21 @@ class FootballDatabase {
 
         const sortedGames = [...yearGames].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        container.innerHTML = sortedGames.map(game => {
+        container.innerHTML = `<div class="games-grid">${sortedGames.map(game => {
             const gameDate = new Date(game.date);
             const dateString = gameDate.toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
+                month: 'short', 
+                day: 'numeric',
+                year: 'numeric'
             });
+            const playerCount = game.playerStats.length;
             return `
-                <div class="game-card">
-                    <h4>Game - ${dateString}</h4>
-                    <div class="game-players">
-                        ${game.playerStats.map(stat => {
-                            const player = this.players.find(p => p.id === stat.playerId);
-                            if (!player) return '';
-                            
-                            const stats = [];
-                            if (stat.win) stats.push('Win');
-                            if (stat.draw) stats.push('Draw');
-                            if (stat.loss) stats.push('Loss');
-                            if (stat.cleanSheet) stats.push('Clean Sheet');
-                            if (stat.goals > 0) stats.push(`${stat.goals} Goal(s)`);
-                            if (stat.captainWin) stats.push('Captain Win');
-                            if (stat.captainDraw) stats.push('Captain Draw');
-                            if (stat.captainLoss) stats.push('Captain Loss');
-                            
-                            return `
-                                <div class="game-player-item">
-                                    <h5>${player.firstName} ${player.lastName}</h5>
-                                    <p>${stats.join(', ')}</p>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                    ${this.isEditor ? `
-                        <div class="game-actions">
-                            <button class="btn-edit" onclick="database.editGame('${game.id}')">Edit</button>
-                            <button class="btn-delete" onclick="database.deleteGame('${game.id}')">Delete</button>
-                        </div>
-                    ` : ''}
+                <div class="game-card" onclick="database.showGameDetails('${game.id}')">
+                    <h4>${dateString}</h4>
+                    <p>${playerCount} player${playerCount !== 1 ? 's' : ''}</p>
                 </div>
             `;
-        }).join('');
+        }).join('')}</div>`;
     }
 
     editGame(gameId) {
