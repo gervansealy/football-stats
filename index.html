@@ -259,6 +259,9 @@
                 <button id="admin-settings-btn" class="btn-secondary" onclick="database.openAdminSettings()" style="margin-top: 15px;">
                     Admin Settings (Manage Access)
                 </button>
+                <button class="btn-secondary" onclick="database.migrateExistingGames()" style="margin-top: 15px;">
+                    🔄 Add Snapshots to Old Games
+                </button>
             </div>
         </section>
     </main>
@@ -274,6 +277,13 @@
         <div class="modal-content profile-modal-content">
             <span class="close" onclick="database.closeProfileModal()">&times;</span>
             <div id="profile-modal-body"></div>
+        </div>
+    </div>
+
+    <div id="game-details-modal" class="modal">
+        <div class="modal-content game-details-modal-content">
+            <span class="close" onclick="database.closeGameDetailsModal()">&times;</span>
+            <div id="game-details-body"></div>
         </div>
     </div>
 
