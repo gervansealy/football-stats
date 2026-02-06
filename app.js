@@ -76,7 +76,7 @@ class FootballDatabase {
                 this.players = docSnap.data().value;
                 this.updateStandings();
                 this.updatePlayerSelects();
-                this.renderPlayerProfiles();
+                this.renderPlayersList();
             }
         });
 
