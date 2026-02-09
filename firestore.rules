@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Admin user email
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == 'gervansealy@gmail.com';
+    }
+    
+    // Viewer user email
+    function isViewer() {
+      return request.auth != null && request.auth.token.email == 'footballzess@gmail.com';
+    }
+    
+    // Any authenticated user (admin or viewer)
+    function isAuthenticated() {
+      return request.auth != null && (isAdmin() || isViewer());
+    }
+    
+    // Players collection
+    match /players/{playerId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Games collection
+    match /games/{gameId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Config collection (settings, points, passwords)
+    match /config/{configId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

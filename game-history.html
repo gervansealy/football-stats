@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game History - Football Database</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">Football Season Player Database</div>
+        <div class="nav-links">
+            <a href="standings.html">Standings</a>
+            <a href="game-history.html" class="active">Game History</a>
+            <a href="input-stats.html" class="admin-only">Input Stats</a>
+            <a href="player-profiles.html">Player Profiles</a>
+            <a href="settings.html" class="admin-only">Settings</a>
+        </div>
+        <div class="nav-actions">
+            <span id="userRole" class="role-badge"></span>
+            <button id="changeRoleBtn" class="btn-secondary">Change Role</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Game History</h1>
+        <p class="subtitle">View all games and see where players stood in the standings after each match.</p>
+
+        <div id="gameHistoryContainer">
+            <p class="no-data">No games recorded yet</p>
+        </div>
+    </div>
+
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/game-history.js"></script>
+</body>
+</html>

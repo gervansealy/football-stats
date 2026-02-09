@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Football Season Player Database - Login</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="login-page">
+    <div class="animated-background">
+        <div class="icon trophy1">🏆</div>
+        <div class="icon trophy2">🏆</div>
+        <div class="icon trophy3">🏆</div>
+        <div class="icon ball1">⚽</div>
+        <div class="icon ball2">⚽</div>
+        <div class="icon ball3">⚽</div>
+        <div class="icon shoe1">👟</div>
+        <div class="icon shoe2">👟</div>
+        <div class="icon goal">🥅</div>
+        <div class="icon jersey">🎽</div>
+        <div class="icon whistle">🎲</div>
+        <div class="icon timer">⏱️</div>
+    </div>
+    
+    <div class="login-container">
+        <h1>Football Season Player Database</h1>
+        <form id="loginForm">
+            <input type="email" id="emailInput" placeholder="Enter Email" required>
+            <input type="password" id="passwordInput" placeholder="Enter Password" required>
+            <button type="submit" class="btn-primary">Login</button>
+        </form>
+        <div id="errorMessage" class="error-message"></div>
+    </div>
+
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/auth.js"></script>
+</body>
+</html>
