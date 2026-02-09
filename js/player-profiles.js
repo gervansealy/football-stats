@@ -107,7 +107,7 @@ function loadPlayers() {
             const stats = await getPlayerStats(playerDoc.id);
 
             const avatarContent = player.headshotLink 
-                ? `<img src="${convertToDirectLink(player.headshotLink)}" alt="${player.firstName}" class="player-avatar">` 
+                ? `<img src="${convertToDirectLink(player.headshotLink)}" alt="${player.firstName}" class="player-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="display:block;"><div class="player-avatar" style="display:none;">⚽</div>` 
                 : `<div class="player-avatar">⚽</div>`;
 
             playersHTML.push(`
@@ -207,7 +207,7 @@ window.showPlayerDetail = async function(playerId) {
     const stats = await getPlayerStats(playerId);
 
     const avatarContent = player.headshotLink 
-        ? `<img src="${convertToDirectLink(player.headshotLink)}" alt="${player.firstName}" class="player-detail-avatar">` 
+        ? `<img src="${convertToDirectLink(player.headshotLink)}" alt="${player.firstName}" class="player-detail-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="display:block;"><div class="player-detail-avatar" style="display:none;">⚽</div>` 
         : `<div class="player-detail-avatar">⚽</div>`;
 
     const age = player.birthday ? calculateAge(player.birthday) : 'N/A';
@@ -300,9 +300,19 @@ window.showPlayerDetail = async function(playerId) {
 };
 
 function convertToDirectLink(url) {
+    if (!url) return url;
+    
     if (url.includes('drive.google.com')) {
-        const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-        if (match) {
+        // Handle /file/d/ or /d/ formats
+        let match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+        if (!match) {
+            match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        }
+        if (!match) {
+            // Handle id= parameter
+            match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        }
+        if (match && match[1]) {
             return `https://drive.google.com/uc?export=view&id=${match[1]}`;
         }
     }
