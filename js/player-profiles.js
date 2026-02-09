@@ -167,8 +167,9 @@ function loadPlayers() {
             const player = playerDoc.data();
             const stats = await getPlayerStats(playerDoc.id);
 
+            const imageUrl = convertToDirectLink(player.headshotLink);
             const avatarContent = player.headshotLink 
-                ? `<img src="${convertToDirectLink(player.headshotLink)}" alt="${player.firstName}" class="player-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="display:block;"><div class="player-avatar" style="display:none;">⚽</div>` 
+                ? `<img src="${imageUrl}" alt="${player.firstName}" class="player-avatar" crossorigin="anonymous" onerror="this.onerror=null; this.src='https://drive.google.com/uc?export=view&id=${player.headshotLink.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1] || ''}'; console.error('Image failed to load:', '${imageUrl}');">` 
                 : `<div class="player-avatar">⚽</div>`;
 
             const editDeleteButtons = isAdmin ? `
@@ -275,8 +276,9 @@ window.showPlayerDetail = async function(playerId) {
     const player = playerDoc.data();
     const stats = await getPlayerStats(playerId);
 
+    const detailImageUrl = convertToDirectLink(player.headshotLink);
     const avatarContent = player.headshotLink 
-        ? `<img src="${convertToDirectLink(player.headshotLink)}" alt="${player.firstName}" class="player-detail-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="display:block;"><div class="player-detail-avatar" style="display:none;">⚽</div>` 
+        ? `<img src="${detailImageUrl}" alt="${player.firstName}" class="player-detail-avatar" crossorigin="anonymous" onerror="this.onerror=null; this.src='https://drive.google.com/uc?export=view&id=${player.headshotLink.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1] || ''}';">` 
         : `<div class="player-detail-avatar">⚽</div>`;
 
     const age = player.birthday ? calculateAge(player.birthday) : 'N/A';
@@ -372,20 +374,21 @@ function convertToDirectLink(url) {
     if (!url) return url;
     
     if (url.includes('drive.google.com')) {
-        // Handle /file/d/ or /d/ formats
+        // Extract file ID from Google Drive URL
         let match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
         if (!match) {
             match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
         }
         if (!match) {
-            // Handle id= parameter
             match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
         }
         if (match && match[1]) {
             const fileId = match[1];
-            // Use thumbnail API which works better for publicly shared images
-            const directUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w500`;
-            console.log('Converting Google Drive URL:', url, '→', directUrl);
+            // Use multiple fallback URLs for better compatibility
+            // Primary: googleusercontent (most reliable for public images)
+            const directUrl = `https://lh3.googleusercontent.com/d/${fileId}=s500?authuser=0`;
+            console.log('Google Drive Image - File ID:', fileId);
+            console.log('Direct URL:', directUrl);
             return directUrl;
         }
     }
