@@ -1,8 +1,9 @@
 import { db } from './firebase-config.js';
 import { checkAuth } from './auth.js';
-import { collection, query, where, onSnapshot, getDocs } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { collection, query, where, onSnapshot, getDocs, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 let currentYear = new Date().getFullYear();
+let unsubscribe = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     await checkAuth();
@@ -12,6 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     yearSelect.addEventListener('change', (e) => {
         currentYear = parseInt(e.target.value);
+        if (unsubscribe) unsubscribe();
         loadStandings();
     });
 
@@ -21,7 +23,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 function loadStandings() {
     const playersQuery = query(collection(db, 'players'));
     
-    onSnapshot(playersQuery, async (playersSnapshot) => {
+    unsubscribe = onSnapshot(playersQuery, async (playersSnapshot) => {
+        if (playersSnapshot.empty) {
+            displayStandings([]);
+            return;
+        }
+
         const players = [];
         
         for (const playerDoc of playersSnapshot.docs) {
@@ -42,7 +49,47 @@ function loadStandings() {
         });
 
         displayStandings(players);
+    }, (error) => {
+        console.error('Error loading players:', error);
+        displayStandings([]);
     });
+}
+
+let cachedPointValues = null;
+
+async function getPointValues() {
+    if (cachedPointValues) return cachedPointValues;
+    
+    try {
+        const pointsDoc = await getDoc(doc(db, 'config', 'points'));
+        if (pointsDoc.exists()) {
+            cachedPointValues = pointsDoc.data();
+        } else {
+            cachedPointValues = {
+                win: 3,
+                draw: 1,
+                loss: -1,
+                cleanSheet: 3,
+                goal: 1,
+                captainWin: 5,
+                captainDraw: 2.5,
+                captainLoss: -2
+            };
+        }
+    } catch (error) {
+        console.error('Error loading point values:', error);
+        cachedPointValues = {
+            win: 3,
+            draw: 1,
+            loss: -1,
+            cleanSheet: 3,
+            goal: 1,
+            captainWin: 5,
+            captainDraw: 2.5,
+            captainLoss: -2
+        };
+    }
+    return cachedPointValues;
 }
 
 async function calculatePlayerStats(playerId, year) {
@@ -66,23 +113,7 @@ async function calculatePlayerStats(playerId, year) {
         points: 0
     };
 
-    const pointsDoc = await getDocs(collection(db, 'config'));
-    let pointValues = {
-        win: 3,
-        draw: 1,
-        loss: -1,
-        cleanSheet: 3,
-        goal: 1,
-        captainWin: 5,
-        captainDraw: 2.5,
-        captainLoss: -2
-    };
-
-    for (const configDoc of pointsDoc.docs) {
-        if (configDoc.id === 'points') {
-            pointValues = configDoc.data();
-        }
-    }
+    const pointValues = await getPointValues();
 
     gamesSnapshot.forEach((gameDoc) => {
         const gameData = gameDoc.data();
