@@ -169,7 +169,7 @@ function loadPlayers() {
 
             const imageUrl = convertToDirectLink(player.headshotLink);
             const avatarContent = player.headshotLink 
-                ? `<img src="${imageUrl}" alt="${player.firstName}" class="player-avatar" onerror="console.error('Failed to load image:', '${imageUrl}'); this.parentElement.innerHTML = '<div class=\\'player-avatar\\'>⚽</div>';">` 
+                ? `<div class="player-avatar-container"><img src="${imageUrl}" alt="${player.firstName}" class="player-avatar" onerror="this.style.display='none'; this.parentElement.innerHTML = '<div class=\\'player-avatar\\'>⚽</div>';"></div>` 
                 : `<div class="player-avatar">⚽</div>`;
 
             const editDeleteButtons = isAdmin ? `
@@ -278,7 +278,7 @@ window.showPlayerDetail = async function(playerId) {
 
     const detailImageUrl = convertToDirectLink(player.headshotLink);
     const avatarContent = player.headshotLink 
-        ? `<img src="${detailImageUrl}" alt="${player.firstName}" class="player-detail-avatar" onerror="console.error('Failed to load detail image:', '${detailImageUrl}');">` 
+        ? `<div><img src="${detailImageUrl}" alt="${player.firstName}" class="player-detail-avatar" onerror="this.style.display='none'; this.parentElement.innerHTML = '<div class=\\'player-detail-avatar\\'>⚽</div>';"></div>` 
         : `<div class="player-detail-avatar">⚽</div>`;
 
     const age = player.birthday ? calculateAge(player.birthday) : 'N/A';
@@ -373,8 +373,14 @@ window.showPlayerDetail = async function(playerId) {
 function convertToDirectLink(url) {
     if (!url) return url;
     
+    // If it's already a direct image URL (ends with image extension), use it as-is
+    if (url.match(/\.(jpg|jpeg|png|gif|webp|bmp)(\?.*)?$/i)) {
+        console.log('Direct image URL detected:', url);
+        return url;
+    }
+    
+    // Handle Google Drive URLs
     if (url.includes('drive.google.com')) {
-        // Extract file ID from Google Drive URL
         let match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
         if (!match) {
             match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
@@ -384,13 +390,12 @@ function convertToDirectLink(url) {
         }
         if (match && match[1]) {
             const fileId = match[1];
-            // Use the direct download format which works for publicly shared files
-            const directUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-            console.log('Google Drive Image - File ID:', fileId);
-            console.log('Direct URL:', directUrl);
-            return directUrl;
+            // Try multiple Google Drive formats
+            return `https://lh3.googleusercontent.com/d/${fileId}`;
         }
     }
+    
+    // For any other URL, return as-is and let the browser try to load it
     return url;
 }
 
