@@ -169,7 +169,7 @@ function loadPlayers() {
 
             const imageUrl = convertToDirectLink(player.headshotLink);
             const avatarContent = player.headshotLink 
-                ? `<img src="${imageUrl}" alt="${player.firstName}" class="player-avatar" crossorigin="anonymous" onerror="this.onerror=null; this.src='https://drive.google.com/uc?export=view&id=${player.headshotLink.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1] || ''}'; console.error('Image failed to load:', '${imageUrl}');">` 
+                ? `<img src="${imageUrl}" alt="${player.firstName}" class="player-avatar" onerror="console.error('Failed to load image:', '${imageUrl}'); this.parentElement.innerHTML = '<div class=\\'player-avatar\\'>⚽</div>';">` 
                 : `<div class="player-avatar">⚽</div>`;
 
             const editDeleteButtons = isAdmin ? `
@@ -278,7 +278,7 @@ window.showPlayerDetail = async function(playerId) {
 
     const detailImageUrl = convertToDirectLink(player.headshotLink);
     const avatarContent = player.headshotLink 
-        ? `<img src="${detailImageUrl}" alt="${player.firstName}" class="player-detail-avatar" crossorigin="anonymous" onerror="this.onerror=null; this.src='https://drive.google.com/uc?export=view&id=${player.headshotLink.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1] || ''}';">` 
+        ? `<img src="${detailImageUrl}" alt="${player.firstName}" class="player-detail-avatar" onerror="console.error('Failed to load detail image:', '${detailImageUrl}');">` 
         : `<div class="player-detail-avatar">⚽</div>`;
 
     const age = player.birthday ? calculateAge(player.birthday) : 'N/A';
@@ -384,9 +384,8 @@ function convertToDirectLink(url) {
         }
         if (match && match[1]) {
             const fileId = match[1];
-            // Use multiple fallback URLs for better compatibility
-            // Primary: googleusercontent (most reliable for public images)
-            const directUrl = `https://lh3.googleusercontent.com/d/${fileId}=s500?authuser=0`;
+            // Use the most reliable format for publicly shared Google Drive images
+            const directUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
             console.log('Google Drive Image - File ID:', fileId);
             console.log('Direct URL:', directUrl);
             return directUrl;
