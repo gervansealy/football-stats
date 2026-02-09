@@ -285,24 +285,23 @@ window.showPlayerDetail = async function(playerId) {
 
     let videosSection = '';
     if (player.highlightVideos && player.highlightVideos.length > 0) {
-        const videoThumbnails = player.highlightVideos.map((link, index) => {
+        const videoButtons = player.highlightVideos.map((link, index) => {
             const embedLink = convertToEmbedLink(link);
-            const thumbnailUrl = getVideoThumbnail(link);
             return embedLink ? `
-                <div class="video-thumbnail" onclick="openVideoModal('${embedLink}')">
-                    <img src="${thumbnailUrl}" alt="Video ${index + 1}" class="video-thumb-img">
-                    <div class="play-button">▶</div>
-                    <div class="video-label">Video ${index + 1}</div>
+                <div class="video-file-box" onclick="openVideoModal('${embedLink}')">
+                    <div class="video-icon">🎬</div>
+                    <div class="video-file-name">Highlight Video ${index + 1}</div>
+                    <div class="video-play-icon">▶</div>
                 </div>
             ` : '';
         }).join('');
 
-        if (videoThumbnails) {
+        if (videoButtons) {
             videosSection = `
                 <div class="videos-section">
                     <h3>Highlight Videos</h3>
-                    <div class="video-grid">
-                        ${videoThumbnails}
+                    <div class="video-file-list">
+                        ${videoButtons}
                     </div>
                 </div>
             `;

@@ -676,67 +676,52 @@ body.admin .nav-links a.admin-only {
     margin-bottom: 20px;
 }
 
-.video-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
+.video-file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
-.video-thumbnail {
-    position: relative;
-    cursor: pointer;
-    border-radius: 8px;
-    overflow: hidden;
-    transition: transform 0.3s, box-shadow 0.3s;
-    background: #000;
-}
-
-.video-thumbnail:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-}
-
-.video-thumb-img {
-    width: 100%;
-    height: auto;
-    display: block;
-    aspect-ratio: 16/9;
-    object-fit: cover;
-}
-
-.play-button {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 60px;
-    height: 60px;
-    background: rgba(255, 0, 0, 0.8);
-    border-radius: 50%;
+.video-file-box {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    color: white;
-    transition: background 0.3s;
+    gap: 15px;
+    background: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.3s;
 }
 
-.video-thumbnail:hover .play-button {
-    background: rgba(255, 0, 0, 1);
-    transform: translate(-50%, -50%) scale(1.1);
+.video-file-box:hover {
+    border-color: var(--primary-color);
+    background: #f8f9fa;
+    transform: translateX(5px);
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
 }
 
-.video-label {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 8px;
-    text-align: center;
-    font-size: 14px;
+.video-icon {
+    font-size: 32px;
+    flex-shrink: 0;
+}
+
+.video-file-name {
+    flex: 1;
+    font-size: 16px;
     font-weight: 600;
+    color: var(--text-primary);
+}
+
+.video-play-icon {
+    font-size: 24px;
+    color: var(--primary-color);
+    flex-shrink: 0;
+}
+
+.video-file-box:hover .video-play-icon {
+    color: var(--danger-color);
+    transform: scale(1.2);
 }
 
 .video-modal-content {
