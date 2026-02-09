@@ -382,7 +382,11 @@ function convertToDirectLink(url) {
             match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
         }
         if (match && match[1]) {
-            return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+            const fileId = match[1];
+            // Use thumbnail API which works better for publicly shared images
+            const directUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w500`;
+            console.log('Converting Google Drive URL:', url, '→', directUrl);
+            return directUrl;
         }
     }
     return url;
