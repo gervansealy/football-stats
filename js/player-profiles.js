@@ -286,19 +286,36 @@ window.showPlayerDetail = async function(playerId) {
     let videosSection = '';
     if (player.highlightVideos && player.highlightVideos.length > 0) {
         const videoButtons = player.highlightVideos.map((link, index) => {
-            const embedLink = convertToEmbedLink(link);
             const isDriveVideo = link.includes('drive.google.com');
-            const clickHandler = isDriveVideo 
-                ? `window.open('${embedLink}', '_blank', 'width=1200,height=675')`
-                : `openVideoModal('${embedLink}')`;
+            const videoId = `video-${playerDoc.id}-${index}`;
             
-            return embedLink ? `
-                <div class="video-file-box" onclick="${clickHandler}">
-                    <div class="video-icon">🎬</div>
-                    <div class="video-file-name">Highlight Video ${index + 1}</div>
-                    <div class="video-play-icon">▶</div>
-                </div>
-            ` : '';
+            if (isDriveVideo) {
+                // For Google Drive, extract file ID and create direct link
+                const match = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                const fileId = match ? match[1] : null;
+                if (!fileId) return '';
+                
+                const driveLink = `https://drive.google.com/file/d/${fileId}/view`;
+                return `
+                    <div class="video-file-box" data-drive-link="${driveLink}" data-video-id="${videoId}">
+                        <div class="video-icon">🎬</div>
+                        <div class="video-file-name">Highlight Video ${index + 1}</div>
+                        <div class="video-play-icon">▶</div>
+                    </div>
+                `;
+            } else {
+                // For YouTube, use embed link
+                const embedLink = convertToEmbedLink(link);
+                if (!embedLink) return '';
+                
+                return `
+                    <div class="video-file-box" data-embed-link="${embedLink}" data-video-id="${videoId}">
+                        <div class="video-icon">🎬</div>
+                        <div class="video-file-name">Highlight Video ${index + 1}</div>
+                        <div class="video-play-icon">▶</div>
+                    </div>
+                `;
+            }
         }).join('');
 
         if (videoButtons) {
@@ -375,6 +392,24 @@ window.showPlayerDetail = async function(playerId) {
     document.getElementById('playerDetailContent').innerHTML = content;
     document.getElementById('detailModalTitle').textContent = `${player.firstName} ${player.lastName}`;
     document.getElementById('playerDetailModal').style.display = 'block';
+    
+    // Attach event listeners to video boxes after DOM is updated
+    setTimeout(() => {
+        document.querySelectorAll('.video-file-box').forEach(box => {
+            box.addEventListener('click', function() {
+                const driveLink = this.getAttribute('data-drive-link');
+                const embedLink = this.getAttribute('data-embed-link');
+                
+                if (driveLink) {
+                    // Open Google Drive videos in new window (no iframe = no CSP errors)
+                    window.open(driveLink, '_blank', 'width=1200,height=675');
+                } else if (embedLink) {
+                    // Open YouTube videos in modal
+                    openVideoModal(embedLink);
+                }
+            });
+        });
+    }, 50);
 };
 
 function convertToDirectLink(url) {
