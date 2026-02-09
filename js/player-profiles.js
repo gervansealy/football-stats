@@ -1,8 +1,9 @@
 import { db } from './firebase-config.js';
 import { checkAuth } from './auth.js';
-import { collection, addDoc, getDocs, doc, getDoc, onSnapshot, query, where } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { collection, addDoc, getDocs, doc, getDoc, onSnapshot, query, where, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 let isAdmin = false;
+let editingPlayerId = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     const authData = await checkAuth();
@@ -35,11 +36,62 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function openPlayerModal() {
+    editingPlayerId = null;
     document.getElementById('modalTitle').textContent = 'Add New Player';
     document.getElementById('playerForm').reset();
     document.getElementById('videoLinksContainer').innerHTML = '';
     document.getElementById('playerModal').style.display = 'block';
 }
+
+window.openEditModal = async function(playerId) {
+    editingPlayerId = playerId;
+    document.getElementById('modalTitle').textContent = 'Edit Player';
+    
+    const playerDoc = await getDoc(doc(db, 'players', playerId));
+    const player = playerDoc.data();
+    
+    document.getElementById('firstName').value = player.firstName || '';
+    document.getElementById('lastName').value = player.lastName || '';
+    document.getElementById('position').value = player.position || '';
+    document.getElementById('height').value = player.height || '';
+    document.getElementById('weight').value = player.weight || '';
+    document.getElementById('birthday').value = player.birthday || '';
+    document.getElementById('hobbies').value = player.hobbies || '';
+    document.getElementById('headshotLink').value = player.headshotLink || '';
+    
+    const videoLinksContainer = document.getElementById('videoLinksContainer');
+    videoLinksContainer.innerHTML = '';
+    
+    if (player.highlightVideos && player.highlightVideos.length > 0) {
+        document.getElementById('highlightVideos').value = player.highlightVideos[0] || '';
+        
+        for (let i = 1; i < player.highlightVideos.length; i++) {
+            const div = document.createElement('div');
+            div.className = 'form-group';
+            div.innerHTML = `
+                <label>Video ${i + 1}:</label>
+                <input type="url" class="video-link" placeholder="Paste video link" value="${player.highlightVideos[i]}">
+            `;
+            videoLinksContainer.appendChild(div);
+        }
+    }
+    
+    document.getElementById('playerModal').style.display = 'block';
+};
+
+window.deletePlayer = async function(playerId, playerName) {
+    if (!confirm(`Are you sure you want to delete ${playerName}? This action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        await deleteDoc(doc(db, 'players', playerId));
+        alert('Player deleted successfully!');
+    } catch (error) {
+        console.error('Error deleting player:', error);
+        alert('Error deleting player. Please try again.');
+    }
+};
 
 function addVideoField() {
     const container = document.getElementById('videoLinksContainer');
@@ -75,17 +127,26 @@ async function handlePlayerSubmit(e) {
         birthday: document.getElementById('birthday').value,
         hobbies: document.getElementById('hobbies').value.trim(),
         headshotLink: document.getElementById('headshotLink').value.trim(),
-        highlightVideos: videoLinks,
-        createdAt: new Date().toISOString()
+        highlightVideos: videoLinks
     };
 
     try {
-        await addDoc(collection(db, 'players'), playerData);
+        if (editingPlayerId) {
+            // Update existing player
+            playerData.updatedAt = new Date().toISOString();
+            await updateDoc(doc(db, 'players', editingPlayerId), playerData);
+            alert('Player updated successfully!');
+        } else {
+            // Add new player
+            playerData.createdAt = new Date().toISOString();
+            await addDoc(collection(db, 'players'), playerData);
+            alert('Player added successfully!');
+        }
         document.getElementById('playerModal').style.display = 'none';
-        alert('Player added successfully!');
+        editingPlayerId = null;
     } catch (error) {
-        console.error('Error adding player:', error);
-        alert('Error adding player. Please try again.');
+        console.error('Error saving player:', error);
+        alert('Error saving player. Please try again.');
     }
 }
 
@@ -110,8 +171,16 @@ function loadPlayers() {
                 ? `<img src="${convertToDirectLink(player.headshotLink)}" alt="${player.firstName}" class="player-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="display:block;"><div class="player-avatar" style="display:none;">⚽</div>` 
                 : `<div class="player-avatar">⚽</div>`;
 
+            const editDeleteButtons = isAdmin ? `
+                <div class="player-actions">
+                    <button class="btn-edit" onclick="event.stopPropagation(); openEditModal('${playerDoc.id}');" title="Edit">✏️</button>
+                    <button class="btn-delete" onclick="event.stopPropagation(); deletePlayer('${playerDoc.id}', '${player.firstName} ${player.lastName}');" title="Delete">🗑️</button>
+                </div>
+            ` : '';
+
             playersHTML.push(`
                 <div class="player-card" onclick="showPlayerDetail('${playerDoc.id}')">
+                    ${editDeleteButtons}
                     ${avatarContent}
                     <h3>${player.firstName} ${player.lastName}</h3>
                     <p class="position">${player.position || 'Player'}</p>

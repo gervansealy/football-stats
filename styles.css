@@ -400,11 +400,45 @@ h1 {
     text-align: center;
     transition: transform 0.3s;
     cursor: pointer;
+    position: relative;
 }
 
 .player-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.player-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 4px;
+    z-index: 10;
+}
+
+.btn-edit,
+.btn-delete {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    line-height: 1;
+}
+
+.btn-edit:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    transform: scale(1.1);
+}
+
+.btn-delete:hover {
+    background: var(--danger-color);
+    border-color: var(--danger-color);
+    transform: scale(1.1);
 }
 
 .player-avatar {
