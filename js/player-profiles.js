@@ -285,21 +285,24 @@ window.showPlayerDetail = async function(playerId) {
 
     let videosSection = '';
     if (player.highlightVideos && player.highlightVideos.length > 0) {
-        const videoEmbeds = player.highlightVideos.map(link => {
+        const videoThumbnails = player.highlightVideos.map((link, index) => {
             const embedLink = convertToEmbedLink(link);
+            const thumbnailUrl = getVideoThumbnail(link);
             return embedLink ? `
-                <div class="video-embed">
-                    <iframe src="${embedLink}" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                <div class="video-thumbnail" onclick="openVideoModal('${embedLink}')">
+                    <img src="${thumbnailUrl}" alt="Video ${index + 1}" class="video-thumb-img">
+                    <div class="play-button">▶</div>
+                    <div class="video-label">Video ${index + 1}</div>
                 </div>
             ` : '';
         }).join('');
 
-        if (videoEmbeds) {
+        if (videoThumbnails) {
             videosSection = `
                 <div class="videos-section">
                     <h3>Highlight Videos</h3>
                     <div class="video-grid">
-                        ${videoEmbeds}
+                        ${videoThumbnails}
                     </div>
                 </div>
             `;
@@ -402,18 +405,45 @@ function convertToDirectLink(url) {
 function convertToEmbedLink(url) {
     if (url.includes('youtube.com/watch')) {
         const videoId = url.split('v=')[1]?.split('&')[0];
-        return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+        return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1` : null;
     } else if (url.includes('youtu.be/')) {
         const videoId = url.split('youtu.be/')[1]?.split('?')[0];
-        return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+        return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1` : null;
     } else if (url.includes('drive.google.com')) {
         const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
         if (match) {
-            return `https://drive.google.com/file/d/${match[1]}/preview`;
+            return `https://drive.google.com/file/d/${match[1]}/preview?autoplay=1`;
         }
     }
     return null;
 }
+
+function getVideoThumbnail(url) {
+    if (url.includes('youtube.com/watch')) {
+        const videoId = url.split('v=')[1]?.split('&')[0];
+        return videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : '';
+    } else if (url.includes('youtu.be/')) {
+        const videoId = url.split('youtu.be/')[1]?.split('?')[0];
+        return videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : '';
+    } else if (url.includes('drive.google.com')) {
+        return 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%234285f4" width="100" height="100"/><text x="50" y="50" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="40">▶</text></svg>';
+    }
+    return '';
+}
+
+window.openVideoModal = function(embedUrl) {
+    const modal = document.getElementById('videoModal');
+    const iframe = document.getElementById('videoModalIframe');
+    iframe.src = embedUrl;
+    modal.style.display = 'block';
+};
+
+window.closeVideoModal = function() {
+    const modal = document.getElementById('videoModal');
+    const iframe = document.getElementById('videoModalIframe');
+    iframe.src = '';
+    modal.style.display = 'none';
+};
 
 function calculateAge(birthday) {
     const birthDate = new Date(birthday);
