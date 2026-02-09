@@ -287,8 +287,13 @@ window.showPlayerDetail = async function(playerId) {
     if (player.highlightVideos && player.highlightVideos.length > 0) {
         const videoButtons = player.highlightVideos.map((link, index) => {
             const embedLink = convertToEmbedLink(link);
+            const isDriveVideo = link.includes('drive.google.com');
+            const clickHandler = isDriveVideo 
+                ? `window.open('${embedLink}', '_blank', 'width=1200,height=675')`
+                : `openVideoModal('${embedLink}')`;
+            
             return embedLink ? `
-                <div class="video-file-box" onclick="openVideoModal('${embedLink}')">
+                <div class="video-file-box" onclick="${clickHandler}">
                     <div class="video-icon">🎬</div>
                     <div class="video-file-name">Highlight Video ${index + 1}</div>
                     <div class="video-play-icon">▶</div>
@@ -411,7 +416,8 @@ function convertToEmbedLink(url) {
     } else if (url.includes('drive.google.com')) {
         const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
         if (match) {
-            return `https://drive.google.com/file/d/${match[1]}/preview?autoplay=1`;
+            // For Google Drive, return a direct link that opens in new window
+            return `https://drive.google.com/file/d/${match[1]}/preview`;
         }
     }
     return null;
