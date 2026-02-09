@@ -384,8 +384,8 @@ function convertToDirectLink(url) {
         }
         if (match && match[1]) {
             const fileId = match[1];
-            // Use the most reliable format for publicly shared Google Drive images
-            const directUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+            // Use drive.google.com/thumbnail which works better for public images
+            const directUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
             console.log('Google Drive Image - File ID:', fileId);
             console.log('Direct URL:', directUrl);
             return directUrl;
