@@ -40,7 +40,7 @@ function loadStandings() {
                 name: `${playerData.firstName} ${playerData.lastName}`,
                 firstName: playerData.firstName,
                 lastName: playerData.lastName,
-                profilePicture: playerData.profilePicture || '',
+                headshotLink: playerData.headshotLink || '',
                 ...stats
             });
         }
@@ -160,9 +160,9 @@ function displayStandings(players) {
     }
 
     tbody.innerHTML = players.map((player, index) => {
-        const profilePicUrl = convertToDirectLink(player.profilePicture);
-        const avatarHtml = profilePicUrl 
-            ? `<img src="${profilePicUrl}" alt="${player.firstName}" class="player-standings-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        const headshotUrl = convertToDirectLink(player.headshotLink);
+        const avatarHtml = headshotUrl 
+            ? `<img src="${headshotUrl}" alt="${player.firstName}" class="player-standings-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                <div class="player-standings-avatar-fallback" style="display:none;">${player.firstName.charAt(0)}${player.lastName.charAt(0)}</div>`
             : `<div class="player-standings-avatar-fallback">${player.firstName.charAt(0)}${player.lastName.charAt(0)}</div>`;
         
@@ -215,6 +215,34 @@ function convertToDirectLink(url) {
     return url;
 }
 
+function calculateAge(birthday) {
+    if (!birthday) return 'N/A';
+    const birthDate = new Date(birthday);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    return age;
+}
+
+function convertToEmbedLink(url) {
+    if (url.includes('youtube.com/watch')) {
+        const videoId = url.split('v=')[1]?.split('&')[0];
+        return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1` : null;
+    } else if (url.includes('youtu.be/')) {
+        const videoId = url.split('youtu.be/')[1]?.split('?')[0];
+        return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1` : null;
+    } else if (url.includes('vimeo.com/')) {
+        const match = url.match(/vimeo\.com\/(\d+)/);
+        if (match && match[1]) {
+            return `https://player.vimeo.com/video/${match[1]}?autoplay=1`;
+        }
+    }
+    return null;
+}
+
 window.openPlayerProfileModal = async function(playerId) {
     const playerDoc = await getDoc(doc(db, 'players', playerId));
     if (!playerDoc.exists()) {
@@ -228,63 +256,188 @@ window.openPlayerProfileModal = async function(playerId) {
     const modal = document.getElementById('playerProfileModal');
     const modalContent = document.getElementById('playerProfileContent');
     
-    const profilePicUrl = convertToDirectLink(player.profilePicture);
-    const avatarHtml = profilePicUrl 
-        ? `<img src="${profilePicUrl}" alt="${player.firstName}" class="profile-modal-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-           <div class="profile-modal-avatar-fallback" style="display:none;">${player.firstName.charAt(0)}${player.lastName.charAt(0)}</div>`
-        : `<div class="profile-modal-avatar-fallback">${player.firstName.charAt(0)}${player.lastName.charAt(0)}</div>`;
+    const headshotUrl = convertToDirectLink(player.headshotLink);
+    const avatarContent = player.headshotLink 
+        ? `<div><img src="${headshotUrl}" alt="${player.firstName}" class="player-detail-avatar" onerror="this.style.display='none'; this.parentElement.innerHTML = '<div class=\\'player-detail-avatar\\'>⚽</div>';"></div>` 
+        : `<div class="player-detail-avatar">⚽</div>`;
+    
+    const age = calculateAge(player.birthday);
+    
+    let videosSection = '';
+    if (player.highlightVideos && player.highlightVideos.length > 0) {
+        const videoButtons = player.highlightVideos.map((link, index) => {
+            const isDriveVideo = link.includes('drive.google.com');
+            const videoId = `video-${playerDoc.id}-${index}`;
+            
+            if (isDriveVideo) {
+                const match = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                const fileId = match ? match[1] : null;
+                if (!fileId) return '';
+                
+                const driveDirectLink = `https://drive.google.com/uc?export=download&id=${fileId}`;
+                return `
+                    <div class="video-file-box" data-drive-video="${driveDirectLink}" data-video-id="${videoId}">
+                        <div class="video-icon">🎬</div>
+                        <div class="video-file-name">Highlight Video ${index + 1}</div>
+                        <div class="video-play-icon">▶</div>
+                    </div>
+                `;
+            } else {
+                const embedLink = convertToEmbedLink(link);
+                if (!embedLink) return '';
+                
+                return `
+                    <div class="video-file-box" data-embed-link="${embedLink}" data-video-id="${videoId}">
+                        <div class="video-icon">🎬</div>
+                        <div class="video-file-name">Highlight Video ${index + 1}</div>
+                        <div class="video-play-icon">▶</div>
+                    </div>
+                `;
+            }
+        }).join('');
+        
+        if (videoButtons) {
+            videosSection = `
+                <div class="videos-section">
+                    <h3>Highlight Videos</h3>
+                    <div class="video-file-list">
+                        ${videoButtons}
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    const content = `
+        <div class="player-detail-grid">
+            <div class="player-detail-left">
+                ${avatarContent}
+                <h2>${player.firstName} ${player.lastName}</h2>
+                <p class="position">${player.position || 'Player'}</p>
+            </div>
+            <div class="player-detail-info">
+                <div class="info-row">
+                    <div class="info-label">Age:</div>
+                    <div>${age}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Height:</div>
+                    <div>${player.height || 'N/A'}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Weight:</div>
+                    <div>${player.weight ? player.weight + ' lbs' : 'N/A'}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Games Played:</div>
+                    <div>${stats.games}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Wins:</div>
+                    <div>${stats.wins}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Losses:</div>
+                    <div>${stats.losses}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Goals:</div>
+                    <div>${stats.goals}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Captain Wins:</div>
+                    <div>${stats.captainWins}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Captain Losses:</div>
+                    <div>${stats.captainLosses}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Total Points:</div>
+                    <div><strong>${stats.points}</strong></div>
+                </div>
+                ${player.hobbies ? `
+                <div class="info-row">
+                    <div class="info-label">Hobbies:</div>
+                    <div>${player.hobbies}</div>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+        ${videosSection}
+    `;
+    
+    modalContent.innerHTML = content;
+    modal.style.display = 'block';
+    
+    // Attach event listeners to video boxes
+    setTimeout(() => {
+        document.querySelectorAll('.video-file-box').forEach(box => {
+            box.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const driveVideo = this.getAttribute('data-drive-video');
+                const embedLink = this.getAttribute('data-embed-link');
+                
+                if (driveVideo) {
+                    openDriveVideoModal(driveVideo);
+                } else if (embedLink) {
+                    openVideoModal(embedLink);
+                }
+            });
+        });
+    }, 50);
+};
+
+window.openVideoModal = function(embedUrl) {
+    const modal = document.getElementById('videoModal');
+    const iframe = document.getElementById('videoModalIframe');
+    
+    if (!modal || !iframe) return;
+    
+    iframe.src = embedUrl;
+    modal.style.display = 'block';
+};
+
+window.openDriveVideoModal = function(videoUrl) {
+    const modal = document.getElementById('videoModal');
+    const modalContent = modal.querySelector('.video-modal-content');
+    
+    if (!modal || !modalContent) return;
     
     modalContent.innerHTML = `
-        <div class="profile-modal-header">
-            ${avatarHtml}
-            <div>
-                <h2>${player.firstName} ${player.lastName}</h2>
-                <p class="profile-position">${player.position || 'Player'}</p>
-            </div>
-        </div>
-        <div class="profile-modal-stats">
-            <div class="stat-row">
-                <span>Games Played:</span>
-                <strong>${stats.games}</strong>
-            </div>
-            <div class="stat-row">
-                <span>Wins:</span>
-                <strong>${stats.wins}</strong>
-            </div>
-            <div class="stat-row">
-                <span>Draws:</span>
-                <strong>${stats.draws}</strong>
-            </div>
-            <div class="stat-row">
-                <span>Losses:</span>
-                <strong>${stats.losses}</strong>
-            </div>
-            <div class="stat-row">
-                <span>Goals:</span>
-                <strong>${stats.goals}</strong>
-            </div>
-            <div class="stat-row">
-                <span>Clean Sheets:</span>
-                <strong>${stats.cleanSheets}</strong>
-            </div>
-            <div class="stat-row">
-                <span>Captain Wins:</span>
-                <strong>${stats.captainWins}</strong>
-            </div>
-            <div class="stat-row">
-                <span>Captain Losses:</span>
-                <strong>${stats.captainLosses}</strong>
-            </div>
-            <div class="stat-row">
-                <span>Win %:</span>
-                <strong>${stats.winPercentage}%</strong>
-            </div>
-            <div class="stat-row">
-                <span>Total Points:</span>
-                <strong class="highlight-points">${stats.points}</strong>
-            </div>
-        </div>
+        <span class="close video-close" onclick="closeVideoModal()">&times;</span>
+        <video id="driveVideoPlayer" controls autoplay style="width: 100%; height: 675px; background: #000;">
+            <source src="${videoUrl}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
     `;
     
     modal.style.display = 'block';
+    
+    setTimeout(() => {
+        const video = document.getElementById('driveVideoPlayer');
+        if (video) video.play().catch(err => console.log('Autoplay prevented:', err));
+    }, 100);
+};
+
+window.closeVideoModal = function() {
+    const modal = document.getElementById('videoModal');
+    const modalContent = modal.querySelector('.video-modal-content');
+    
+    const video = document.getElementById('driveVideoPlayer');
+    if (video) {
+        video.pause();
+        video.src = '';
+    }
+    
+    modalContent.innerHTML = `
+        <span class="close video-close" onclick="closeVideoModal()">&times;</span>
+        <iframe id="videoModalIframe" frameborder="0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
+    `;
+    
+    const iframe = document.getElementById('videoModalIframe');
+    if (iframe) iframe.src = '';
+    
+    modal.style.display = 'none';
 };

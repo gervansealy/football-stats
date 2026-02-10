@@ -63,9 +63,19 @@
     </div>
 
     <div id="playerProfileModal" class="modal">
-        <div class="modal-content player-profile-modal-content">
-            <span class="close" onclick="document.getElementById('playerProfileModal').style.display='none'">&times;</span>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="playerProfileModalTitle">Player Profile</h2>
+                <span class="close" onclick="document.getElementById('playerProfileModal').style.display='none'">&times;</span>
+            </div>
             <div id="playerProfileContent"></div>
+        </div>
+    </div>
+
+    <div id="videoModal" class="modal" onclick="if(event.target === this) closeVideoModal();">
+        <div class="modal-content video-modal-content">
+            <span class="close video-close" onclick="closeVideoModal()">&times;</span>
+            <iframe id="videoModalIframe" frameborder="0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
         </div>
     </div>
 
