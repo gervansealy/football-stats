@@ -253,8 +253,8 @@ window.openPlayerProfileModal = async function(playerId) {
     const player = playerDoc.data();
     const stats = await calculatePlayerStats(playerId, currentYear);
     
-    const modal = document.getElementById('playerProfileModal');
-    const modalContent = document.getElementById('playerProfileContent');
+    const modal = document.getElementById('playerDetailModal');
+    const modalContent = document.getElementById('playerDetailContent');
     
     const headshotUrl = convertToDirectLink(player.headshotLink);
     const avatarContent = player.headshotLink 
@@ -368,7 +368,14 @@ window.openPlayerProfileModal = async function(playerId) {
     `;
     
     modalContent.innerHTML = content;
+    document.getElementById('detailModalTitle').textContent = `${player.firstName} ${player.lastName}`;
     modal.style.display = 'block';
+    
+    // Close button handler
+    const closeBtn = modal.querySelector('.close');
+    closeBtn.onclick = function() {
+        modal.style.display = 'none';
+    };
     
     // Attach event listeners to video boxes
     setTimeout(() => {
