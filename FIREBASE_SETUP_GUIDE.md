@@ -1,4 +1,4 @@
-# Firebase Setup Guide - Step by Step
+    # Firebase Setup Guide - Step by Step
 
 This guide will walk you through setting up Firebase for your Football Stats Database from scratch.
 
@@ -173,8 +173,28 @@ service cloud.firestore {
 **Before:**
 ```javascript
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
+    apiKey: "AIzaSyAbQgr9z8ZQUbNP-quIQglyvnpBqIup2sU",
+    authDomain: "// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyAbQgr9z8ZQUbNP-quIQglyvnpBqIup2sU",
+  authDomain: "sweat-squad-stats.firebaseapp.com",
+  projectId: "sweat-squad-stats",
+  storageBucket: "sweat-squad-stats.firebasestorage.app",
+  messagingSenderId: "25309305756",
+  appId: "1:25309305756:web:dbefb3d367483210dec659",
+  measurementId: "G-1J57ZZ5EL0"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);",
     projectId: "YOUR_PROJECT_ID",
     storageBucket: "YOUR_STORAGE_BUCKET",
     messagingSenderId: "YOUR_MESSAGING_SENDER_ID",

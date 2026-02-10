@@ -446,6 +446,20 @@ h1 {
     color: var(--text-secondary);
 }
 
+.loading-message {
+    text-align: center;
+    padding: 40px;
+    color: var(--primary-color);
+    font-weight: 500;
+    font-size: 16px;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
 .player-name-cell {
     min-width: 180px;
 }

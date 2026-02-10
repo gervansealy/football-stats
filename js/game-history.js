@@ -4,11 +4,14 @@ import { collection, query, orderBy, onSnapshot, getDocs, doc, updateDoc, delete
 
 let currentUserRole = 'viewer';
 let allPlayers = [];
+let cachedGames = []; // Cache games for performance
+let cachedPointValues = null; // Cache point values
 
 document.addEventListener('DOMContentLoaded', async () => {
     const authData = await checkAuth();
     currentUserRole = authData.role;
     await loadPlayers();
+    await loadPointValues();
     loadGameHistory();
 });
 
@@ -23,7 +26,45 @@ async function loadPlayers() {
     });
 }
 
+async function loadPointValues() {
+    try {
+        const pointsDoc = await getDoc(doc(db, 'config', 'points'));
+        if (pointsDoc.exists()) {
+            cachedPointValues = pointsDoc.data();
+        } else {
+            cachedPointValues = {
+                win: 3,
+                draw: 1,
+                loss: -1,
+                cleanSheet: 3,
+                goal: 1,
+                captainWin: 5,
+                captainDraw: 2.5,
+                captainLoss: -2
+            };
+        }
+    } catch (error) {
+        console.error('Error loading point values:', error);
+        cachedPointValues = {
+            win: 3,
+            draw: 1,
+            loss: -1,
+            cleanSheet: 3,
+            goal: 1,
+            captainWin: 5,
+            captainDraw: 2.5,
+            captainLoss: -2
+        };
+    }
+}
+
+function showLoadingIndicator() {
+    const container = document.getElementById('gameHistoryContainer');
+    container.innerHTML = '<p class="loading-message">⏳ Loading game history...</p>';
+}
+
 function loadGameHistory() {
+    showLoadingIndicator();
     const gamesQuery = query(collection(db, 'games'), orderBy('date', 'desc'));
     
     onSnapshot(gamesQuery, async (snapshot) => {
@@ -31,8 +72,15 @@ function loadGameHistory() {
         
         if (snapshot.empty) {
             container.innerHTML = '<p class="no-data">No games recorded yet</p>';
+            cachedGames = [];
             return;
         }
+
+        // Update cached games
+        cachedGames = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
 
         const gamesHTML = [];
         
@@ -72,13 +120,64 @@ function loadGameHistory() {
     });
 }
 
+// OPTIMIZED: Calculate standings from cached data
+function calculateStandingsAtDateOptimized(targetDate, gamesArray, playersArray, pointValues) {
+    const players = [];
+
+    playersArray.forEach((playerData) => {
+        const stats = {
+            id: playerData.id,
+            name: `${playerData.firstName} ${playerData.lastName}`,
+            games: 0,
+            wins: 0,
+            points: 0
+        };
+
+        gamesArray.forEach((game) => {
+            if (game.date <= targetDate) {
+                const playerStats = game.playerStats?.[playerData.id];
+                
+                if (playerStats) {
+                    stats.games++;
+                    stats.wins += playerStats.win || 0;
+
+                    stats.points += (playerStats.win || 0) * pointValues.win;
+                    stats.points += (playerStats.draw || 0) * pointValues.draw;
+                    stats.points += (playerStats.loss || 0) * pointValues.loss;
+                    stats.points += playerStats.cleanSheet ? pointValues.cleanSheet : 0;
+                    stats.points += (playerStats.goals || 0) * pointValues.goal;
+                    stats.points += (playerStats.captainWin || 0) * pointValues.captainWin;
+                    stats.points += (playerStats.captainDraw || 0) * pointValues.captainDraw;
+                    stats.points += (playerStats.captainLoss || 0) * pointValues.captainLoss;
+                }
+            }
+        });
+
+        stats.points = parseFloat(stats.points.toFixed(1));
+        players.push(stats);
+    });
+
+    players.sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        return b.wins - a.wins;
+    });
+
+    return players;
+}
+
 async function calculateStandingsAtDate(targetDate) {
+    // Use cached data if available
+    if (cachedGames.length > 0 && allPlayers.length > 0 && cachedPointValues) {
+        return calculateStandingsAtDateOptimized(targetDate, cachedGames, allPlayers, cachedPointValues);
+    }
+
+    // Fallback to database calls (only if cache is empty)
     const playersSnapshot = await getDocs(collection(db, 'players'));
     const gamesQuery = query(collection(db, 'games'));
     const gamesSnapshot = await getDocs(gamesQuery);
 
     const pointsSnapshot = await getDocs(collection(db, 'config'));
-    let pointValues = {
+    let pointValues = cachedPointValues || {
         win: 3,
         draw: 1,
         loss: -1,

@@ -4,6 +4,8 @@ import { collection, query, where, onSnapshot, getDocs, doc, getDoc } from 'http
 
 let currentYear = new Date().getFullYear();
 let unsubscribe = null;
+let cachedGames = null; // Cache all games data
+let cachedPlayers = null; // Cache all players data
 
 document.addEventListener('DOMContentLoaded', async () => {
     await checkAuth();
@@ -13,6 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     yearSelect.addEventListener('change', (e) => {
         currentYear = parseInt(e.target.value);
+        cachedGames = null; // Clear cache when year changes
         if (unsubscribe) unsubscribe();
         loadStandings();
     });
@@ -20,38 +23,63 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadStandings();
 });
 
+function showLoadingIndicator() {
+    const tbody = document.getElementById('standingsBody');
+    tbody.innerHTML = '<tr><td colspan="14" class="loading-message">⏳ Loading standings...</td></tr>';
+}
+
 function loadStandings() {
+    showLoadingIndicator();
     const playersQuery = query(collection(db, 'players'));
     
     unsubscribe = onSnapshot(playersQuery, async (playersSnapshot) => {
-        if (playersSnapshot.empty) {
-            displayStandings([]);
-            return;
-        }
+        try {
+            if (playersSnapshot.empty) {
+                displayStandings([]);
+                return;
+            }
 
-        const players = [];
-        
-        for (const playerDoc of playersSnapshot.docs) {
-            const playerData = playerDoc.data();
-            const stats = await calculatePlayerStats(playerDoc.id, currentYear);
+            // Fetch all games ONCE for the current year
+            if (!cachedGames) {
+                const gamesQuery = query(
+                    collection(db, 'games'),
+                    where('year', '==', currentYear)
+                );
+                const gamesSnapshot = await getDocs(gamesQuery);
+                cachedGames = gamesSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+            }
+
+            const players = [];
             
-            players.push({
-                id: playerDoc.id,
-                name: `${playerData.firstName} ${playerData.lastName}`,
-                firstName: playerData.firstName,
-                lastName: playerData.lastName,
-                headshotLink: playerData.headshotLink || '',
-                ...stats
+            for (const playerDoc of playersSnapshot.docs) {
+                const playerData = playerDoc.data();
+                const stats = calculatePlayerStatsOptimized(playerDoc.id, cachedGames);
+                
+                players.push({
+                    id: playerDoc.id,
+                    name: `${playerData.firstName} ${playerData.lastName}`,
+                    firstName: playerData.firstName,
+                    lastName: playerData.lastName,
+                    headshotLink: playerData.headshotLink || '',
+                    ...stats
+                });
+            }
+
+            players.sort((a, b) => {
+                if (b.points !== a.points) return b.points - a.points;
+                if (b.wins !== a.wins) return b.wins - a.wins;
+                return b.winPercentage - a.winPercentage;
             });
+
+            displayStandings(players);
+        } catch (error) {
+            console.error('Error loading standings:', error);
+            alert('Error loading standings. Please refresh the page.');
+            displayStandings([]);
         }
-
-        players.sort((a, b) => {
-            if (b.points !== a.points) return b.points - a.points;
-            if (b.wins !== a.wins) return b.wins - a.wins;
-            return b.winPercentage - a.winPercentage;
-        });
-
-        displayStandings(players);
     }, (error) => {
         console.error('Error loading players:', error);
         displayStandings([]);
@@ -59,6 +87,32 @@ function loadStandings() {
 }
 
 let cachedPointValues = null;
+
+// Synchronous version - loads once at app start
+function getPointValuesSync() {
+    if (!cachedPointValues) {
+        cachedPointValues = {
+            win: 3,
+            draw: 1,
+            loss: -1,
+            cleanSheet: 3,
+            goal: 1,
+            captainWin: 5,
+            captainDraw: 2.5,
+            captainLoss: -2
+        };
+        
+        // Load from database asynchronously, but don't block
+        getDoc(doc(db, 'config', 'points'))
+            .then(pointsDoc => {
+                if (pointsDoc.exists()) {
+                    cachedPointValues = pointsDoc.data();
+                }
+            })
+            .catch(err => console.error('Error loading point values:', err));
+    }
+    return cachedPointValues;
+}
 
 async function getPointValues() {
     if (cachedPointValues) return cachedPointValues;
@@ -95,14 +149,8 @@ async function getPointValues() {
     return cachedPointValues;
 }
 
-async function calculatePlayerStats(playerId, year) {
-    const gamesQuery = query(
-        collection(db, 'games'),
-        where('year', '==', year)
-    );
-    
-    const gamesSnapshot = await getDocs(gamesQuery);
-    
+// OPTIMIZED: Calculate player stats from cached games array (no database calls)
+function calculatePlayerStatsOptimized(playerId, gamesArray) {
     const stats = {
         games: 0,
         wins: 0,
@@ -116,11 +164,10 @@ async function calculatePlayerStats(playerId, year) {
         points: 0
     };
 
-    const pointValues = await getPointValues();
+    const pointValues = getPointValuesSync();
 
-    gamesSnapshot.forEach((gameDoc) => {
-        const gameData = gameDoc.data();
-        const playerStats = gameData.playerStats?.[playerId];
+    gamesArray.forEach((game) => {
+        const playerStats = game.playerStats?.[playerId];
         
         if (playerStats) {
             stats.games++;
@@ -244,156 +291,178 @@ function convertToEmbedLink(url) {
 }
 
 window.openPlayerProfileModal = async function(playerId) {
-    const playerDoc = await getDoc(doc(db, 'players', playerId));
-    if (!playerDoc.exists()) {
-        alert('Player not found');
-        return;
-    }
-    
-    const player = playerDoc.data();
-    const stats = await calculatePlayerStats(playerId, currentYear);
-    
-    const modal = document.getElementById('playerDetailModal');
-    const modalContent = document.getElementById('playerDetailContent');
-    
-    const headshotUrl = convertToDirectLink(player.headshotLink);
-    const avatarContent = player.headshotLink 
-        ? `<div><img src="${headshotUrl}" alt="${player.firstName}" class="player-detail-avatar" onerror="this.style.display='none'; this.parentElement.innerHTML = '<div class=\\'player-detail-avatar\\'>⚽</div>';"></div>` 
-        : `<div class="player-detail-avatar">⚽</div>`;
-    
-    const age = calculateAge(player.birthday);
-    
-    let videosSection = '';
-    if (player.highlightVideos && player.highlightVideos.length > 0) {
-        const videoButtons = player.highlightVideos.map((link, index) => {
-            const isDriveVideo = link.includes('drive.google.com');
-            const videoId = `video-${playerDoc.id}-${index}`;
+    try {
+        const playerDoc = await getDoc(doc(db, 'players', playerId));
+        if (!playerDoc.exists()) {
+            alert('Player not found');
+            return;
+        }
+        
+        const player = playerDoc.data();
+        
+        // Use cached games if available, otherwise fetch
+        let gamesForPlayer;
+        if (cachedGames) {
+            gamesForPlayer = cachedGames;
+        } else {
+            const gamesQuery = query(
+                collection(db, 'games'),
+                where('year', '==', currentYear)
+            );
+            const gamesSnapshot = await getDocs(gamesQuery);
+            gamesForPlayer = gamesSnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+        }
+        
+        const stats = calculatePlayerStatsOptimized(playerId, gamesForPlayer);
+        
+        const modal = document.getElementById('playerDetailModal');
+        const modalContent = document.getElementById('playerDetailContent');
+        
+        const headshotUrl = convertToDirectLink(player.headshotLink);
+        const avatarContent = player.headshotLink 
+            ? `<div><img src="${headshotUrl}" alt="${player.firstName}" class="player-detail-avatar" onerror="this.style.display='none'; this.parentElement.innerHTML = '<div class=\\'player-detail-avatar\\'>⚽</div>';"></div>` 
+            : `<div class="player-detail-avatar">⚽</div>`;
+        
+        const age = calculateAge(player.birthday);
+        
+        let videosSection = '';
+        if (player.highlightVideos && player.highlightVideos.length > 0) {
+            const videoButtons = player.highlightVideos.map((link, index) => {
+                const isDriveVideo = link.includes('drive.google.com');
+                const videoId = `video-${playerDoc.id}-${index}`;
+                
+                if (isDriveVideo) {
+                    const match = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                    const fileId = match ? match[1] : null;
+                    if (!fileId) return '';
+                    
+                    const driveDirectLink = `https://drive.google.com/uc?export=download&id=${fileId}`;
+                    return `
+                        <div class="video-file-box" data-drive-video="${driveDirectLink}" data-video-id="${videoId}">
+                            <div class="video-icon">🎬</div>
+                            <div class="video-file-name">Highlight Video ${index + 1}</div>
+                            <div class="video-play-icon">▶</div>
+                        </div>
+                    `;
+                } else {
+                    const embedLink = convertToEmbedLink(link);
+                    if (!embedLink) return '';
+                    
+                    return `
+                        <div class="video-file-box" data-embed-link="${embedLink}" data-video-id="${videoId}">
+                            <div class="video-icon">🎬</div>
+                            <div class="video-file-name">Highlight Video ${index + 1}</div>
+                            <div class="video-play-icon">▶</div>
+                        </div>
+                    `;
+                }
+            }).join('');
             
-            if (isDriveVideo) {
-                const match = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
-                const fileId = match ? match[1] : null;
-                if (!fileId) return '';
-                
-                const driveDirectLink = `https://drive.google.com/uc?export=download&id=${fileId}`;
-                return `
-                    <div class="video-file-box" data-drive-video="${driveDirectLink}" data-video-id="${videoId}">
-                        <div class="video-icon">🎬</div>
-                        <div class="video-file-name">Highlight Video ${index + 1}</div>
-                        <div class="video-play-icon">▶</div>
-                    </div>
-                `;
-            } else {
-                const embedLink = convertToEmbedLink(link);
-                if (!embedLink) return '';
-                
-                return `
-                    <div class="video-file-box" data-embed-link="${embedLink}" data-video-id="${videoId}">
-                        <div class="video-icon">🎬</div>
-                        <div class="video-file-name">Highlight Video ${index + 1}</div>
-                        <div class="video-play-icon">▶</div>
+            if (videoButtons) {
+                videosSection = `
+                    <div class="videos-section">
+                        <h3>Highlight Videos</h3>
+                        <div class="video-file-list">
+                            ${videoButtons}
+                        </div>
                     </div>
                 `;
             }
-        }).join('');
-        
-        if (videoButtons) {
-            videosSection = `
-                <div class="videos-section">
-                    <h3>Highlight Videos</h3>
-                    <div class="video-file-list">
-                        ${videoButtons}
-                    </div>
-                </div>
-            `;
         }
-    }
-    
-    const content = `
-        <div class="player-detail-grid">
-            <div class="player-detail-left">
-                ${avatarContent}
-                <h2>${player.firstName} ${player.lastName}</h2>
-                <p class="position">${player.position || 'Player'}</p>
+        
+        const content = `
+            <div class="player-detail-grid">
+                <div class="player-detail-left">
+                    ${avatarContent}
+                    <h2>${player.firstName} ${player.lastName}</h2>
+                    <p class="position">${player.position || 'Player'}</p>
+                </div>
+                <div class="player-detail-info">
+                    <div class="info-row">
+                        <div class="info-label">Age:</div>
+                        <div>${age}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Height:</div>
+                        <div>${player.height || 'N/A'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Weight:</div>
+                        <div>${player.weight ? player.weight + ' lbs' : 'N/A'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Games Played:</div>
+                        <div>${stats.games}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Wins:</div>
+                        <div>${stats.wins}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Losses:</div>
+                        <div>${stats.losses}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Goals:</div>
+                        <div>${stats.goals}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Captain Wins:</div>
+                        <div>${stats.captainWins}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Captain Losses:</div>
+                        <div>${stats.captainLosses}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Total Points:</div>
+                        <div><strong>${stats.points}</strong></div>
+                    </div>
+                    ${player.hobbies ? `
+                    <div class="info-row">
+                        <div class="info-label">Hobbies:</div>
+                        <div>${player.hobbies}</div>
+                    </div>
+                    ` : ''}
+                </div>
             </div>
-            <div class="player-detail-info">
-                <div class="info-row">
-                    <div class="info-label">Age:</div>
-                    <div>${age}</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Height:</div>
-                    <div>${player.height || 'N/A'}</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Weight:</div>
-                    <div>${player.weight ? player.weight + ' lbs' : 'N/A'}</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Games Played:</div>
-                    <div>${stats.games}</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Wins:</div>
-                    <div>${stats.wins}</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Losses:</div>
-                    <div>${stats.losses}</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Goals:</div>
-                    <div>${stats.goals}</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Captain Wins:</div>
-                    <div>${stats.captainWins}</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Captain Losses:</div>
-                    <div>${stats.captainLosses}</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Total Points:</div>
-                    <div><strong>${stats.points}</strong></div>
-                </div>
-                ${player.hobbies ? `
-                <div class="info-row">
-                    <div class="info-label">Hobbies:</div>
-                    <div>${player.hobbies}</div>
-                </div>
-                ` : ''}
-            </div>
-        </div>
-        ${videosSection}
-    `;
-    
-    modalContent.innerHTML = content;
-    document.getElementById('detailModalTitle').textContent = `${player.firstName} ${player.lastName}`;
-    modal.style.display = 'block';
-    
-    // Close button handler
-    const closeBtn = modal.querySelector('.close');
-    closeBtn.onclick = function() {
-        modal.style.display = 'none';
-    };
-    
-    // Attach event listeners to video boxes
-    setTimeout(() => {
-        document.querySelectorAll('.video-file-box').forEach(box => {
-            box.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const driveVideo = this.getAttribute('data-drive-video');
-                const embedLink = this.getAttribute('data-embed-link');
-                
-                if (driveVideo) {
-                    openDriveVideoModal(driveVideo);
-                } else if (embedLink) {
-                    openVideoModal(embedLink);
-                }
+            ${videosSection}
+        `;
+        
+        modalContent.innerHTML = content;
+        document.getElementById('detailModalTitle').textContent = `${player.firstName} ${player.lastName}`;
+        modal.style.display = 'block';
+        
+        // Close button handler
+        const closeBtn = modal.querySelector('.close');
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+        };
+        
+        // Attach event listeners to video boxes
+        setTimeout(() => {
+            document.querySelectorAll('.video-file-box').forEach(box => {
+                box.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const driveVideo = this.getAttribute('data-drive-video');
+                    const embedLink = this.getAttribute('data-embed-link');
+                    
+                    if (driveVideo) {
+                        openDriveVideoModal(driveVideo);
+                    } else if (embedLink) {
+                        openVideoModal(embedLink);
+                    }
+                });
             });
-        });
-    }, 50);
+        }, 50);
+    } catch (error) {
+        console.error('Error opening player profile:', error);
+        alert('Error loading player profile. Please try again.');
+    }
 };
 
 window.openVideoModal = function(embedUrl) {

@@ -20,7 +20,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('saveStatsBtn').addEventListener('click', saveGameStats);
 });
 
+function showLoadingIndicator() {
+    const container = document.getElementById('playerStatsContainer');
+    container.innerHTML = '<p class="loading-message">⏳ Loading players...</p>';
+}
+
 function loadPlayers() {
+    showLoadingIndicator();
     const playersQuery = collection(db, 'players');
     
     onSnapshot(playersQuery, (snapshot) => {
