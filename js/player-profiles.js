@@ -305,7 +305,7 @@ window.showPlayerDetail = async function(playerId) {
                     </div>
                 `;
             } else {
-                // For YouTube, use embed link
+                // For YouTube and Vimeo, use embed link
                 const embedLink = convertToEmbedLink(link);
                 if (!embedLink) return '';
                 
@@ -410,8 +410,8 @@ window.showPlayerDetail = async function(playerId) {
                     console.log('Opening Google Drive video:', driveVideo);
                     openDriveVideoModal(driveVideo);
                 } else if (embedLink) {
-                    // YouTube video - use iframe
-                    console.log('Opening YouTube video:', embedLink);
+                    // YouTube/Vimeo video - use iframe
+                    console.log('Opening video:', embedLink);
                     openVideoModal(embedLink);
                 }
             });
@@ -455,6 +455,12 @@ function convertToEmbedLink(url) {
     } else if (url.includes('youtu.be/')) {
         const videoId = url.split('youtu.be/')[1]?.split('?')[0];
         return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1` : null;
+    } else if (url.includes('vimeo.com/')) {
+        // Extract Vimeo video ID from URL
+        const match = url.match(/vimeo\.com\/(\d+)/);
+        if (match && match[1]) {
+            return `https://player.vimeo.com/video/${match[1]}?autoplay=1`;
+        }
     } else if (url.includes('drive.google.com')) {
         const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
         if (match) {
