@@ -492,93 +492,93 @@ h1 {
     margin: 5px 0;
 }
 
-/* Game Detail Modal Layout */
+/* Game Detail Modal Layout - Compact */
 .game-detail-layout {
     display: grid;
     grid-template-columns: 1.5fr 1fr;
-    gap: 30px;
+    gap: 25px;
     margin-top: 20px;
 }
 
 .game-player-stats h3,
 .game-standings-table h3 {
-    margin: 0 0 15px 0;
-    font-size: 18px;
-    color: var(--text-primary);
-    border-bottom: 2px solid var(--primary-color);
-    padding-bottom: 10px;
-}
-
-.game-player-stat {
-    background: #F8FAFB;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    border-left: 4px solid var(--primary-color);
-}
-
-.game-player-stat h4 {
-    margin: 0 0 10px 0;
+    margin: 0 0 12px 0;
     font-size: 16px;
     color: var(--text-primary);
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 8px;
 }
 
-.stat-badges {
+.game-player-stat-compact {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    margin-bottom: 6px;
+    background: white;
+    border-radius: 6px;
+    border-left: 3px solid var(--primary-color);
+    transition: all 0.2s;
+}
+
+.game-player-stat-compact:hover {
+    background: #F8FAFB;
+    transform: translateX(3px);
+}
+
+.player-name-compact {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary);
+    min-width: 150px;
+}
+
+.stat-badges-compact {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 5px;
+    justify-content: flex-end;
 }
 
-.stat-badge {
+.stat-badge-compact {
     display: inline-block;
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
     font-weight: 600;
     white-space: nowrap;
+    line-height: 1.2;
 }
 
-.stat-badge.win {
+.stat-badge-compact.win {
     background: #D4EDDA;
     color: #155724;
 }
 
-.stat-badge.draw {
+.stat-badge-compact.draw {
     background: #FFF3CD;
     color: #856404;
 }
 
-.stat-badge.loss {
+.stat-badge-compact.loss {
     background: #F8D7DA;
     color: #721C24;
 }
 
-.stat-badge.goal {
+.stat-badge-compact.goal {
     background: #D1ECF1;
     color: #0C5460;
 }
 
-.stat-badge.cleansheet {
+.stat-badge-compact.cleansheet {
     background: #E2E3E5;
     color: #383D41;
 }
 
-.stat-badge.captain-win {
+.stat-badge-compact.captain {
     background: #FFE5B4;
     color: #CC8800;
-    border: 2px solid #FFD700;
-}
-
-.stat-badge.captain-draw {
-    background: #FFEAA7;
-    color: #CC8800;
-    border: 2px solid #FFD700;
-}
-
-.stat-badge.captain-loss {
-    background: #FFCCCB;
-    color: #CC0000;
-    border: 2px solid #FFD700;
+    border: 1px solid #FFD700;
 }
 
 .standings-table.compact {

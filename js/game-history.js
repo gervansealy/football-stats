@@ -38,7 +38,8 @@ function loadGameHistory() {
         
         for (const gameDoc of snapshot.docs) {
             const gameData = gameDoc.data();
-            const date = new Date(gameData.date);
+            // Fix timezone issue by adding 'T12:00:00' to treat as local noon
+            const date = new Date(gameData.date + 'T12:00:00');
             const formattedDate = date.toLocaleDateString('en-US', { 
                 month: 'short',
                 day: 'numeric',
@@ -145,7 +146,8 @@ window.openGameDetailModal = async function(gameId) {
     if (!gameDoc.exists()) return;
     
     const gameData = gameDoc.data();
-    const date = new Date(gameData.date);
+    // Fix timezone issue by adding 'T12:00:00' to treat as local noon
+    const date = new Date(gameData.date + 'T12:00:00');
     const formattedDate = date.toLocaleDateString('en-US', { 
         weekday: 'long', 
         year: 'numeric', 
@@ -158,7 +160,7 @@ window.openGameDetailModal = async function(gameId) {
     const modal = document.getElementById('gameDetailModal');
     const content = document.getElementById('gameDetailContent');
     
-    // Build player stats for this game
+    // Build player stats for this game (compact horizontal layout)
     const playerStatsHTML = Object.keys(gameData.playerStats || {}).map(playerId => {
         const player = allPlayers.find(p => p.id === playerId);
         if (!player) return '';
@@ -166,19 +168,19 @@ window.openGameDetailModal = async function(gameId) {
         const stats = gameData.playerStats[playerId];
         const badges = [];
         
-        if (stats.win > 0) badges.push(`<span class="stat-badge win">✓ ${stats.win} Win${stats.win > 1 ? 's' : ''}</span>`);
-        if (stats.draw > 0) badges.push(`<span class="stat-badge draw">− ${stats.draw} Draw${stats.draw > 1 ? 's' : ''}</span>`);
-        if (stats.loss > 0) badges.push(`<span class="stat-badge loss">✗ ${stats.loss} Loss${stats.loss > 1 ? 'es' : ''}</span>`);
-        if (stats.goals > 0) badges.push(`<span class="stat-badge goal">⚽ ${stats.goals} Goal${stats.goals > 1 ? 's' : ''}</span>`);
-        if (stats.cleanSheet) badges.push(`<span class="stat-badge cleansheet">🛡️ Clean Sheet</span>`);
-        if (stats.captainWin > 0) badges.push(`<span class="stat-badge captain-win">⭐ ${stats.captainWin} Captain Win${stats.captainWin > 1 ? 's' : ''}</span>`);
-        if (stats.captainDraw > 0) badges.push(`<span class="stat-badge captain-draw">⭐ ${stats.captainDraw} Captain Draw${stats.captainDraw > 1 ? 's' : ''}</span>`);
-        if (stats.captainLoss > 0) badges.push(`<span class="stat-badge captain-loss">⭐ ${stats.captainLoss} Captain Loss${stats.captainLoss > 1 ? 'es' : ''}</span>`);
+        if (stats.win > 0) badges.push(`<span class="stat-badge-compact win">W ${stats.win}</span>`);
+        if (stats.draw > 0) badges.push(`<span class="stat-badge-compact draw">D ${stats.draw}</span>`);
+        if (stats.loss > 0) badges.push(`<span class="stat-badge-compact loss">L ${stats.loss}</span>`);
+        if (stats.goals > 0) badges.push(`<span class="stat-badge-compact goal">⚽ ${stats.goals}</span>`);
+        if (stats.cleanSheet) badges.push(`<span class="stat-badge-compact cleansheet">CS</span>`);
+        if (stats.captainWin > 0) badges.push(`<span class="stat-badge-compact captain">⭐ CW ${stats.captainWin}</span>`);
+        if (stats.captainDraw > 0) badges.push(`<span class="stat-badge-compact captain">⭐ CD ${stats.captainDraw}</span>`);
+        if (stats.captainLoss > 0) badges.push(`<span class="stat-badge-compact captain">⭐ CL ${stats.captainLoss}</span>`);
         
         return `
-            <div class="game-player-stat">
-                <h4>${player.firstName} ${player.lastName}</h4>
-                <div class="stat-badges">
+            <div class="game-player-stat-compact">
+                <span class="player-name-compact">${player.firstName} ${player.lastName}</span>
+                <div class="stat-badges-compact">
                     ${badges.join('')}
                 </div>
             </div>
