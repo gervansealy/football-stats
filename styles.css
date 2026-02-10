@@ -25,57 +25,205 @@ body {
     line-height: 1.6;
 }
 
+/* Professional Login Page */
 .login-page {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.login-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
+    background-image: 
+        radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.3) 0%, transparent 50%),
+        linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.login-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.login-container-new {
+    position: relative;
+    z-index: 10;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
-    overflow: hidden;
+    min-height: 100vh;
+    padding: 20px;
 }
 
-.animated-background {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-}
-
-.icon {
-    position: absolute;
-    font-size: 2.5rem;
-    opacity: 0.15;
-    animation: float 20s infinite ease-in-out;
-}
-
-.trophy1 { top: 10%; left: 15%; animation-delay: 0s; }
-.trophy2 { top: 15%; right: 10%; animation-delay: 3s; font-size: 3rem; }
-.trophy3 { bottom: 15%; right: 20%; animation-delay: 6s; }
-.ball1 { top: 40%; left: 8%; animation-delay: 2s; }
-.ball2 { bottom: 30%; right: 30%; animation-delay: 5s; }
-.ball3 { top: 60%; right: 5%; animation-delay: 8s; }
-.shoe1 { bottom: 20%; left: 10%; animation-delay: 4s; }
-.shoe2 { top: 25%; right: 25%; animation-delay: 7s; }
-.goal { bottom: 35%; left: 25%; animation-delay: 1s; }
-.jersey { top: 70%; left: 35%; animation-delay: 9s; }
-.whistle { top: 80%; right: 15%; animation-delay: 10s; }
-.timer { top: 50%; right: 40%; animation-delay: 3.5s; }
-
-@keyframes float {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    25% { transform: translateY(-20px) rotate(5deg); }
-    50% { transform: translateY(0px) rotate(-5deg); }
-    75% { transform: translateY(20px) rotate(3deg); }
-}
-
-.login-container {
-    background: var(--card-bg);
-    padding: 40px;
-    border-radius: 16px;
+.login-card {
+    background: white;
+    border-radius: 20px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    width: 90%;
-    max-width: 420px;
+    width: 100%;
+    max-width: 450px;
+    padding: 50px 40px;
+    animation: slideUp 0.6s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.football-icon {
+    font-size: 60px;
+    margin-bottom: 20px;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.login-header h1 {
+    margin: 0 0 10px 0;
+    font-size: 28px;
+    color: #2d3748;
+    font-weight: 700;
+}
+
+.login-subtitle {
+    color: #718096;
+    font-size: 14px;
+    margin: 0;
+}
+
+.role-selection {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.role-btn {
+    background: #f7fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.role-btn:hover {
+    background: #edf2f7;
+    border-color: #cbd5e0;
+    transform: translateY(-2px);
+}
+
+.role-btn.active {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.role-icon {
+    font-size: 32px;
+}
+
+.role-label {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.role-btn.active .role-label {
+    color: white;
+}
+
+.form-group-login {
+    margin-bottom: 25px;
+}
+
+.form-group-login input {
+    width: 100%;
+    padding: 15px 20px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 16px;
+    transition: all 0.3s;
+    box-sizing: border-box;
+}
+
+.form-group-login input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.btn-login {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+}
+
+.btn-login:active {
+    transform: translateY(0);
+}
+
+.arrow {
+    font-size: 18px;
+    transition: transform 0.3s;
+}
+
+.btn-login:hover .arrow {
+    transform: translateX(5px);
+}
+
+.error-message-login {
+    color: #e53e3e;
+    text-align: center;
+    margin-top: 15px;
+    font-size: 14px;
+    font-weight: 500;
+}
     text-align: center;
     position: relative;
     z-index: 1;
