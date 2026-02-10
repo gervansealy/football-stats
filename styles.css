@@ -311,15 +311,16 @@ h1 {
 .player-standings-avatar {
     width: 32px;
     height: 32px;
-    border-radius: 50%;
-    object-fit: cover;
+    border-radius: 6px;
+    object-fit: contain;
     border: 2px solid var(--border-color);
+    background: white;
 }
 
 .player-standings-avatar-fallback {
     width: 32px;
     height: 32px;
-    border-radius: 50%;
+    border-radius: 6px;
     background: var(--primary-color);
     color: white;
     display: flex;
@@ -356,15 +357,16 @@ h1 {
 .profile-modal-avatar {
     width: 80px;
     height: 80px;
-    border-radius: 50%;
-    object-fit: cover;
+    border-radius: 10px;
+    object-fit: contain;
     border: 3px solid var(--primary-color);
+    background: white;
 }
 
 .profile-modal-avatar-fallback {
     width: 80px;
     height: 80px;
-    border-radius: 50%;
+    border-radius: 10px;
     background: var(--primary-color);
     color: white;
     display: flex;
@@ -563,14 +565,15 @@ h1 {
 .player-avatar {
     width: 60px;
     height: 60px;
-    border-radius: 50%;
-    object-fit: cover;
+    border-radius: 8px;
+    object-fit: contain;
     margin: 0 auto 8px;
     background: var(--background);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 24px;
+    border: 2px solid var(--border-color);
 }
 
 .player-card h3 {
@@ -773,14 +776,15 @@ body.admin .nav-links a.admin-only {
 .player-detail-avatar {
     width: 150px;
     height: 150px;
-    border-radius: 50%;
-    object-fit: cover;
+    border-radius: 12px;
+    object-fit: contain;
     margin: 0 auto 15px;
     background: var(--background);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 60px;
+    border: 2px solid var(--border-color);
 }
 
 .player-detail-info {
