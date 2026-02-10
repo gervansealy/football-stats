@@ -290,15 +290,15 @@ window.showPlayerDetail = async function(playerId) {
             const videoId = `video-${playerDoc.id}-${index}`;
             
             if (isDriveVideo) {
-                // For Google Drive, extract file ID and create embed preview link with autoplay
+                // For Google Drive, use direct download link for HTML5 video player
                 const match = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
                 const fileId = match ? match[1] : null;
                 if (!fileId) return '';
                 
-                // Use preview URL with autoplay parameter
-                const driveEmbedLink = `https://drive.google.com/file/d/${fileId}/preview?autoplay=1`;
+                // Use direct download link that works with HTML5 video
+                const driveDirectLink = `https://drive.google.com/uc?export=download&id=${fileId}`;
                 return `
-                    <div class="video-file-box" data-embed-link="${driveEmbedLink}" data-video-id="${videoId}">
+                    <div class="video-file-box" data-drive-video="${driveDirectLink}" data-video-id="${videoId}">
                         <div class="video-icon">🎬</div>
                         <div class="video-file-name">Highlight Video ${index + 1}</div>
                         <div class="video-play-icon">▶</div>
@@ -403,9 +403,15 @@ window.showPlayerDetail = async function(playerId) {
                 e.preventDefault();
                 e.stopPropagation();
                 const embedLink = this.getAttribute('data-embed-link');
-                console.log('Video clicked, embed link:', embedLink);
-                if (embedLink) {
-                    // Open all videos (YouTube and Google Drive) in modal with autoplay
+                const driveVideo = this.getAttribute('data-drive-video');
+                
+                if (driveVideo) {
+                    // Google Drive video - use HTML5 video player
+                    console.log('Opening Google Drive video:', driveVideo);
+                    openDriveVideoModal(driveVideo);
+                } else if (embedLink) {
+                    // YouTube video - use iframe
+                    console.log('Opening YouTube video:', embedLink);
                     openVideoModal(embedLink);
                 }
             });
@@ -473,7 +479,6 @@ function getVideoThumbnail(url) {
 }
 
 window.openVideoModal = function(embedUrl) {
-    console.log('Opening video modal with URL:', embedUrl);
     const modal = document.getElementById('videoModal');
     const iframe = document.getElementById('videoModalIframe');
     
@@ -484,13 +489,59 @@ window.openVideoModal = function(embedUrl) {
     
     iframe.src = embedUrl;
     modal.style.display = 'block';
-    console.log('Video modal opened');
+};
+
+window.openDriveVideoModal = function(videoUrl) {
+    const modal = document.getElementById('videoModal');
+    const modalContent = modal.querySelector('.video-modal-content');
+    
+    if (!modal || !modalContent) {
+        console.error('Video modal elements not found!');
+        return;
+    }
+    
+    // Replace iframe with HTML5 video player for Google Drive
+    modalContent.innerHTML = `
+        <span class="close video-close" onclick="closeVideoModal()">&times;</span>
+        <video id="driveVideoPlayer" controls autoplay style="width: 100%; height: 675px; background: #000;">
+            <source src="${videoUrl}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    `;
+    
+    modal.style.display = 'block';
+    
+    // Start playing
+    setTimeout(() => {
+        const video = document.getElementById('driveVideoPlayer');
+        if (video) {
+            video.play().catch(err => console.log('Autoplay prevented:', err));
+        }
+    }, 100);
 };
 
 window.closeVideoModal = function() {
     const modal = document.getElementById('videoModal');
+    const modalContent = modal.querySelector('.video-modal-content');
+    
+    // Stop any playing video
+    const video = document.getElementById('driveVideoPlayer');
+    if (video) {
+        video.pause();
+        video.src = '';
+    }
+    
+    // Reset to original iframe structure
+    modalContent.innerHTML = `
+        <span class="close video-close" onclick="closeVideoModal()">&times;</span>
+        <iframe id="videoModalIframe" frameborder="0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
+    `;
+    
     const iframe = document.getElementById('videoModalIframe');
-    iframe.src = '';
+    if (iframe) {
+        iframe.src = '';
+    }
+    
     modal.style.display = 'none';
 };
 
