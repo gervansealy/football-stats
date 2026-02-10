@@ -396,9 +396,14 @@ window.showPlayerDetail = async function(playerId) {
     
     // Attach event listeners to video boxes after DOM is updated
     setTimeout(() => {
-        document.querySelectorAll('.video-file-box').forEach(box => {
-            box.addEventListener('click', function() {
+        const videoBoxes = document.querySelectorAll('.video-file-box');
+        console.log('Found video boxes:', videoBoxes.length);
+        videoBoxes.forEach(box => {
+            box.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 const embedLink = this.getAttribute('data-embed-link');
+                console.log('Video clicked, embed link:', embedLink);
                 if (embedLink) {
                     // Open all videos (YouTube and Google Drive) in modal with autoplay
                     openVideoModal(embedLink);
@@ -468,10 +473,18 @@ function getVideoThumbnail(url) {
 }
 
 window.openVideoModal = function(embedUrl) {
+    console.log('Opening video modal with URL:', embedUrl);
     const modal = document.getElementById('videoModal');
     const iframe = document.getElementById('videoModalIframe');
+    
+    if (!modal || !iframe) {
+        console.error('Video modal elements not found!');
+        return;
+    }
+    
     iframe.src = embedUrl;
     modal.style.display = 'block';
+    console.log('Video modal opened');
 };
 
 window.closeVideoModal = function() {
