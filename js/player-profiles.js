@@ -211,11 +211,33 @@ function loadPlayers() {
             ...doc.data()
         }));
 
-        const playersHTML = [];
+        // Build player array with stats for sorting
+        const playersWithStats = [];
 
         for (const playerDoc of snapshot.docs) {
             const player = playerDoc.data();
             const stats = getPlayerStatsOptimized(playerDoc.id, cachedGames);
+            
+            playersWithStats.push({
+                id: playerDoc.id,
+                player: player,
+                stats: stats,
+                winPercentage: stats.games > 0 ? ((stats.wins / stats.games) * 100).toFixed(1) : 0
+            });
+        }
+
+        // Sort by standings order: points DESC, wins DESC, win percentage DESC
+        playersWithStats.sort((a, b) => {
+            if (b.stats.points !== a.stats.points) return b.stats.points - a.stats.points;
+            if (b.stats.wins !== a.stats.wins) return b.stats.wins - a.stats.wins;
+            return b.winPercentage - a.winPercentage;
+        });
+
+        // Generate HTML from sorted array
+        const playersHTML = playersWithStats.map(item => {
+            const player = item.player;
+            const stats = item.stats;
+            const playerId = item.id;
 
             const imageUrl = convertToDirectLink(player.headshotLink);
             const avatarContent = player.headshotLink 
@@ -224,13 +246,13 @@ function loadPlayers() {
 
             const editDeleteButtons = isAdmin ? `
                 <div class="player-actions">
-                    <button class="btn-edit" onclick="event.stopPropagation(); openEditModal('${playerDoc.id}');" title="Edit">✏️</button>
-                    <button class="btn-delete" onclick="event.stopPropagation(); deletePlayer('${playerDoc.id}', '${player.firstName} ${player.lastName}');" title="Delete">🗑️</button>
+                    <button class="btn-edit" onclick="event.stopPropagation(); openEditModal('${playerId}');" title="Edit">✏️</button>
+                    <button class="btn-delete" onclick="event.stopPropagation(); deletePlayer('${playerId}', '${player.firstName} ${player.lastName}');" title="Delete">🗑️</button>
                 </div>
             ` : '';
 
-            playersHTML.push(`
-                <div class="player-card" onclick="showPlayerDetail('${playerDoc.id}')">
+            return `
+                <div class="player-card" onclick="showPlayerDetail('${playerId}')">
                     ${editDeleteButtons}
                     ${avatarContent}
                     <h3>${player.firstName} ${player.lastName}</h3>
@@ -254,8 +276,8 @@ function loadPlayers() {
                         </div>
                     </div>
                 </div>
-            `);
-        }
+            `;
+        });
 
         container.innerHTML = playersHTML.join('');
     });
