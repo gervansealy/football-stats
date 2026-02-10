@@ -9,6 +9,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('loginForm');
     const passwordInput = document.getElementById('passwordInput');
     const errorMessage = document.getElementById('errorMessage');
+    const emailInput = document.getElementById('emailInput');
+    const roleButtons = document.querySelectorAll('.role-btn');
+
+    // Role selection handling
+    if (roleButtons.length > 0) {
+        roleButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                roleButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const email = this.getAttribute('data-email');
+                emailInput.value = email;
+                passwordInput.focus();
+            });
+        });
+    }
 
     if (loginForm) {
         onAuthStateChanged(auth, (user) => {
@@ -19,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('emailInput').value;
+            const email = emailInput.value;
             const password = passwordInput.value;
             errorMessage.textContent = '';
 
