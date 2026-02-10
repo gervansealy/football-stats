@@ -492,6 +492,110 @@ h1 {
     margin: 5px 0;
 }
 
+/* Game Detail Modal Layout */
+.game-detail-layout {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.game-player-stats h3,
+.game-standings-table h3 {
+    margin: 0 0 15px 0;
+    font-size: 18px;
+    color: var(--text-primary);
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 10px;
+}
+
+.game-player-stat {
+    background: #F8FAFB;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.game-player-stat h4 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    color: var(--text-primary);
+}
+
+.stat-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.stat-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.stat-badge.win {
+    background: #D4EDDA;
+    color: #155724;
+}
+
+.stat-badge.draw {
+    background: #FFF3CD;
+    color: #856404;
+}
+
+.stat-badge.loss {
+    background: #F8D7DA;
+    color: #721C24;
+}
+
+.stat-badge.goal {
+    background: #D1ECF1;
+    color: #0C5460;
+}
+
+.stat-badge.cleansheet {
+    background: #E2E3E5;
+    color: #383D41;
+}
+
+.stat-badge.captain-win {
+    background: #FFE5B4;
+    color: #CC8800;
+    border: 2px solid #FFD700;
+}
+
+.stat-badge.captain-draw {
+    background: #FFEAA7;
+    color: #CC8800;
+    border: 2px solid #FFD700;
+}
+
+.stat-badge.captain-loss {
+    background: #FFCCCB;
+    color: #CC0000;
+    border: 2px solid #FFD700;
+}
+
+.standings-table.compact {
+    font-size: 13px;
+}
+
+.standings-table.compact th,
+.standings-table.compact td {
+    padding: 8px;
+}
+
+@media (max-width: 968px) {
+    .game-detail-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
 .input-form {
     background: var(--card-bg);
     padding: 30px;

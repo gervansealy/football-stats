@@ -158,31 +158,62 @@ window.openGameDetailModal = async function(gameId) {
     const modal = document.getElementById('gameDetailModal');
     const content = document.getElementById('gameDetailContent');
     
+    // Build player stats for this game
+    const playerStatsHTML = Object.keys(gameData.playerStats || {}).map(playerId => {
+        const player = allPlayers.find(p => p.id === playerId);
+        if (!player) return '';
+        
+        const stats = gameData.playerStats[playerId];
+        const badges = [];
+        
+        if (stats.win > 0) badges.push(`<span class="stat-badge win">✓ ${stats.win} Win${stats.win > 1 ? 's' : ''}</span>`);
+        if (stats.draw > 0) badges.push(`<span class="stat-badge draw">− ${stats.draw} Draw${stats.draw > 1 ? 's' : ''}</span>`);
+        if (stats.loss > 0) badges.push(`<span class="stat-badge loss">✗ ${stats.loss} Loss${stats.loss > 1 ? 'es' : ''}</span>`);
+        if (stats.goals > 0) badges.push(`<span class="stat-badge goal">⚽ ${stats.goals} Goal${stats.goals > 1 ? 's' : ''}</span>`);
+        if (stats.cleanSheet) badges.push(`<span class="stat-badge cleansheet">🛡️ Clean Sheet</span>`);
+        if (stats.captainWin > 0) badges.push(`<span class="stat-badge captain-win">⭐ ${stats.captainWin} Captain Win${stats.captainWin > 1 ? 's' : ''}</span>`);
+        if (stats.captainDraw > 0) badges.push(`<span class="stat-badge captain-draw">⭐ ${stats.captainDraw} Captain Draw${stats.captainDraw > 1 ? 's' : ''}</span>`);
+        if (stats.captainLoss > 0) badges.push(`<span class="stat-badge captain-loss">⭐ ${stats.captainLoss} Captain Loss${stats.captainLoss > 1 ? 'es' : ''}</span>`);
+        
+        return `
+            <div class="game-player-stat">
+                <h4>${player.firstName} ${player.lastName}</h4>
+                <div class="stat-badges">
+                    ${badges.join('')}
+                </div>
+            </div>
+        `;
+    }).join('');
+    
     content.innerHTML = `
         <h2>Game on ${formattedDate}</h2>
-        <h3>Standings After This Game</h3>
-        <table class="standings-table">
-            <thead>
-                <tr>
-                    <th>Rank</th>
-                    <th>Player</th>
-                    <th>Games</th>
-                    <th>Wins</th>
-                    <th>Points</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${standings.map((p, idx) => `
-                    <tr>
-                        <td>${idx + 1}</td>
-                        <td>${p.name}</td>
-                        <td>${p.games}</td>
-                        <td>${p.wins}</td>
-                        <td><strong>${p.points}</strong></td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
+        <div class="game-detail-layout">
+            <div class="game-player-stats">
+                <h3>Player Results</h3>
+                ${playerStatsHTML}
+            </div>
+            <div class="game-standings-table">
+                <h3>Standings After This Game</h3>
+                <table class="standings-table compact">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Player</th>
+                            <th>Pts</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${standings.map((p, idx) => `
+                            <tr>
+                                <td>${idx + 1}</td>
+                                <td>${p.name}</td>
+                                <td><strong>${p.points}</strong></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     `;
     
     modal.style.display = 'block';
@@ -253,8 +284,8 @@ window.saveEditedGame = async function() {
     const gameId = document.getElementById('editGameId').value;
     const gameDate = document.getElementById('editGameDate').value;
     
-    if (!gameDate) {
-        alert('Please select a game date');
+    if (!gameId || !gameDate) {
+        alert('Error: Missing game ID or date');
         return;
     }
     
@@ -288,8 +319,14 @@ window.saveEditedGame = async function() {
         }
     });
     
+    if (Object.keys(playerStats).length === 0) {
+        alert('Please enter stats for at least one player');
+        return;
+    }
+    
     try {
-        await updateDoc(doc(db, 'games', gameId), {
+        const gameRef = doc(db, 'games', gameId);
+        await updateDoc(gameRef, {
             date: gameDate,
             year: new Date(gameDate).getFullYear(),
             playerStats: playerStats,
@@ -300,7 +337,7 @@ window.saveEditedGame = async function() {
         document.getElementById('editGameModal').style.display = 'none';
     } catch (error) {
         console.error('Error updating game:', error);
-        alert('Error updating game. Please try again.');
+        alert('Error updating game: ' + error.message);
     }
 };
 
