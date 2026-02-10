@@ -38,6 +38,9 @@ function loadStandings() {
             players.push({
                 id: playerDoc.id,
                 name: `${playerData.firstName} ${playerData.lastName}`,
+                firstName: playerData.firstName,
+                lastName: playerData.lastName,
+                profilePicture: playerData.profilePicture || '',
                 ...stats
             });
         }
@@ -156,10 +159,22 @@ function displayStandings(players) {
         return;
     }
 
-    tbody.innerHTML = players.map((player, index) => `
+    tbody.innerHTML = players.map((player, index) => {
+        const profilePicUrl = convertToDirectLink(player.profilePicture);
+        const avatarHtml = profilePicUrl 
+            ? `<img src="${profilePicUrl}" alt="${player.firstName}" class="player-standings-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+               <div class="player-standings-avatar-fallback" style="display:none;">${player.firstName.charAt(0)}${player.lastName.charAt(0)}</div>`
+            : `<div class="player-standings-avatar-fallback">${player.firstName.charAt(0)}${player.lastName.charAt(0)}</div>`;
+        
+        return `
         <tr>
             <td>${index + 1}</td>
-            <td><strong>${player.name}</strong></td>
+            <td class="player-name-cell">
+                <div class="player-name-container">
+                    ${avatarHtml}
+                    <strong class="player-name-link" onclick="openPlayerProfileModal('${player.id}')" style="cursor: pointer;">${player.name}</strong>
+                </div>
+            </td>
             <td>${player.games}</td>
             <td>${player.wins}</td>
             <td>${player.draws}</td>
@@ -173,5 +188,103 @@ function displayStandings(players) {
             <td>${player.winPercentage}%</td>
             <td><strong>${player.points}</strong></td>
         </tr>
-    `).join('');
+        `;
+    }).join('');
 }
+
+function convertToDirectLink(url) {
+    if (!url) return url;
+    
+    if (url.match(/\.(jpg|jpeg|png|gif|webp|bmp)(\?.*)?$/i)) {
+        return url;
+    }
+    
+    if (url.includes('drive.google.com')) {
+        const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (!match) {
+            const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+            if (idMatch && idMatch[1]) {
+                return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
+            }
+        }
+        if (match && match[1]) {
+            return `https://lh3.googleusercontent.com/d/${match[1]}`;
+        }
+    }
+    
+    return url;
+}
+
+window.openPlayerProfileModal = async function(playerId) {
+    const playerDoc = await getDoc(doc(db, 'players', playerId));
+    if (!playerDoc.exists()) {
+        alert('Player not found');
+        return;
+    }
+    
+    const player = playerDoc.data();
+    const stats = await calculatePlayerStats(playerId, currentYear);
+    
+    const modal = document.getElementById('playerProfileModal');
+    const modalContent = document.getElementById('playerProfileContent');
+    
+    const profilePicUrl = convertToDirectLink(player.profilePicture);
+    const avatarHtml = profilePicUrl 
+        ? `<img src="${profilePicUrl}" alt="${player.firstName}" class="profile-modal-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+           <div class="profile-modal-avatar-fallback" style="display:none;">${player.firstName.charAt(0)}${player.lastName.charAt(0)}</div>`
+        : `<div class="profile-modal-avatar-fallback">${player.firstName.charAt(0)}${player.lastName.charAt(0)}</div>`;
+    
+    modalContent.innerHTML = `
+        <div class="profile-modal-header">
+            ${avatarHtml}
+            <div>
+                <h2>${player.firstName} ${player.lastName}</h2>
+                <p class="profile-position">${player.position || 'Player'}</p>
+            </div>
+        </div>
+        <div class="profile-modal-stats">
+            <div class="stat-row">
+                <span>Games Played:</span>
+                <strong>${stats.games}</strong>
+            </div>
+            <div class="stat-row">
+                <span>Wins:</span>
+                <strong>${stats.wins}</strong>
+            </div>
+            <div class="stat-row">
+                <span>Draws:</span>
+                <strong>${stats.draws}</strong>
+            </div>
+            <div class="stat-row">
+                <span>Losses:</span>
+                <strong>${stats.losses}</strong>
+            </div>
+            <div class="stat-row">
+                <span>Goals:</span>
+                <strong>${stats.goals}</strong>
+            </div>
+            <div class="stat-row">
+                <span>Clean Sheets:</span>
+                <strong>${stats.cleanSheets}</strong>
+            </div>
+            <div class="stat-row">
+                <span>Captain Wins:</span>
+                <strong>${stats.captainWins}</strong>
+            </div>
+            <div class="stat-row">
+                <span>Captain Losses:</span>
+                <strong>${stats.captainLosses}</strong>
+            </div>
+            <div class="stat-row">
+                <span>Win %:</span>
+                <strong>${stats.winPercentage}%</strong>
+            </div>
+            <div class="stat-row">
+                <span>Total Points:</span>
+                <strong class="highlight-points">${stats.points}</strong>
+            </div>
+        </div>
+    `;
+    
+    modal.style.display = 'block';
+};
