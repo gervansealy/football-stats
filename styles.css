@@ -507,6 +507,25 @@ h1 {
     cursor: pointer;
 }
 
+.stat-input-group.captain-checkbox {
+    background: #FFF9E6;
+    border: 2px solid #FFD700;
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.stat-input-group.captain-checkbox label {
+    color: #CC8800;
+    font-size: 14px;
+}
+
+.stat-input-group.captain-checkbox input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #FFD700;
+}
+
 .profiles-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));

@@ -77,19 +77,9 @@ function displayPlayerStats() {
                 <input type="number" class="stat-goals" min="0" value="0">
             </div>
             
-            <div class="stat-input-group">
-                <label>Captain Wins:</label>
-                <input type="number" class="stat-capwin" min="0" value="0">
-            </div>
-            
-            <div class="stat-input-group">
-                <label>Captain Draws:</label>
-                <input type="number" class="stat-capdraw" min="0" value="0">
-            </div>
-            
-            <div class="stat-input-group">
-                <label>Captain Losses:</label>
-                <input type="number" class="stat-caploss" min="0" value="0">
+            <div class="stat-input-group captain-checkbox">
+                <label><strong>⭐ Captain:</strong></label>
+                <input type="checkbox" class="stat-captain">
             </div>
         </div>
     `).join('');
@@ -113,12 +103,14 @@ async function saveGameStats() {
         const losses = parseInt(card.querySelector('.stat-loss').value) || 0;
         const cleanSheet = card.querySelector('.stat-cleansheet').checked;
         const goals = parseInt(card.querySelector('.stat-goals').value) || 0;
-        const captainWins = parseInt(card.querySelector('.stat-capwin').value) || 0;
-        const captainDraws = parseInt(card.querySelector('.stat-capdraw').value) || 0;
-        const captainLosses = parseInt(card.querySelector('.stat-caploss').value) || 0;
+        const isCaptain = card.querySelector('.stat-captain').checked;
 
-        if (wins > 0 || draws > 0 || losses > 0 || cleanSheet || goals > 0 || 
-            captainWins > 0 || captainDraws > 0 || captainLosses > 0) {
+        // If captain checkbox is checked, wins/draws/losses count as captain stats
+        const captainWins = isCaptain ? wins : 0;
+        const captainDraws = isCaptain ? draws : 0;
+        const captainLosses = isCaptain ? losses : 0;
+
+        if (wins > 0 || draws > 0 || losses > 0 || cleanSheet || goals > 0) {
             playerStats[playerId] = {
                 win: wins,
                 draw: draws,
@@ -153,9 +145,7 @@ async function saveGameStats() {
             card.querySelector('.stat-loss').value = 0;
             card.querySelector('.stat-cleansheet').checked = false;
             card.querySelector('.stat-goals').value = 0;
-            card.querySelector('.stat-capwin').value = 0;
-            card.querySelector('.stat-capdraw').value = 0;
-            card.querySelector('.stat-caploss').value = 0;
+            card.querySelector('.stat-captain').checked = false;
         });
     } catch (error) {
         console.error('Error saving game stats:', error);
