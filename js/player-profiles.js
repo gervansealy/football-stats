@@ -290,14 +290,15 @@ window.showPlayerDetail = async function(playerId) {
             const videoId = `video-${playerDoc.id}-${index}`;
             
             if (isDriveVideo) {
-                // For Google Drive, extract file ID and create direct link
+                // For Google Drive, extract file ID and create embed preview link with autoplay
                 const match = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
                 const fileId = match ? match[1] : null;
                 if (!fileId) return '';
                 
-                const driveLink = `https://drive.google.com/file/d/${fileId}/view`;
+                // Use preview URL with autoplay parameter
+                const driveEmbedLink = `https://drive.google.com/file/d/${fileId}/preview?autoplay=1`;
                 return `
-                    <div class="video-file-box" data-drive-link="${driveLink}" data-video-id="${videoId}">
+                    <div class="video-file-box" data-embed-link="${driveEmbedLink}" data-video-id="${videoId}">
                         <div class="video-icon">🎬</div>
                         <div class="video-file-name">Highlight Video ${index + 1}</div>
                         <div class="video-play-icon">▶</div>
@@ -397,14 +398,9 @@ window.showPlayerDetail = async function(playerId) {
     setTimeout(() => {
         document.querySelectorAll('.video-file-box').forEach(box => {
             box.addEventListener('click', function() {
-                const driveLink = this.getAttribute('data-drive-link');
                 const embedLink = this.getAttribute('data-embed-link');
-                
-                if (driveLink) {
-                    // Open Google Drive videos in new window (no iframe = no CSP errors)
-                    window.open(driveLink, '_blank', 'width=1200,height=675');
-                } else if (embedLink) {
-                    // Open YouTube videos in modal
+                if (embedLink) {
+                    // Open all videos (YouTube and Google Drive) in modal with autoplay
                     openVideoModal(embedLink);
                 }
             });
