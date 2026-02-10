@@ -24,10 +24,41 @@
 
     <div class="container">
         <h1>Game History</h1>
-        <p class="subtitle">View all games and see where players stood in the standings after each match.</p>
+        <p class="subtitle">Click on any game to view details. Admins can edit or delete games.</p>
 
-        <div id="gameHistoryContainer">
+        <div id="gameHistoryContainer" class="game-history-grid">
             <p class="no-data">No games recorded yet</p>
+        </div>
+    </div>
+
+    <!-- Game Detail Modal -->
+    <div id="gameDetailModal" class="modal" onclick="if(event.target === this) closeGameDetailModal();">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2>Game Details</h2>
+                <span class="close" onclick="closeGameDetailModal()">&times;</span>
+            </div>
+            <div id="gameDetailContent"></div>
+        </div>
+    </div>
+
+    <!-- Edit Game Modal -->
+    <div id="editGameModal" class="modal" onclick="if(event.target === this) closeEditGameModal();">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2>Edit Game</h2>
+                <span class="close" onclick="closeEditGameModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editGameId">
+                <div class="form-group">
+                    <label for="editGameDate">Game Date:</label>
+                    <input type="date" id="editGameDate" class="form-input">
+                </div>
+                <h3>Player Stats</h3>
+                <div id="editGameContent" class="player-stats-grid"></div>
+                <button onclick="saveEditedGame()" class="btn-primary">Save Changes</button>
+            </div>
         </div>
     </div>
 
