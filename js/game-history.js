@@ -160,32 +160,81 @@ window.openGameDetailModal = async function(gameId) {
     const modal = document.getElementById('gameDetailModal');
     const content = document.getElementById('gameDetailContent');
     
-    // Build player stats for this game (compact horizontal layout)
-    const playerStatsHTML = Object.keys(gameData.playerStats || {}).map(playerId => {
+    // Build player stats for this game with full text labels
+    const playerResults = Object.keys(gameData.playerStats || {}).map(playerId => {
         const player = allPlayers.find(p => p.id === playerId);
-        if (!player) return '';
+        if (!player) return null;
         
         const stats = gameData.playerStats[playerId];
         const badges = [];
         
-        if (stats.win > 0) badges.push(`<span class="stat-badge-compact win">W ${stats.win}</span>`);
-        if (stats.draw > 0) badges.push(`<span class="stat-badge-compact draw">D ${stats.draw}</span>`);
-        if (stats.loss > 0) badges.push(`<span class="stat-badge-compact loss">L ${stats.loss}</span>`);
-        if (stats.goals > 0) badges.push(`<span class="stat-badge-compact goal">⚽ ${stats.goals}</span>`);
-        if (stats.cleanSheet) badges.push(`<span class="stat-badge-compact cleansheet">CS</span>`);
-        if (stats.captainWin > 0) badges.push(`<span class="stat-badge-compact captain">⭐ CW ${stats.captainWin}</span>`);
-        if (stats.captainDraw > 0) badges.push(`<span class="stat-badge-compact captain">⭐ CD ${stats.captainDraw}</span>`);
-        if (stats.captainLoss > 0) badges.push(`<span class="stat-badge-compact captain">⭐ CL ${stats.captainLoss}</span>`);
+        if (stats.win > 0) badges.push(`<span class="stat-badge-compact win">Win ${stats.win}</span>`);
+        if (stats.draw > 0) badges.push(`<span class="stat-badge-compact draw">Draw ${stats.draw}</span>`);
+        if (stats.loss > 0) badges.push(`<span class="stat-badge-compact loss">Loss ${stats.loss}</span>`);
+        if (stats.goals > 0) badges.push(`<span class="stat-badge-compact goal">⚽ ${stats.goals} Goal${stats.goals > 1 ? 's' : ''}</span>`);
+        if (stats.cleanSheet) badges.push(`<span class="stat-badge-compact cleansheet">Clean Sheet</span>`);
+        if (stats.captainWin > 0) badges.push(`<span class="stat-badge-compact captain">⭐ Captain Win ${stats.captainWin}</span>`);
+        if (stats.captainDraw > 0) badges.push(`<span class="stat-badge-compact captain">⭐ Captain Draw ${stats.captainDraw}</span>`);
+        if (stats.captainLoss > 0) badges.push(`<span class="stat-badge-compact captain">⭐ Captain Loss ${stats.captainLoss}</span>`);
         
-        return `
-            <div class="game-player-stat-compact">
-                <span class="player-name-compact">${player.firstName} ${player.lastName}</span>
-                <div class="stat-badges-compact">
-                    ${badges.join('')}
-                </div>
+        return {
+            playerId,
+            name: `${player.firstName} ${player.lastName}`,
+            stats,
+            badges: badges.join(''),
+            isCaptainWin: (stats.captainWin || 0) > 0,
+            isCaptainLoss: (stats.captainLoss || 0) > 0,
+            isCaptainDraw: (stats.captainDraw || 0) > 0,
+            hasWin: (stats.win || 0) > 0,
+            hasLoss: (stats.loss || 0) > 0,
+            hasDraw: (stats.draw || 0) > 0,
+            hasGoals: (stats.goals || 0) > 0,
+            hasCleanSheet: stats.cleanSheet || false,
+            goalCount: stats.goals || 0
+        };
+    }).filter(p => p !== null);
+    
+    // Smart sorting
+    playerResults.sort((a, b) => {
+        const isWinGame = playerResults.some(p => p.hasWin);
+        const isDrawGame = !isWinGame && playerResults.some(p => p.hasDraw);
+        const hasCleanSheet = playerResults.some(p => p.hasCleanSheet);
+        
+        if (isWinGame) {
+            if (hasCleanSheet) {
+                if (a.isCaptainWin !== b.isCaptainWin) return b.isCaptainWin ? 1 : -1;
+                if (a.hasCleanSheet !== b.hasCleanSheet) return b.hasCleanSheet ? 1 : -1;
+                if (a.hasWin && b.hasWin && a.hasGoals !== b.hasGoals) return b.hasGoals ? 1 : -1;
+                if (a.hasWin !== b.hasWin) return b.hasWin ? 1 : -1;
+                if (a.isCaptainLoss !== b.isCaptainLoss) return b.isCaptainLoss ? 1 : -1;
+                if (a.hasLoss && b.hasLoss && a.hasGoals !== b.hasGoals) return b.hasGoals ? 1 : -1;
+            } else {
+                if (a.isCaptainWin !== b.isCaptainWin) return b.isCaptainWin ? 1 : -1;
+                if (a.hasWin && b.hasWin && a.hasGoals !== b.hasGoals) return b.hasGoals ? 1 : -1;
+                if (a.hasWin !== b.hasWin) return b.hasWin ? 1 : -1;
+                if (a.isCaptainLoss !== b.isCaptainLoss) return b.isCaptainLoss ? 1 : -1;
+                if (a.hasLoss && b.hasLoss && a.hasGoals !== b.hasGoals) return b.hasGoals ? 1 : -1;
+            }
+        } else if (isDrawGame) {
+            if (a.isCaptainDraw !== b.isCaptainDraw) return b.isCaptainDraw ? 1 : -1;
+            if (a.hasGoals !== b.hasGoals) return b.hasGoals ? 1 : -1;
+            if (a.goalCount !== b.goalCount) return b.goalCount - a.goalCount;
+        } else {
+            if (a.isCaptainLoss !== b.isCaptainLoss) return b.isCaptainLoss ? 1 : -1;
+            if (a.hasGoals !== b.hasGoals) return b.hasGoals ? 1 : -1;
+            if (a.goalCount !== b.goalCount) return b.goalCount - a.goalCount;
+        }
+        return 0;
+    });
+    
+    const playerStatsHTML = playerResults.map(player => `
+        <div class="game-player-stat-compact">
+            <span class="player-name-compact">${player.name}</span>
+            <div class="stat-badges-compact">
+                ${player.badges}
             </div>
-        `;
-    }).join('');
+        </div>
+    `).join('');
     
     content.innerHTML = `
         <h2>Game on ${formattedDate}</h2>
