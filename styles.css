@@ -809,25 +809,25 @@ h1 {
 }
 
 .player-stats-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 15px;
     margin: 25px 0;
 }
 
 .player-stat-card {
     background: #F8FAFB;
-    padding: 6px 10px;
+    padding: 6px 8px;
     border-radius: 6px;
     border: 1px solid var(--border-color);
     margin-bottom: 4px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
 }
 
 .player-name-input {
-    min-width: 140px;
+    min-width: 120px;
     font-weight: 600;
     color: var(--text-primary);
     font-size: 13px;
@@ -836,7 +836,7 @@ h1 {
 .stat-inputs-row {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     flex: 1;
 }
 
@@ -855,8 +855,8 @@ h1 {
 }
 
 .stat-input-group input[type="number"] {
-    width: 45px;
-    padding: 4px;
+    width: 40px;
+    padding: 4px 2px;
     text-align: center;
     border: 1px solid var(--border-color);
     border-radius: 3px;
@@ -877,7 +877,7 @@ h1 {
     background: #FFF9E6;
     border: 2px solid #FFD700;
     border-radius: 5px;
-    padding: 5px 10px;
+    padding: 5px 8px;
 }
 
 .stat-input-group.captain-box label {
