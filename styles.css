@@ -817,26 +817,26 @@ h1 {
 
 .player-stat-card {
     background: #F8FAFB;
-    padding: 12px 16px;
-    border-radius: 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
     border: 1px solid var(--border-color);
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 12px;
 }
 
 .player-name-input {
-    min-width: 150px;
+    min-width: 140px;
     font-weight: 600;
     color: var(--text-primary);
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .stat-inputs-row {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 10px;
     flex: 1;
 }
 
@@ -844,51 +844,51 @@ h1 {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
 }
 
 .stat-input-group label {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 500;
     color: var(--text-secondary);
     white-space: nowrap;
 }
 
 .stat-input-group input[type="number"] {
-    width: 50px;
-    padding: 6px;
+    width: 45px;
+    padding: 4px;
     text-align: center;
     border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 13px;
+    border-radius: 3px;
+    font-size: 12px;
 }
 
 .stat-input-group.checkbox-group {
-    gap: 6px;
+    gap: 3px;
 }
 
 .stat-input-group input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     cursor: pointer;
 }
 
 .stat-input-group.captain-box {
     background: #FFF9E6;
     border: 2px solid #FFD700;
-    border-radius: 6px;
-    padding: 8px 12px;
+    border-radius: 5px;
+    padding: 5px 10px;
 }
 
 .stat-input-group.captain-box label {
     color: #CC8800;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
 }
 
 .stat-input-group.captain-box input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     accent-color: #FFD700;
 }
 
