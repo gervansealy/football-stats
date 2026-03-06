@@ -817,34 +817,54 @@ h1 {
 
 .player-stat-card {
     background: #F8FAFB;
-    padding: 20px;
-    border-radius: 10px;
+    padding: 12px 16px;
+    border-radius: 8px;
     border: 1px solid var(--border-color);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
 }
 
-.player-stat-card h3 {
-    margin-bottom: 15px;
+.player-name-input {
+    min-width: 150px;
+    font-weight: 600;
     color: var(--text-primary);
-    font-size: 16px;
+    font-size: 14px;
+}
+
+.stat-inputs-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
 }
 
 .stat-input-group {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 4px;
 }
 
 .stat-input-group label {
-    flex: 1;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 500;
+    color: var(--text-secondary);
+    white-space: nowrap;
 }
 
 .stat-input-group input[type="number"] {
-    width: 60px;
+    width: 50px;
     padding: 6px;
     text-align: center;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.stat-input-group.checkbox-group {
+    gap: 6px;
 }
 
 .stat-input-group input[type="checkbox"] {
@@ -853,20 +873,20 @@ h1 {
     cursor: pointer;
 }
 
-.stat-input-group.captain-checkbox {
+.stat-input-group.captain-box {
     background: #FFF9E6;
     border: 2px solid #FFD700;
-    border-radius: 8px;
-    padding: 10px;
-    margin-top: 10px;
+    border-radius: 6px;
+    padding: 8px 12px;
 }
 
-.stat-input-group.captain-checkbox label {
+.stat-input-group.captain-box label {
     color: #CC8800;
-    font-size: 14px;
+    font-size: 12px;
+    font-weight: 600;
 }
 
-.stat-input-group.captain-checkbox input[type="checkbox"] {
+.stat-input-group.captain-box input[type="checkbox"] {
     width: 20px;
     height: 20px;
     accent-color: #FFD700;

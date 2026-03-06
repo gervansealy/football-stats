@@ -56,36 +56,38 @@ function displayPlayerStats() {
 
     container.innerHTML = players.map(player => `
         <div class="player-stat-card" data-player-id="${player.id}">
-            <h3>${player.firstName} ${player.lastName}</h3>
+            <div class="player-name-input">${player.firstName} ${player.lastName}</div>
             
-            <div class="stat-input-group">
-                <label>Wins:</label>
-                <input type="number" class="stat-win" min="0" value="0">
-            </div>
-            
-            <div class="stat-input-group">
-                <label>Draws:</label>
-                <input type="number" class="stat-draw" min="0" value="0">
-            </div>
-            
-            <div class="stat-input-group">
-                <label>Losses:</label>
-                <input type="number" class="stat-loss" min="0" value="0">
-            </div>
-            
-            <div class="stat-input-group">
-                <label>Clean Sheet:</label>
-                <input type="checkbox" class="stat-cleansheet">
-            </div>
-            
-            <div class="stat-input-group">
-                <label>Goals:</label>
-                <input type="number" class="stat-goals" min="0" value="0">
-            </div>
-            
-            <div class="stat-input-group captain-checkbox">
-                <label><strong>⭐ Captain:</strong></label>
-                <input type="checkbox" class="stat-captain">
+            <div class="stat-inputs-row">
+                <div class="stat-input-group">
+                    <label>Wins</label>
+                    <input type="number" class="stat-win" min="0" value="0">
+                </div>
+                
+                <div class="stat-input-group">
+                    <label>Draws</label>
+                    <input type="number" class="stat-draw" min="0" value="0">
+                </div>
+                
+                <div class="stat-input-group">
+                    <label>Losses</label>
+                    <input type="number" class="stat-loss" min="0" value="0">
+                </div>
+                
+                <div class="stat-input-group">
+                    <label>Goals</label>
+                    <input type="number" class="stat-goals" min="0" value="0">
+                </div>
+                
+                <div class="stat-input-group checkbox-group">
+                    <label>Clean Sheet</label>
+                    <input type="checkbox" class="stat-cleansheet">
+                </div>
+                
+                <div class="stat-input-group checkbox-group captain-box">
+                    <label>⭐ Captain</label>
+                    <input type="checkbox" class="stat-captain">
+                </div>
             </div>
         </div>
     `).join('');
