@@ -809,9 +809,9 @@ h1 {
 }
 
 .player-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     margin: 25px 0;
 }
 
