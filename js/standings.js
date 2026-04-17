@@ -260,33 +260,44 @@ function displayHighlights(players) {
         return;
     }
 
-    const byGoals  = [...players].sort((a, b) => b.goals  - a.goals)[0];
-    const byWins   = [...players].sort((a, b) => b.wins   - a.wins)[0];
-    const byLosses = [...players].sort((a, b) => b.losses - a.losses)[0];
+    const topPlayer   = players[0];
+    const lastPlayer  = players[players.length - 1];
+    const maxGoals    = Math.max(...players.map(p => p.goals));
+    const maxWins     = Math.max(...players.map(p => p.wins));
+    const maxLosses   = Math.max(...players.map(p => p.losses));
+
+    const tiedTop    = players.filter(p => p.points === topPlayer.points && p.wins === topPlayer.wins && p.winPercentage === topPlayer.winPercentage);
+    const tiedBottom = players.filter(p => p.points === lastPlayer.points && p.wins === lastPlayer.wins && p.winPercentage === lastPlayer.winPercentage);
+    const tiedGoals  = players.filter(p => p.goals   === maxGoals);
+    const tiedWins   = players.filter(p => p.wins    === maxWins);
+    const tiedLosses = players.filter(p => p.losses  === maxLosses);
 
     const highlights = [
-        { icon: '🏆', animClass: 'anim-bounce',      title: 'Top Player',    player: players[0],           stat: `${players[0].points} pts`,       cardClass: 'highlight-gold'   },
-        { icon: '⚽', animClass: 'anim-spin',        title: 'Most Goals',    player: byGoals,              stat: `${byGoals.goals} goals`,         cardClass: 'highlight-green'  },
-        { icon: '👑', animClass: 'anim-pulse-glow',  title: 'Most Wins',     player: byWins,               stat: `${byWins.wins} wins`,            cardClass: 'highlight-blue'   },
-        { icon: '📉', animClass: 'anim-drop',        title: 'Most Losses',   player: byLosses,             stat: `${byLosses.losses} losses`,      cardClass: 'highlight-orange' },
-        { icon: '🗑️', animClass: 'anim-shake',      title: 'Biggest Loser', player: players[players.length - 1], stat: `${players[players.length - 1].points} pts`, cardClass: 'highlight-red' }
+        { icon: '🏆', animClass: 'anim-bounce',     title: 'Top Player',    tied: tiedTop,    stat: `${topPlayer.points} pts`,    cardClass: 'highlight-gold'   },
+        { icon: '⚽', animClass: 'anim-spin',       title: 'Most Goals',    tied: tiedGoals,  stat: `${maxGoals} goals`,          cardClass: 'highlight-green'  },
+        { icon: '👑', animClass: 'anim-pulse-glow', title: 'Most Wins',     tied: tiedWins,   stat: `${maxWins} wins`,            cardClass: 'highlight-blue'   },
+        { icon: '📉', animClass: 'anim-drop',       title: 'Most Losses',   tied: tiedLosses, stat: `${maxLosses} losses`,        cardClass: 'highlight-orange' },
+        { icon: '🗑️', animClass: 'anim-shake',     title: 'Biggest Loser', tied: tiedBottom, stat: `${lastPlayer.points} pts`,  cardClass: 'highlight-red'    }
     ];
 
     grid.innerHTML = highlights.map(h => {
-        const headshotUrl = convertToDirectLink(h.player.headshotLink);
-        const avatarHtml = headshotUrl
-            ? `<img src="${headshotUrl}" alt="${h.player.firstName}" class="highlight-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-               <div class="highlight-avatar-fallback" style="display:none;">${h.player.firstName.charAt(0)}${h.player.lastName.charAt(0)}</div>`
-            : `<div class="highlight-avatar-fallback">${h.player.firstName.charAt(0)}${h.player.lastName.charAt(0)}</div>`;
+        const playersHtml = h.tied.map(p => {
+            const url = convertToDirectLink(p.headshotLink);
+            const avatarHtml = url
+                ? `<img src="${url}" alt="${p.firstName}" class="highlight-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                   <div class="highlight-avatar-fallback" style="display:none;">${p.firstName.charAt(0)}${p.lastName.charAt(0)}</div>`
+                : `<div class="highlight-avatar-fallback">${p.firstName.charAt(0)}${p.lastName.charAt(0)}</div>`;
+            return `<div class="highlight-player-row">
+                ${avatarHtml}
+                <span class="highlight-player-name" onclick="openPlayerProfileModal('${p.id}')">${p.name}</span>
+            </div>`;
+        }).join('');
 
         return `
         <div class="highlight-card ${h.cardClass}">
             <span class="highlight-icon ${h.animClass}">${h.icon}</span>
             <div class="highlight-label">${h.title}</div>
-            <div class="highlight-player-info">
-                ${avatarHtml}
-                <span class="highlight-player-name" onclick="openPlayerProfileModal('${h.player.id}')">${h.player.name}</span>
-            </div>
+            <div class="highlight-players-list">${playersHtml}</div>
             <div class="highlight-stat">${h.stat}</div>
         </div>`;
     }).join('');

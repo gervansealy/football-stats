@@ -1443,6 +1443,21 @@ body.admin .nav-links a.admin-only {
     margin-bottom: 8px;
 }
 
+.highlight-players-list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.highlight-player-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
 .highlight-avatar {
     width: 44px;
     height: 44px;
