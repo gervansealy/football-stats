@@ -15,9 +15,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     yearSelect.addEventListener('change', (e) => {
         currentYear = parseInt(e.target.value);
-        cachedGames = null; // Clear cache when year changes
+        cachedGames = null;
         if (unsubscribe) unsubscribe();
         loadStandings();
+    });
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const tab = btn.dataset.tab;
+            document.getElementById('standingsSection').style.display = tab === 'standings' ? '' : 'none';
+            document.getElementById('highlightsSection').style.display = tab === 'highlights' ? '' : 'none';
+        });
     });
 
     loadStandings();
@@ -36,6 +46,7 @@ function loadStandings() {
         try {
             if (playersSnapshot.empty) {
                 displayStandings([]);
+                displayHighlights([]);
                 return;
             }
 
@@ -75,6 +86,7 @@ function loadStandings() {
             });
 
             displayStandings(players);
+            displayHighlights(players);
         } catch (error) {
             console.error('Error loading standings:', error);
             alert('Error loading standings. Please refresh the page.');
@@ -236,6 +248,47 @@ function displayStandings(players) {
             <td><strong>${player.points}</strong></td>
         </tr>
         `;
+    }).join('');
+}
+
+function displayHighlights(players) {
+    const grid = document.getElementById('highlightsGrid');
+    if (!grid) return;
+
+    if (players.length === 0) {
+        grid.innerHTML = '<div class="no-data">No data available yet</div>';
+        return;
+    }
+
+    const byGoals  = [...players].sort((a, b) => b.goals  - a.goals)[0];
+    const byWins   = [...players].sort((a, b) => b.wins   - a.wins)[0];
+    const byLosses = [...players].sort((a, b) => b.losses - a.losses)[0];
+
+    const highlights = [
+        { icon: '🏆', animClass: 'anim-bounce',      title: 'Top Player',    player: players[0],           stat: `${players[0].points} pts`,       cardClass: 'highlight-gold'   },
+        { icon: '⚽', animClass: 'anim-spin',        title: 'Most Goals',    player: byGoals,              stat: `${byGoals.goals} goals`,         cardClass: 'highlight-green'  },
+        { icon: '👑', animClass: 'anim-pulse-glow',  title: 'Most Wins',     player: byWins,               stat: `${byWins.wins} wins`,            cardClass: 'highlight-blue'   },
+        { icon: '📉', animClass: 'anim-drop',        title: 'Most Losses',   player: byLosses,             stat: `${byLosses.losses} losses`,      cardClass: 'highlight-orange' },
+        { icon: '🗑️', animClass: 'anim-shake',      title: 'Biggest Loser', player: players[players.length - 1], stat: `${players[players.length - 1].points} pts`, cardClass: 'highlight-red' }
+    ];
+
+    grid.innerHTML = highlights.map(h => {
+        const headshotUrl = convertToDirectLink(h.player.headshotLink);
+        const avatarHtml = headshotUrl
+            ? `<img src="${headshotUrl}" alt="${h.player.firstName}" class="highlight-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+               <div class="highlight-avatar-fallback" style="display:none;">${h.player.firstName.charAt(0)}${h.player.lastName.charAt(0)}</div>`
+            : `<div class="highlight-avatar-fallback">${h.player.firstName.charAt(0)}${h.player.lastName.charAt(0)}</div>`;
+
+        return `
+        <div class="highlight-card ${h.cardClass}">
+            <span class="highlight-icon ${h.animClass}">${h.icon}</span>
+            <div class="highlight-label">${h.title}</div>
+            <div class="highlight-player-info">
+                ${avatarHtml}
+                <span class="highlight-player-name" onclick="openPlayerProfileModal('${h.player.id}')">${h.player.name}</span>
+            </div>
+            <div class="highlight-stat">${h.stat}</div>
+        </div>`;
     }).join('');
 }
 

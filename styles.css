@@ -1363,3 +1363,213 @@ body.admin .nav-links a.admin-only {
     border-radius: 8px;
     margin-top: 15px;
 }
+
+/* Page Tabs */
+.page-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    width: fit-content;
+    background: var(--card-bg);
+    box-shadow: var(--shadow);
+}
+
+.tab-btn {
+    padding: 10px 30px;
+    border: none;
+    background: transparent;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.25s;
+}
+
+.tab-btn.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.tab-btn:hover:not(.active) {
+    background: var(--background);
+    color: var(--text-primary);
+}
+
+/* Highlights Grid */
+.highlights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 22px;
+    padding: 4px 0 10px;
+}
+
+.highlight-card {
+    background: white;
+    border-radius: 18px;
+    padding: 30px 20px 24px;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.highlight-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.15);
+}
+
+.highlight-icon {
+    font-size: 58px;
+    margin-bottom: 10px;
+    display: block;
+    line-height: 1.2;
+}
+
+.highlight-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 14px;
+}
+
+.highlight-player-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.highlight-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: contain;
+    border: 2px solid white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    background: white;
+}
+
+.highlight-avatar-fallback {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
+}
+
+.highlight-player-name {
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    color: var(--text-primary);
+    transition: color 0.2s;
+}
+
+.highlight-player-name:hover {
+    text-decoration: underline;
+    color: var(--primary-color);
+}
+
+.highlight-stat {
+    font-size: 22px;
+    font-weight: 800;
+    margin-top: 6px;
+}
+
+/* Card colour themes */
+.highlight-gold {
+    background: linear-gradient(135deg, #FFFBEA 0%, #FFF3CC 100%);
+    border: 2px solid #FFD700;
+}
+.highlight-gold .highlight-label { color: #A67C00; }
+.highlight-gold .highlight-stat  { color: #A67C00; }
+.highlight-gold .highlight-avatar-fallback { background: #FFD700; color: #5A4000; }
+
+.highlight-green {
+    background: linear-gradient(135deg, #F0FBF0 0%, #C8E6C9 100%);
+    border: 2px solid #43A047;
+}
+.highlight-green .highlight-label { color: #2E7D32; }
+.highlight-green .highlight-stat  { color: #2E7D32; }
+.highlight-green .highlight-avatar-fallback { background: #43A047; }
+
+.highlight-blue {
+    background: linear-gradient(135deg, #EBF4FF 0%, #BBDEFB 100%);
+    border: 2px solid var(--primary-color);
+}
+.highlight-blue .highlight-label { color: #1565C0; }
+.highlight-blue .highlight-stat  { color: #1565C0; }
+.highlight-blue .highlight-avatar-fallback { background: var(--primary-color); }
+
+.highlight-orange {
+    background: linear-gradient(135deg, #FFF8F0 0%, #FFE0B2 100%);
+    border: 2px solid #FB8C00;
+}
+.highlight-orange .highlight-label { color: #E65100; }
+.highlight-orange .highlight-stat  { color: #E65100; }
+.highlight-orange .highlight-avatar-fallback { background: #FB8C00; }
+
+.highlight-red {
+    background: linear-gradient(135deg, #FFF0F0 0%, #FFCDD2 100%);
+    border: 2px solid var(--danger-color);
+}
+.highlight-red .highlight-label { color: #B71C1C; }
+.highlight-red .highlight-stat  { color: #B71C1C; }
+.highlight-red .highlight-avatar-fallback { background: var(--danger-color); }
+
+/* Highlight animations */
+@keyframes hl-bounce {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-14px); }
+}
+.anim-bounce { animation: hl-bounce 1.6s ease-in-out infinite; }
+
+@keyframes hl-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+.anim-spin { animation: hl-spin 3s linear infinite; }
+
+@keyframes hl-pulse-glow {
+    0%, 100% { transform: scale(1);    filter: drop-shadow(0 0 0px transparent); }
+    50%       { transform: scale(1.18); filter: drop-shadow(0 0 10px gold); }
+}
+.anim-pulse-glow { animation: hl-pulse-glow 1.8s ease-in-out infinite; }
+
+@keyframes hl-drop {
+    0%, 55%, 100% { transform: translateY(0); }
+    30%           { transform: translateY(14px); }
+}
+.anim-drop { animation: hl-drop 2.2s ease-in-out infinite; }
+
+@keyframes hl-shake {
+    0%, 100%        { transform: rotate(0deg); }
+    15%             { transform: rotate(-9deg); }
+    30%             { transform: rotate(9deg); }
+    45%             { transform: rotate(-5deg); }
+    60%             { transform: rotate(5deg); }
+    75%             { transform: rotate(-2deg); }
+}
+.anim-shake { animation: hl-shake 2.2s ease-in-out infinite; }
+
+@media (max-width: 768px) {
+    .highlights-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .highlights-grid {
+        grid-template-columns: 1fr;
+    }
+}
