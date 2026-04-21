@@ -224,10 +224,6 @@ body {
     font-size: 14px;
     font-weight: 500;
 }
-    text-align: center;
-    position: relative;
-    z-index: 1;
-}
 
 .login-container h1 {
     color: var(--text-primary);
@@ -1316,19 +1312,40 @@ body.admin .nav-links a.admin-only {
 
 @media (max-width: 768px) {
     .navbar {
-        flex-direction: column;
+        flex-wrap: wrap;
         height: auto;
-        padding: 15px;
+        padding: 8px 12px;
+        gap: 6px;
     }
 
+    .nav-brand {
+        font-size: 0.95rem;
+        white-space: nowrap;
+    }
+
+    /* Horizontal-scroll nav row — no stacking, no wrapping */
     .nav-links {
-        flex-wrap: wrap;
-        justify-content: center;
-        margin: 10px 0;
+        order: 3;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        flex-wrap: nowrap;
+        scrollbar-width: none;
+        gap: 2px;
+        padding: 4px 0;
+    }
+
+    .nav-links::-webkit-scrollbar { display: none; }
+
+    .nav-links a {
+        flex-shrink: 0;
+        white-space: nowrap;
+        padding: 8px 12px;
+        font-size: 13px;
     }
 
     .nav-actions {
-        margin-top: 10px;
+        margin-top: 0;
     }
 
     .page-header {
@@ -2402,4 +2419,241 @@ body.admin .nav-links a.admin-only {
     .pregame-teams {
         grid-template-columns: 1fr;
     }
+}
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE OVERHAUL — all devices
+   ═══════════════════════════════════════════════════ */
+
+/* ── Universal touch targets ──────────────────────── */
+.close {
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+}
+
+.btn-edit-small,
+.btn-delete-small {
+    min-width: 40px;
+    min-height: 40px;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-edit,
+.btn-delete {
+    min-width: 32px;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-copy-otp {
+    padding: 6px 12px;
+    font-size: 12px;
+    min-height: 32px;
+}
+
+.btn-view-lineup {
+    padding: 9px 18px;
+    font-size: 13px;
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-enter-stats {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Page tabs: horizontal scroll on narrow screens ── */
+.page-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+    scrollbar-width: none;
+}
+.page-tabs::-webkit-scrollbar { display: none; }
+
+.tab-btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+/* ── Modal: tighter margins on small screens ──────── */
+@media (max-width: 768px) {
+    .modal-content {
+        margin: 10px auto;
+        width: calc(100% - 24px);
+        max-width: 100%;
+    }
+
+    .modal-content.large {
+        width: calc(100% - 16px);
+        margin: 8px auto;
+    }
+
+    .modal-header {
+        padding: 16px 20px;
+    }
+
+    .modal-body {
+        padding: 16px 20px;
+    }
+
+    /* Prevent iOS Safari auto-zoom on any focused input */
+    input, select, textarea {
+        font-size: 16px !important;
+    }
+
+    /* Stat number inputs stay narrow but legible */
+    .stat-input-group input[type="number"] {
+        width: 44px;
+        padding: 6px 2px;
+    }
+
+    /* Player stat grid: single column on mobile */
+    .player-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Stat row wraps on small cards */
+    .player-stat-card {
+        flex-wrap: wrap;
+        padding: 8px 10px;
+    }
+
+    .player-name-input {
+        min-width: 100%;
+        margin-bottom: 6px;
+    }
+
+    .stat-inputs-row {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    /* Pregame banner stacks on mobile */
+    .pregame-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    /* OTP badge wraps */
+    .otp-badge {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .otp-badge-code {
+        font-size: 17px;
+    }
+
+    /* Lineup editor header stacks */
+    .lineup-editor-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    /* Lineup pitch: fluid width */
+    .pitch {
+        width: min(320px, calc(100vw - 32px));
+        height: calc(min(320px, calc(100vw - 32px)) * 105 / 68);
+    }
+
+    /* Dual pitch view: stack vertically */
+    .dual-pitch-view {
+        flex-direction: column;
+        align-items: center;
+        gap: 28px;
+        padding: 16px;
+    }
+
+    /* Player detail info: single column */
+    .player-detail-info {
+        grid-template-columns: 1fr;
+    }
+
+    /* Login card */
+    .login-card {
+        padding: 36px 24px;
+    }
+
+    /* Standings: allow horizontal scroll without body overflow */
+    .table-container {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Game detail layout (already handled at 968px but reinforce) */
+    .game-detail-layout {
+        grid-template-columns: 1fr;
+    }
+
+    /* Captain select row */
+    .captain-select-row {
+        flex-wrap: wrap;
+    }
+
+    /* Page header button */
+    .page-header .btn-primary {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.4rem;
+    }
+
+    .container {
+        padding: 0 12px;
+        margin: 16px auto;
+    }
+
+    /* Compact pregame card */
+    .pregame-card {
+        padding: 14px;
+    }
+
+    /* Smaller token text on very small phones */
+    .token-name {
+        font-size: 8px;
+    }
+
+    .token-jersey {
+        width: 40px;
+        height: 36px;
+        font-size: 11px;
+    }
+
+    /* OTP badge code size */
+    .otp-badge-code {
+        font-size: 15px;
+        letter-spacing: 2px;
+    }
+
+    /* Profiles grid denser */
+    .profiles-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+}
+
+/* ── Video close: keep inside viewport ──────────── */
+.video-close {
+    top: 10px;
+    right: 10px;
+    font-size: 36px;
+    width: 44px;
+    height: 44px;
 }
