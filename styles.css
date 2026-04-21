@@ -1856,6 +1856,32 @@ body.admin .nav-links a.admin-only {
     border: 1px solid rgba(255,255,255,0.2);
 }
 
+/* Captain token highlight */
+.token-captain .token-jersey {
+    outline: 3px solid #FFD700;
+    outline-offset: 2px;
+    filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.85));
+}
+
+.token-captain-star {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 18px;
+    height: 18px;
+    background: #FFD700;
+    color: #7A5900;
+    font-size: 10px;
+    font-weight: 900;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    pointer-events: none;
+}
+
 .token-name {
     font-size: 9.5px;
     color: white;

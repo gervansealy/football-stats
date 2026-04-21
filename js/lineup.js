@@ -158,8 +158,9 @@ function initEditor() {
     document.getElementById('editorTitle').textContent    = `${label} Lineup`;
     document.getElementById('editorSubtitle').textContent = formatted;
 
+    const captainId = currentTeam === 'red' ? currentPregame.redCaptain : currentPregame.blackCaptain;
     showSection('editor');
-    renderTokensOnPitch('pitch', [{ team: currentTeam, players: teamPlayers }], true);
+    renderTokensOnPitch('pitch', [{ team: currentTeam, players: teamPlayers }], true, captainId);
     initDragDrop();
 
     document.getElementById('submitLineupBtn').addEventListener('click', submitLineup);
@@ -168,7 +169,7 @@ function initEditor() {
 // ── Token rendering ────────────────────────────────
 
 /** Render one team's players onto a pitch, or show the pending overlay. */
-function renderTeamPitch(pitchId, pendingId, lineup, team) {
+function renderTeamPitch(pitchId, pendingId, lineup, team, captainId = null) {
     const pitch   = document.getElementById(pitchId);
     const pending = document.getElementById(pendingId);
     pitch.querySelectorAll('.player-token').forEach(t => t.remove());
@@ -178,24 +179,24 @@ function renderTeamPitch(pitchId, pendingId, lineup, team) {
         return;
     }
     if (pending) pending.style.display = 'none';
-    lineup.forEach(p => pitch.appendChild(makeToken(p.id, p.name || p.id, team, p.x, p.y, false)));
+    lineup.forEach(p => pitch.appendChild(makeToken(p.id, p.name || p.id, team, p.x, p.y, false, p.id === captainId)));
 }
 
 /** Render the editor's own team on the editing pitch. */
-function renderTokensOnPitch(pitchId, groups, draggable) {
+function renderTokensOnPitch(pitchId, groups, draggable, captainId = null) {
     const pitch = document.getElementById(pitchId);
     pitch.querySelectorAll('.player-token').forEach(t => t.remove());
     groups.forEach(({ team, players }) => {
         players.forEach(p => {
             const pos = placedPlayers[p.id] || { x: 50, y: 50 };
-            pitch.appendChild(makeToken(p.id, p.name, team, pos.x, pos.y, draggable));
+            pitch.appendChild(makeToken(p.id, p.name, team, pos.x, pos.y, draggable, p.id === captainId));
         });
     });
 }
 
-function makeToken(id, name, team, x, y, draggable) {
+function makeToken(id, name, team, x, y, draggable, isCaptain = false) {
     const el = document.createElement('div');
-    el.className        = 'player-token' + (draggable ? '' : ' view-only');
+    el.className        = 'player-token' + (draggable ? '' : ' view-only') + (isCaptain ? ' token-captain' : '');
     el.dataset.playerId = id;
     el.style.left       = x + '%';
     el.style.top        = y + '%';
@@ -207,6 +208,7 @@ function makeToken(id, name, team, x, y, draggable) {
     el.innerHTML = `
         <div class="token-jersey ${team}">${initials}</div>
         <div class="token-name">${first}</div>
+        ${isCaptain ? '<div class="token-captain-star">C</div>' : ''}
     `;
     return el;
 }
@@ -327,8 +329,8 @@ async function initViewMode(pregameId) {
     placedPlayers = {};
     [...redLineup, ...blackLineup].forEach(p => { placedPlayers[p.id] = { x: p.x, y: p.y }; });
 
-    renderTeamPitch('redViewPitch',   'redPitchPending',   redLineup,   'red');
-    renderTeamPitch('blackViewPitch', 'blackPitchPending', blackLineup, 'black');
+    renderTeamPitch('redViewPitch',   'redPitchPending',   redLineup,   'red',   pg.redCaptain   || null);
+    renderTeamPitch('blackViewPitch', 'blackPitchPending', blackLineup, 'black', pg.blackCaptain || null);
     showSection('view');
 
     // Check if admin for edit buttons (no redirect if not logged in)
