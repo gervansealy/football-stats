@@ -76,12 +76,17 @@ function renderPregameCards() {
         const redNames = (pg.redTeam || []).map(id => {
             const p = players.find(pl => pl.id === id);
             return p ? `${p.firstName} ${p.lastName}` : '?';
-        }).join(', ') || 'None selected';
+        });
 
         const blackNames = (pg.blackTeam || []).map(id => {
             const p = players.find(pl => pl.id === id);
             return p ? `${p.firstName} ${p.lastName}` : '?';
-        }).join(', ') || 'None selected';
+        });
+
+        const redCount   = redNames.length;
+        const blackCount = blackNames.length;
+        const redNamesJson   = JSON.stringify(redNames).replace(/'/g, '&#39;');
+        const blackNamesJson = JSON.stringify(blackNames).replace(/'/g, '&#39;');
 
         const ld = lineupStatusCache[pg.id] || {};
         const redDone   = ld.redSubmitted   || false;
@@ -124,12 +129,14 @@ function renderPregameCards() {
 
                 <div class="pregame-teams">
                     <div class="team-preview red-team-preview">
-                        <span class="team-label-badge red">🔴 Red Team</span>
-                        <p>${redNames}</p>
+                        <button class="team-label-badge red team-label-btn" onclick="showTeamPlayers('🔴 Red Team', ${redNamesJson})">
+                            🔴 Red Team <span class="team-player-count">${redCount}</span>
+                        </button>
                     </div>
                     <div class="team-preview black-team-preview">
-                        <span class="team-label-badge black">⚫ Black Team</span>
-                        <p>${blackNames}</p>
+                        <button class="team-label-badge black team-label-btn" onclick="showTeamPlayers('⚫ Black Team', ${blackNamesJson})">
+                            ⚫ Black Team <span class="team-player-count">${blackCount}</span>
+                        </button>
                     </div>
                 </div>
 
@@ -156,6 +163,19 @@ window.copyLineupLink = function (url, btn) {
         btn.textContent = '✓ Copied!';
         setTimeout(() => { btn.textContent = orig; }, 1800);
     });
+};
+
+// ── Team player popup ────────────────────────────────
+window.showTeamPlayers = function (teamLabel, names) {
+    document.getElementById('teamPopupTitle').textContent = teamLabel;
+    document.getElementById('teamPopupList').innerHTML = names.length
+        ? names.map(n => `<li>${n}</li>`).join('')
+        : '<li style="color:var(--text-secondary)">No players selected</li>';
+    document.getElementById('teamPlayerPopup').style.display = 'flex';
+};
+
+window.closeTeamPlayerPopup = function () {
+    document.getElementById('teamPlayerPopup').style.display = 'none';
 };
 
 // ── Checkbox builder ─────────────────────────────────

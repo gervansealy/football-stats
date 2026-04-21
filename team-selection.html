@@ -96,6 +96,19 @@
         </div>
     </div>
 
+    <!-- Team Players Popup -->
+    <div id="teamPlayerPopup" class="modal" onclick="if(event.target===this)closeTeamPlayerPopup()" style="display:none;">
+        <div class="modal-content" style="max-width:340px;">
+            <div class="modal-header">
+                <h2 id="teamPopupTitle"></h2>
+                <span class="close" onclick="closeTeamPlayerPopup()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <ul id="teamPopupList" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;"></ul>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="js/firebase-config.js"></script>
     <script type="module" src="js/team-selection.js"></script>
 </body>
