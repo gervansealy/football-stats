@@ -6,10 +6,14 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 let players = [];
-let lineupStatusCache = {};   // { pregameId: lineupDoc data }
+let lineupStatusCache = {};
 let currentPregames   = [];
+let isAdmin = false;
 
-// ── OTP generator (avoids ambiguous chars) ──────────
+// Cache for popup: pregameId → { red: [{id,name}], black: [{id,name}], redCaptain, blackCaptain }
+const teamDataCache = {};
+
+// ── OTP generator ────────────────────────────────────
 function generateOTP() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let otp = '';
@@ -17,28 +21,23 @@ function generateOTP() {
     return otp;
 }
 
-let isAdmin = false;
-
-// ── Init ────────────────────────────────────────────
+// ── Init ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
     const authData = await checkAuth();
     isAdmin = authData.role === 'admin';
 
-    // Viewers can view lineups; hide admin-only controls
     if (!isAdmin) {
         document.getElementById('newPregameBtn').style.display = 'none';
     }
 
     await loadPlayers();
 
-    // Real-time lineup status
     onSnapshot(collection(db, 'lineups'), snap => {
         lineupStatusCache = {};
         snap.forEach(d => { lineupStatusCache[d.id] = d.data(); });
         renderPregameCards();
     });
 
-    // Real-time pregames
     const q = query(collection(db, 'pregames'), orderBy('date', 'desc'));
     onSnapshot(q, snap => {
         currentPregames = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -48,7 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('newPregameBtn').addEventListener('click', openNewPregameModal);
 });
 
-// ── Players ─────────────────────────────────────────
+// ── Players ──────────────────────────────────────────
 async function loadPlayers() {
     const snapshot = await getDocs(collection(db, 'players'));
     players = [];
@@ -58,7 +57,7 @@ async function loadPlayers() {
     );
 }
 
-// ── Render cards ────────────────────────────────────
+// ── Render cards ─────────────────────────────────────
 function renderPregameCards() {
     const container = document.getElementById('pregamesContainer');
 
@@ -73,20 +72,17 @@ function renderPregameCards() {
             weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
         });
 
-        const redNames = (pg.redTeam || []).map(id => {
-            const p = players.find(pl => pl.id === id);
-            return p ? `${p.firstName} ${p.lastName}` : '?';
-        });
+        const redPlayers   = (pg.redTeam   || []).map(id => ({ id, name: (pg.redTeamNames   || {})[id] || id }));
+        const blackPlayers = (pg.blackTeam || []).map(id => ({ id, name: (pg.blackTeamNames || {})[id] || id }));
 
-        const blackNames = (pg.blackTeam || []).map(id => {
-            const p = players.find(pl => pl.id === id);
-            return p ? `${p.firstName} ${p.lastName}` : '?';
-        });
+        // Store in cache for popup (no JSON in onclick attributes)
+        teamDataCache[pg.id] = {
+            red: redPlayers, black: blackPlayers,
+            redCaptain: pg.redCaptain || null, blackCaptain: pg.blackCaptain || null
+        };
 
-        const redCount   = redNames.length;
-        const blackCount = blackNames.length;
-        const redNamesJson   = JSON.stringify(redNames).replace(/'/g, '&#39;');
-        const blackNamesJson = JSON.stringify(blackNames).replace(/'/g, '&#39;');
+        const redCaptainName   = pg.redCaptain   ? (pg.redTeamNames   || {})[pg.redCaptain]   || '' : '';
+        const blackCaptainName = pg.blackCaptain ? (pg.blackTeamNames || {})[pg.blackCaptain] || '' : '';
 
         const ld = lineupStatusCache[pg.id] || {};
         const redDone   = ld.redSubmitted   || false;
@@ -109,9 +105,9 @@ function renderPregameCards() {
             </div>
         ` : '';
 
-        const adminFooterExtra = isAdmin ? `
-            <a href="input-stats.html?pregame=${pg.id}" class="btn-enter-stats">Enter Stats →</a>
-        ` : '';
+        const adminFooterExtra = isAdmin
+            ? `<a href="input-stats.html?pregame=${pg.id}" class="btn-enter-stats">Enter Stats →</a>`
+            : '';
 
         const adminCardActions = isAdmin ? `
             <div class="game-card-actions">
@@ -129,14 +125,16 @@ function renderPregameCards() {
 
                 <div class="pregame-teams">
                     <div class="team-preview red-team-preview">
-                        <button class="team-label-badge red team-label-btn" onclick="showTeamPlayers('🔴 Red Team', ${redNamesJson})">
-                            🔴 Red Team <span class="team-player-count">${redCount}</span>
+                        <button class="team-label-badge red team-label-btn" onclick="showTeamPlayers('${pg.id}','red')">
+                            🔴 Red Team <span class="team-player-count">${redPlayers.length}</span>
                         </button>
+                        ${redCaptainName ? `<p class="captain-display red-captain">⭐ Captain: ${redCaptainName}</p>` : ''}
                     </div>
                     <div class="team-preview black-team-preview">
-                        <button class="team-label-badge black team-label-btn" onclick="showTeamPlayers('⚫ Black Team', ${blackNamesJson})">
-                            ⚫ Black Team <span class="team-player-count">${blackCount}</span>
+                        <button class="team-label-badge black team-label-btn" onclick="showTeamPlayers('${pg.id}','black')">
+                            ⚫ Black Team <span class="team-player-count">${blackPlayers.length}</span>
                         </button>
+                        ${blackCaptainName ? `<p class="captain-display black-captain">⭐ Captain: ${blackCaptainName}</p>` : ''}
                     </div>
                 </div>
 
@@ -156,7 +154,33 @@ function renderPregameCards() {
     }).join('');
 }
 
-// ── Copy link helper ─────────────────────────────────
+// ── Team player popup ─────────────────────────────────
+window.showTeamPlayers = function (pregameId, team) {
+    const data = teamDataCache[pregameId];
+    if (!data) return;
+
+    const teamPlayers = data[team] || [];
+    const captainId   = team === 'red' ? data.redCaptain : data.blackCaptain;
+    const label       = team === 'red' ? '🔴 Red Team' : '⚫ Black Team';
+
+    document.getElementById('teamPopupTitle').textContent = label;
+    document.getElementById('teamPopupList').innerHTML = teamPlayers.length
+        ? teamPlayers.map(p => `
+            <li class="${p.id === captainId ? 'popup-captain' : ''}">
+                ${p.id === captainId ? '⭐ ' : ''}<strong>${p.name}</strong>
+                ${p.id === captainId ? '<span class="popup-captain-badge">Captain</span>' : ''}
+            </li>
+          `).join('')
+        : '<li style="color:var(--text-secondary)">No players selected</li>';
+
+    document.getElementById('teamPlayerPopup').style.display = 'flex';
+};
+
+window.closeTeamPlayerPopup = function () {
+    document.getElementById('teamPlayerPopup').style.display = 'none';
+};
+
+// ── Copy link helper ──────────────────────────────────
 window.copyLineupLink = function (url, btn) {
     navigator.clipboard.writeText(url).then(() => {
         const orig = btn.textContent;
@@ -165,32 +189,42 @@ window.copyLineupLink = function (url, btn) {
     });
 };
 
-// ── Team player popup ────────────────────────────────
-window.showTeamPlayers = function (teamLabel, names) {
-    document.getElementById('teamPopupTitle').textContent = teamLabel;
-    document.getElementById('teamPopupList').innerHTML = names.length
-        ? names.map(n => `<li>${n}</li>`).join('')
-        : '<li style="color:var(--text-secondary)">No players selected</li>';
-    document.getElementById('teamPlayerPopup').style.display = 'flex';
-};
-
-window.closeTeamPlayerPopup = function () {
-    document.getElementById('teamPlayerPopup').style.display = 'none';
-};
-
-// ── Checkbox builder ─────────────────────────────────
-function buildPlayerCheckboxes(containerId, selectedIds = []) {
+// ── Checkbox + captain builder ────────────────────────
+function buildPlayerCheckboxes(containerId, captainSelectId, selectedIds = [], captainId = '') {
     const container = document.getElementById(containerId);
     if (players.length === 0) {
         container.innerHTML = '<p style="padding:8px;color:var(--text-secondary);font-size:13px;">No players found.</p>';
         return;
     }
     container.innerHTML = players.map(p => `
-        <label class="player-checkbox-label" data-name="${p.firstName} ${p.lastName}">
+        <label class="player-checkbox-label" data-name="${p.firstName} ${p.lastName}" data-id="${p.id}">
             <input type="checkbox" value="${p.id}" ${selectedIds.includes(p.id) ? 'checked' : ''}>
             ${p.firstName} ${p.lastName}
         </label>
     `).join('');
+
+    // Wire checkbox changes → update captain select
+    container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', () => refreshCaptainSelect(containerId, captainSelectId));
+    });
+
+    refreshCaptainSelect(containerId, captainSelectId, captainId);
+}
+
+function refreshCaptainSelect(checkboxListId, captainSelectId, preselect = '') {
+    const checked = Array.from(
+        document.getElementById(checkboxListId).querySelectorAll('input[type="checkbox"]:checked')
+    );
+    const current = preselect || document.getElementById(captainSelectId)?.value || '';
+    const select  = document.getElementById(captainSelectId);
+    if (!select) return;
+
+    select.innerHTML = '<option value="">— Select Captain —</option>' +
+        checked.map(cb => {
+            const label = cb.closest('.player-checkbox-label');
+            const name  = label ? label.dataset.name : cb.value;
+            return `<option value="${cb.value}" ${cb.value === current ? 'selected' : ''}>${name}</option>`;
+        }).join('');
 }
 
 function wireSearchInput(searchId, listId) {
@@ -204,15 +238,15 @@ function wireSearchInput(searchId, listId) {
     });
 }
 
-// ── New pregame ──────────────────────────────────────
+// ── New pregame ───────────────────────────────────────
 function openNewPregameModal() {
     const today = new Date();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
     document.getElementById('pregameDate').value = `${today.getFullYear()}-${mm}-${dd}`;
-    buildPlayerCheckboxes('redTeamCheckboxes');
-    buildPlayerCheckboxes('blackTeamCheckboxes');
-    wireSearchInput('redTeamSearch', 'redTeamCheckboxes');
+    buildPlayerCheckboxes('redTeamCheckboxes',   'redCaptain');
+    buildPlayerCheckboxes('blackTeamCheckboxes', 'blackCaptain');
+    wireSearchInput('redTeamSearch',   'redTeamCheckboxes');
     wireSearchInput('blackTeamSearch', 'blackTeamCheckboxes');
     document.getElementById('pregameModal').style.display = 'block';
 }
@@ -230,7 +264,6 @@ window.savePregame = async function () {
     const overlap = redTeam.filter(id => blackTeam.includes(id));
     if (overlap.length > 0) { alert('A player cannot be on both teams'); return; }
 
-    // Build name maps for the lineup page (public, no auth)
     const redTeamNames = {}, blackTeamNames = {};
     redTeam.forEach(id => {
         const p = players.find(pl => pl.id === id);
@@ -241,15 +274,14 @@ window.savePregame = async function () {
         if (p) blackTeamNames[id] = `${p.firstName} ${p.lastName}`;
     });
 
+    const redCaptain   = document.getElementById('redCaptain').value   || null;
+    const blackCaptain = document.getElementById('blackCaptain').value || null;
+
     try {
         await addDoc(collection(db, 'pregames'), {
-            date,
-            redTeam,
-            blackTeam,
-            redTeamNames,
-            blackTeamNames,
-            redOTP:   generateOTP(),
-            blackOTP: generateOTP(),
+            date, redTeam, blackTeam, redTeamNames, blackTeamNames,
+            redCaptain, blackCaptain,
+            redOTP: generateOTP(), blackOTP: generateOTP(),
             createdAt: new Date().toISOString(),
         });
         document.getElementById('pregameModal').style.display = 'none';
@@ -258,16 +290,17 @@ window.savePregame = async function () {
     }
 };
 
-// ── Edit pregame ─────────────────────────────────────
+// ── Edit pregame ──────────────────────────────────────
 window.openEditPregameModal = async function (pregameId) {
     const pgDoc = await getDoc(doc(db, 'pregames', pregameId));
     if (!pgDoc.exists()) return;
 
     const pg = pgDoc.data();
-    document.getElementById('editPregameId').value  = pregameId;
+    document.getElementById('editPregameId').value   = pregameId;
     document.getElementById('editPregameDate').value = pg.date;
-    buildPlayerCheckboxes('editRedTeamCheckboxes',   pg.redTeam   || []);
-    buildPlayerCheckboxes('editBlackTeamCheckboxes', pg.blackTeam || []);
+
+    buildPlayerCheckboxes('editRedTeamCheckboxes',   'editRedCaptain',   pg.redTeam   || [], pg.redCaptain   || '');
+    buildPlayerCheckboxes('editBlackTeamCheckboxes', 'editBlackCaptain', pg.blackTeam || [], pg.blackCaptain || '');
     wireSearchInput('editRedTeamSearch',   'editRedTeamCheckboxes');
     wireSearchInput('editBlackTeamSearch', 'editBlackTeamCheckboxes');
     document.getElementById('editPregameModal').style.display = 'block';
@@ -297,13 +330,13 @@ window.saveEditPregame = async function () {
         if (p) blackTeamNames[id] = `${p.firstName} ${p.lastName}`;
     });
 
+    const redCaptain   = document.getElementById('editRedCaptain').value   || null;
+    const blackCaptain = document.getElementById('editBlackCaptain').value || null;
+
     try {
         await updateDoc(doc(db, 'pregames', pregameId), {
-            date,
-            redTeam,
-            blackTeam,
-            redTeamNames,
-            blackTeamNames,
+            date, redTeam, blackTeam, redTeamNames, blackTeamNames,
+            redCaptain, blackCaptain,
             updatedAt: new Date().toISOString(),
         });
         document.getElementById('editPregameModal').style.display = 'none';
@@ -312,7 +345,7 @@ window.saveEditPregame = async function () {
     }
 };
 
-// ── Delete pregame ───────────────────────────────────
+// ── Delete pregame ────────────────────────────────────
 window.deletePregame = async function (pregameId, formattedDate) {
     if (!confirm(`Delete pre-selection for ${formattedDate}? This cannot be undone.`)) return;
     try {
@@ -322,7 +355,7 @@ window.deletePregame = async function (pregameId, formattedDate) {
     }
 };
 
-// ── Helpers ──────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────
 function getCheckedIds(containerId) {
     return Array.from(
         document.getElementById(containerId).querySelectorAll('input[type="checkbox"]:checked')

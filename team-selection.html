@@ -54,11 +54,19 @@
                         <h4>🔴 Red Team</h4>
                         <input type="text" id="redTeamSearch" class="player-search-input" placeholder="Search players...">
                         <div id="redTeamCheckboxes" class="player-checkbox-list"></div>
+                        <div class="captain-select-row">
+                            <label>⭐ Captain</label>
+                            <select id="redCaptain" class="captain-select"><option value="">— Select Captain —</option></select>
+                        </div>
                     </div>
                     <div class="team-selector-col black-col">
                         <h4>⚫ Black Team</h4>
                         <input type="text" id="blackTeamSearch" class="player-search-input" placeholder="Search players...">
                         <div id="blackTeamCheckboxes" class="player-checkbox-list"></div>
+                        <div class="captain-select-row">
+                            <label>⭐ Captain</label>
+                            <select id="blackCaptain" class="captain-select"><option value="">— Select Captain —</option></select>
+                        </div>
                     </div>
                 </div>
                 <button onclick="savePregame()" class="btn-primary">Save Pre-Selection</button>
@@ -84,11 +92,19 @@
                         <h4>🔴 Red Team</h4>
                         <input type="text" id="editRedTeamSearch" class="player-search-input" placeholder="Search players...">
                         <div id="editRedTeamCheckboxes" class="player-checkbox-list"></div>
+                        <div class="captain-select-row">
+                            <label>⭐ Captain</label>
+                            <select id="editRedCaptain" class="captain-select"><option value="">— Select Captain —</option></select>
+                        </div>
                     </div>
                     <div class="team-selector-col black-col">
                         <h4>⚫ Black Team</h4>
                         <input type="text" id="editBlackTeamSearch" class="player-search-input" placeholder="Search players...">
                         <div id="editBlackTeamCheckboxes" class="player-checkbox-list"></div>
+                        <div class="captain-select-row">
+                            <label>⭐ Captain</label>
+                            <select id="editBlackCaptain" class="captain-select"><option value="">— Select Captain —</option></select>
+                        </div>
                     </div>
                 </div>
                 <button onclick="saveEditPregame()" class="btn-primary">Save Changes</button>
