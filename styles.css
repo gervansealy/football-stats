@@ -2007,6 +2007,56 @@ body.admin .nav-links a.admin-only {
     background: #3A7BC8;
 }
 
+/* Dual pitch view */
+.dual-pitch-view {
+    display: flex;
+    justify-content: center;
+    gap: 28px;
+    padding: 20px 24px 32px;
+    flex-wrap: wrap;
+}
+
+.pitch-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.pitch-panel-title {
+    color: white;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 8px 28px;
+    border-radius: 20px;
+}
+
+.pitch-panel-title.red {
+    background: rgba(220, 53, 69, 0.3);
+    border: 1px solid rgba(220, 53, 69, 0.55);
+}
+
+.pitch-panel-title.black {
+    background: rgba(55, 55, 55, 0.55);
+    border: 1px solid rgba(180, 180, 180, 0.25);
+}
+
+/* Pending overlay sits on top of the pitch */
+.pitch-pending-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 5;
+}
+
 @media (max-width: 600px) {
     .pitch {
         width: 280px;

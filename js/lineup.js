@@ -166,15 +166,29 @@ function initEditor() {
 }
 
 // ── Token rendering ────────────────────────────────
+
+/** Render one team's players onto a pitch, or show the pending overlay. */
+function renderTeamPitch(pitchId, pendingId, lineup, team) {
+    const pitch   = document.getElementById(pitchId);
+    const pending = document.getElementById(pendingId);
+    pitch.querySelectorAll('.player-token').forEach(t => t.remove());
+
+    if (!lineup || lineup.length === 0) {
+        if (pending) pending.style.display = 'flex';
+        return;
+    }
+    if (pending) pending.style.display = 'none';
+    lineup.forEach(p => pitch.appendChild(makeToken(p.id, p.name || p.id, team, p.x, p.y, false)));
+}
+
+/** Render the editor's own team on the editing pitch. */
 function renderTokensOnPitch(pitchId, groups, draggable) {
     const pitch = document.getElementById(pitchId);
     pitch.querySelectorAll('.player-token').forEach(t => t.remove());
-
     groups.forEach(({ team, players }) => {
         players.forEach(p => {
-            const pos   = placedPlayers[p.id] || { x: 50, y: 50 };
-            const token = makeToken(p.id, p.name, team, pos.x, pos.y, draggable);
-            pitch.appendChild(token);
+            const pos = placedPlayers[p.id] || { x: 50, y: 50 };
+            pitch.appendChild(makeToken(p.id, p.name, team, pos.x, pos.y, draggable));
         });
     });
 }
@@ -312,11 +326,8 @@ async function initViewMode(pregameId) {
     placedPlayers = {};
     [...redLineup, ...blackLineup].forEach(p => { placedPlayers[p.id] = { x: p.x, y: p.y }; });
 
-    const groups = [];
-    if (redLineup.length)   groups.push({ team: 'red',   players: redLineup   });
-    if (blackLineup.length) groups.push({ team: 'black', players: blackLineup });
-
-    renderTokensOnPitch('viewPitch', groups, false);
+    renderTeamPitch('redViewPitch',   'redPitchPending',   redLineup,   'red');
+    renderTeamPitch('blackViewPitch', 'blackPitchPending', blackLineup, 'black');
     showSection('view');
 
     // Check if admin for edit buttons (no redirect if not logged in)

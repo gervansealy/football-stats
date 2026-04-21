@@ -49,7 +49,7 @@
         </p>
     </div>
 
-    <!-- Section 3: View Mode (both teams submitted lineup) -->
+    <!-- Section 3: View Mode — two separate pitches -->
     <div id="viewSection" style="display:none;">
         <div class="lineup-editor-header">
             <div>
@@ -58,18 +58,39 @@
             </div>
             <div id="viewAdminBtns" style="display:none; gap:10px; flex-wrap:wrap;"></div>
         </div>
-        <div class="lineup-view-header">
-            <div id="lineupStatus" class="lineup-status"></div>
-        </div>
-        <div class="lineup-editor-body">
-            <div class="pitch" id="viewPitch">
-                <div class="pm-goal top"></div>
-                <div class="pm-penalty top"></div>
-                <div class="pm-halfway"></div>
-                <div class="pm-center-circle"></div>
-                <div class="pm-center-dot"></div>
-                <div class="pm-penalty bottom"></div>
-                <div class="pm-goal bottom"></div>
+        <div id="lineupStatus" class="lineup-status"></div>
+        <div class="dual-pitch-view">
+            <!-- Red Team Pitch -->
+            <div class="pitch-panel">
+                <div class="pitch-panel-title red">🔴 Red Team</div>
+                <div style="position:relative;">
+                    <div class="pitch" id="redViewPitch">
+                        <div class="pm-goal top"></div>
+                        <div class="pm-penalty top"></div>
+                        <div class="pm-halfway"></div>
+                        <div class="pm-center-circle"></div>
+                        <div class="pm-center-dot"></div>
+                        <div class="pm-penalty bottom"></div>
+                        <div class="pm-goal bottom"></div>
+                    </div>
+                    <div id="redPitchPending" class="pitch-pending-overlay" style="display:none;">⏳ Lineup not set yet</div>
+                </div>
+            </div>
+            <!-- Black Team Pitch -->
+            <div class="pitch-panel">
+                <div class="pitch-panel-title black">⚫ Black Team</div>
+                <div style="position:relative;">
+                    <div class="pitch" id="blackViewPitch">
+                        <div class="pm-goal top"></div>
+                        <div class="pm-penalty top"></div>
+                        <div class="pm-halfway"></div>
+                        <div class="pm-center-circle"></div>
+                        <div class="pm-center-dot"></div>
+                        <div class="pm-penalty bottom"></div>
+                        <div class="pm-goal bottom"></div>
+                    </div>
+                    <div id="blackPitchPending" class="pitch-pending-overlay" style="display:none;">⏳ Lineup not set yet</div>
+                </div>
             </div>
         </div>
     </div>

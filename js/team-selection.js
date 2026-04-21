@@ -17,12 +17,16 @@ function generateOTP() {
     return otp;
 }
 
+let isAdmin = false;
+
 // ── Init ────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
     const authData = await checkAuth();
-    if (authData.role !== 'admin') {
-        window.location.href = 'standings.html';
-        return;
+    isAdmin = authData.role === 'admin';
+
+    // Viewers can view lineups; hide admin-only controls
+    if (!isAdmin) {
+        document.getElementById('newPregameBtn').style.display = 'none';
     }
 
     await loadPlayers();
@@ -85,14 +89,37 @@ function renderPregameCards() {
 
         const baseURL = window.location.href.replace(/[^/]*$/, '');
 
+        const adminControls = isAdmin ? `
+            <div class="otp-badges">
+                <div class="otp-badge red">
+                    <span class="otp-badge-label">🔴</span>
+                    <span class="otp-badge-code">${pg.redOTP || '—'}</span>
+                    <button class="btn-copy-otp" onclick="copyLineupLink('${baseURL}lineup.html?otp=${pg.redOTP}', this)">Copy Link</button>
+                </div>
+                <div class="otp-badge black">
+                    <span class="otp-badge-label">⚫</span>
+                    <span class="otp-badge-code">${pg.blackOTP || '—'}</span>
+                    <button class="btn-copy-otp" onclick="copyLineupLink('${baseURL}lineup.html?otp=${pg.blackOTP}', this)">Copy Link</button>
+                </div>
+            </div>
+        ` : '';
+
+        const adminFooterExtra = isAdmin ? `
+            <a href="input-stats.html?pregame=${pg.id}" class="btn-enter-stats">Enter Stats →</a>
+        ` : '';
+
+        const adminCardActions = isAdmin ? `
+            <div class="game-card-actions">
+                <button class="btn-edit-small" onclick="openEditPregameModal('${pg.id}')" title="Edit">✏️</button>
+                <button class="btn-delete-small" onclick="deletePregame('${pg.id}', '${formattedDate}')" title="Delete">🗑️</button>
+            </div>
+        ` : '';
+
         return `
             <div class="pregame-card">
                 <div class="pregame-card-header">
                     <h3>📅 ${formattedDate}</h3>
-                    <div class="game-card-actions">
-                        <button class="btn-edit-small" onclick="openEditPregameModal('${pg.id}')" title="Edit">✏️</button>
-                        <button class="btn-delete-small" onclick="deletePregame('${pg.id}', '${formattedDate}')" title="Delete">🗑️</button>
-                    </div>
+                    ${adminCardActions}
                 </div>
 
                 <div class="pregame-teams">
@@ -106,27 +133,16 @@ function renderPregameCards() {
                     </div>
                 </div>
 
-                <div class="otp-badges">
-                    <div class="otp-badge red">
-                        <span class="otp-badge-label">🔴</span>
-                        <span class="otp-badge-code">${pg.redOTP || '—'}</span>
-                        <button class="btn-copy-otp" onclick="copyLineupLink('${baseURL}lineup.html?otp=${pg.redOTP}', this)">Copy Link</button>
-                    </div>
-                    <div class="otp-badge black">
-                        <span class="otp-badge-label">⚫</span>
-                        <span class="otp-badge-code">${pg.blackOTP || '—'}</span>
-                        <button class="btn-copy-otp" onclick="copyLineupLink('${baseURL}lineup.html?otp=${pg.blackOTP}', this)">Copy Link</button>
-                    </div>
-                </div>
-
                 <div class="lineup-status-badges">
                     <span class="lineup-status-badge ${redDone   ? 'done' : 'pending'}">🔴 ${redDone   ? '✓ Lineup Set' : '⏳ Lineup Pending'}</span>
                     <span class="lineup-status-badge ${blackDone ? 'done' : 'pending'}">⚫ ${blackDone ? '✓ Lineup Set' : '⏳ Lineup Pending'}</span>
                 </div>
 
+                ${adminControls}
+
                 <div class="pregame-card-footer" style="gap:8px; justify-content:space-between; align-items:center;">
                     <a href="lineup.html?view=${pg.id}" class="btn-view-lineup" target="_blank">📋 View Lineup</a>
-                    <a href="input-stats.html?pregame=${pg.id}" class="btn-enter-stats">Enter Stats →</a>
+                    ${adminFooterExtra}
                 </div>
             </div>
         `;
