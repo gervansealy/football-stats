@@ -213,6 +213,7 @@ function makeToken(id, name, team, x, y, draggable) {
 // ── Drag & Drop ────────────────────────────────────
 function initDragDrop() {
     const pitch = document.getElementById('pitch');
+    pitch.classList.add('pitch-editable');
     pitch.addEventListener('pointerdown',  onDown);
     pitch.addEventListener('pointermove',  onMove);
     pitch.addEventListener('pointerup',    onUp);

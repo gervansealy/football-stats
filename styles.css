@@ -1723,9 +1723,13 @@ body.admin .nav-links a.admin-only {
     );
     border: 3px solid rgba(255, 255, 255, 0.8);
     border-radius: 3px;
-    touch-action: none;
     flex-shrink: 0;
     overflow: visible;
+}
+
+/* Only block touch scrolling on the editable pitch */
+.pitch-editable {
+    touch-action: none;
 }
 
 /* Pitch markings */
