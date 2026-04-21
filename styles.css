@@ -1588,3 +1588,228 @@ body.admin .nav-links a.admin-only {
         grid-template-columns: 1fr;
     }
 }
+
+/* Modal body */
+.modal-body {
+    padding: 25px 30px;
+}
+
+/* Pregame / Team Selection */
+.pregame-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.pregame-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 20px;
+    border: 2px solid transparent;
+    transition: all 0.3s;
+}
+
+.pregame-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.pregame-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.pregame-card-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: var(--text-primary);
+}
+
+.pregame-teams {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.team-preview {
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.team-preview p {
+    margin: 6px 0 0 0;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.red-team-preview {
+    background: #FFF0F0;
+    border: 1px solid #FFCDD2;
+}
+
+.black-team-preview {
+    background: #F5F5F5;
+    border: 1px solid #E0E0E0;
+}
+
+.team-label-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.team-label-badge.red {
+    background: #FFCDD2;
+    color: #B71C1C;
+}
+
+.team-label-badge.black {
+    background: #424242;
+    color: white;
+}
+
+.pregame-card-footer {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-enter-stats {
+    background: var(--success-color);
+    color: white;
+    padding: 8px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s;
+    display: inline-block;
+}
+
+.btn-enter-stats:hover {
+    background: #218838;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+}
+
+/* Team selector columns inside modal */
+.team-selector-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.team-selector-col h4 {
+    margin: 0 0 10px 0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.team-selector-col.red-col h4 {
+    background: #FFCDD2;
+    color: #B71C1C;
+}
+
+.team-selector-col.black-col h4 {
+    background: #424242;
+    color: white;
+}
+
+.player-checkbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 260px;
+    overflow-y: auto;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: #F8FAFB;
+}
+
+.player-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.player-checkbox-label:hover {
+    background: #E8F4FD;
+}
+
+.player-checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* Team sections on input-stats page */
+.pregame-banner {
+    background: linear-gradient(135deg, #E8F4FD 0%, #BBDEFB 100%);
+    border: 2px solid var(--primary-color);
+    border-radius: 10px;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pregame-banner-info h3 {
+    margin: 0;
+    color: var(--primary-color);
+    font-size: 16px;
+}
+
+.pregame-banner-info p {
+    margin: 4px 0 0 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.team-section {
+    margin-bottom: 20px;
+}
+
+.team-section-header {
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.team-section-header.red-header {
+    background: #FFCDD2;
+    color: #B71C1C;
+}
+
+.team-section-header.black-header {
+    background: #424242;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .team-selector-columns {
+        grid-template-columns: 1fr;
+    }
+
+    .pregame-teams {
+        grid-template-columns: 1fr;
+    }
+}

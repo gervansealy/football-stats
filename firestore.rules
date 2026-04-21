@@ -29,6 +29,12 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
     
+    // Pregames collection (pre-selected teams before stats entry)
+    match /pregames/{pregameId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+    
     // Config collection (settings, points, passwords)
     match /config/{configId} {
       allow read: if isAuthenticated();

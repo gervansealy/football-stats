@@ -12,6 +12,7 @@
         <div class="nav-links">
             <a href="standings.html">Standings</a>
             <a href="game-history.html">Game History</a>
+            <a href="team-selection.html" class="admin-only">Team Selection</a>
             <a href="input-stats.html" class="active admin-only">Input Stats</a>
             <a href="player-profiles.html">Player Profiles</a>
             <a href="settings.html" class="admin-only">Settings</a>
@@ -26,12 +27,20 @@
         <h1>Input Game Stats</h1>
         
         <div class="input-form">
+            <div id="pregameBanner" style="display:none;" class="pregame-banner">
+                <div class="pregame-banner-info">
+                    <h3>📋 Pre-Selection Loaded</h3>
+                    <p id="pregameBannerText"></p>
+                </div>
+                <a href="team-selection.html" class="btn-secondary" style="white-space:nowrap;">← Back to Teams</a>
+            </div>
+
             <div class="form-group">
                 <label for="gameDate">Game Date:</label>
                 <input type="date" id="gameDate" required>
             </div>
 
-            <div id="playerStatsContainer" class="player-stats-grid">
+            <div id="playerStatsContainer">
                 <p class="no-data">No players added yet. Add players in the Player Profiles section.</p>
             </div>
 
