@@ -1724,6 +1724,22 @@ body.admin .nav-links a.admin-only {
     color: white;
 }
 
+.player-search-input {
+    width: 100%;
+    padding: 7px 10px;
+    margin-bottom: 6px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 13px;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.player-search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
 .player-checkbox-list {
     display: flex;
     flex-direction: column;

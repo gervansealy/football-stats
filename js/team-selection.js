@@ -94,11 +94,22 @@ function buildPlayerCheckboxes(containerId, selectedIds = []) {
         return;
     }
     container.innerHTML = players.map(p => `
-        <label class="player-checkbox-label">
+        <label class="player-checkbox-label" data-name="${p.firstName} ${p.lastName}">
             <input type="checkbox" value="${p.id}" ${selectedIds.includes(p.id) ? 'checked' : ''}>
             ${p.firstName} ${p.lastName}
         </label>
     `).join('');
+}
+
+function wireSearchInput(searchId, listId) {
+    const input = document.getElementById(searchId);
+    input.value = '';
+    input.addEventListener('input', () => {
+        const q = input.value.toLowerCase();
+        document.getElementById(listId).querySelectorAll('.player-checkbox-label').forEach(label => {
+            label.style.display = label.dataset.name.toLowerCase().includes(q) ? '' : 'none';
+        });
+    });
 }
 
 function openNewPregameModal() {
@@ -109,6 +120,8 @@ function openNewPregameModal() {
     document.getElementById('pregameDate').value = `${yyyy}-${mm}-${dd}`;
     buildPlayerCheckboxes('redTeamCheckboxes');
     buildPlayerCheckboxes('blackTeamCheckboxes');
+    wireSearchInput('redTeamSearch', 'redTeamCheckboxes');
+    wireSearchInput('blackTeamSearch', 'blackTeamCheckboxes');
     document.getElementById('pregameModal').style.display = 'block';
 }
 
@@ -121,6 +134,8 @@ window.openEditPregameModal = async function(pregameId) {
     document.getElementById('editPregameDate').value = pg.date;
     buildPlayerCheckboxes('editRedTeamCheckboxes', pg.redTeam || []);
     buildPlayerCheckboxes('editBlackTeamCheckboxes', pg.blackTeam || []);
+    wireSearchInput('editRedTeamSearch', 'editRedTeamCheckboxes');
+    wireSearchInput('editBlackTeamSearch', 'editBlackTeamCheckboxes');
     document.getElementById('editPregameModal').style.display = 'block';
 };
 
