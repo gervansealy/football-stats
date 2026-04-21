@@ -2675,6 +2675,136 @@ body.admin .nav-links a.admin-only {
     }
 }
 
+/* ── Input stats: team controls ─────────────────── */
+
+.team-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-end;
+    padding: 14px 16px;
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: 10px;
+    margin: 0 0 16px;
+}
+
+.team-control-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.control-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+}
+
+.result-btn-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.result-btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: 2px solid #ccc;
+    background: white;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.result-btn:active { transform: scale(0.96); }
+
+.result-btn.win-btn  { border-color: #28a745; color: #28a745; }
+.result-btn.draw-btn { border-color: #fd7e14; color: #fd7e14; }
+.result-btn.loss-btn { border-color: #dc3545; color: #dc3545; }
+
+.result-btn.win-btn.active  { background: #28a745; color: white; border-color: #28a745; }
+.result-btn.draw-btn.active { background: #fd7e14; color: white; border-color: #fd7e14; }
+.result-btn.loss-btn.active { background: #dc3545; color: white; border-color: #dc3545; }
+
+/* No-pregame notice */
+.no-pregame-notice {
+    background: #e8f4fd;
+    border: 1px solid #bee3f8;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #2b6cb0;
+    margin-bottom: 20px;
+}
+
+.no-pregame-notice a {
+    color: #2b6cb0;
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+/* Unassigned player pool */
+.unassigned-pool {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 24px;
+}
+
+.unassigned-pool-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.unassigned-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    background: #f8fafb;
+    transition: background 0.2s;
+}
+
+.unassigned-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.assign-btns {
+    display: flex;
+    gap: 6px;
+}
+
+.assign-btn {
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: none;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.assign-btn:hover { opacity: 0.85; }
+
+.assign-red   { background: #DC3545; color: white; }
+.assign-black { background: #333;    color: white; }
+.assign-none  { background: #ccc;    color: #555; }
+
+.unassigned-row.assigned-to-red   { background: #fff5f5; opacity: 0.6; }
+.unassigned-row.assigned-to-black { background: #f4f4f4; opacity: 0.6; }
+
 /* ── Video close: keep inside viewport ──────────── */
 .video-close {
     top: 10px;
