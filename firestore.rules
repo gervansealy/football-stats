@@ -30,9 +30,16 @@ service cloud.firestore {
     }
     
     // Pregames collection (pre-selected teams before stats entry)
+    // Public read needed so OTP holders can verify without Firebase Auth
     match /pregames/{pregameId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow create, update, delete: if isAdmin();
+    }
+    
+    // Lineups collection — readable and writable by anyone (OTP verified client-side)
+    match /lineups/{lineupId} {
+      allow read: if true;
+      allow write: if true;
     }
     
     // Config collection (settings, points, passwords)

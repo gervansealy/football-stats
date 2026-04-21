@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Lineup</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="lineup-page">
+
+    <!-- Section 1: OTP Entry -->
+    <div id="otpSection" class="otp-section" style="display:none;">
+        <div class="otp-card">
+            <div class="football-icon">⚽</div>
+            <h2>Team Lineup</h2>
+            <p>Enter your team password to set your lineup</p>
+            <input type="text" id="otpInput" class="otp-input" placeholder="XXXXXX" maxlength="6" autocomplete="off" spellcheck="false">
+            <button class="btn-login" onclick="verifyOTP()">
+                Continue <span class="arrow">→</span>
+            </button>
+            <p id="otpError" class="error-message-login" style="display:none; margin-top:14px;"></p>
+        </div>
+    </div>
+
+    <!-- Section 2: Lineup Editor -->
+    <div id="editorSection" style="display:none;">
+        <div class="lineup-editor-header">
+            <div>
+                <h2 id="editorTitle"></h2>
+                <p id="editorSubtitle"></p>
+            </div>
+            <button id="submitLineupBtn" class="btn-login" style="width:auto; padding:12px 24px;">
+                Submit Lineup ✓
+            </button>
+        </div>
+        <div class="lineup-editor-body">
+            <div class="pitch" id="pitch">
+                <div class="pm-goal top"></div>
+                <div class="pm-penalty top"></div>
+                <div class="pm-halfway"></div>
+                <div class="pm-center-circle"></div>
+                <div class="pm-center-dot"></div>
+                <div class="pm-penalty bottom"></div>
+                <div class="pm-goal bottom"></div>
+            </div>
+        </div>
+        <p style="text-align:center; color:rgba(255,255,255,0.4); font-size:12px; padding-bottom:16px;">
+            Drag players to set their positions
+        </p>
+    </div>
+
+    <!-- Section 3: View Mode (both teams submitted lineup) -->
+    <div id="viewSection" style="display:none;">
+        <div class="lineup-editor-header">
+            <div>
+                <h2 id="viewTitle">Match Lineup</h2>
+                <p id="viewSubtitle"></p>
+            </div>
+            <div id="viewAdminBtns" style="display:none; gap:10px; flex-wrap:wrap;"></div>
+        </div>
+        <div class="lineup-view-header">
+            <div id="lineupStatus" class="lineup-status"></div>
+        </div>
+        <div class="lineup-editor-body">
+            <div class="pitch" id="viewPitch">
+                <div class="pm-goal top"></div>
+                <div class="pm-penalty top"></div>
+                <div class="pm-halfway"></div>
+                <div class="pm-center-circle"></div>
+                <div class="pm-center-dot"></div>
+                <div class="pm-penalty bottom"></div>
+                <div class="pm-goal bottom"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/lineup.js"></script>
+</body>
+</html>

@@ -1594,6 +1594,434 @@ body.admin .nav-links a.admin-only {
     padding: 25px 30px;
 }
 
+/* =============================================
+   LINEUP PAGE
+   ============================================= */
+
+.lineup-page {
+    background: #1a1a2e;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* OTP entry */
+.otp-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.otp-card {
+    background: white;
+    border-radius: 20px;
+    padding: 48px 40px;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    animation: slideUp 0.5s ease;
+}
+
+.otp-card h2 {
+    margin: 14px 0 8px;
+    font-size: 26px;
+    color: #2d3748;
+}
+
+.otp-card p {
+    color: #718096;
+    margin-bottom: 28px;
+    font-size: 14px;
+}
+
+.otp-input {
+    width: 100%;
+    padding: 16px;
+    font-size: 22px;
+    text-align: center;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    font-weight: 700;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+    font-family: monospace;
+}
+
+.otp-input:focus {
+    outline: none;
+    border-color: #4A90E2;
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15);
+}
+
+/* Lineup editor layout */
+.lineup-editor-header {
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.lineup-editor-header h2 {
+    margin: 0;
+    color: white;
+    font-size: 20px;
+}
+
+.lineup-editor-header p {
+    margin: 4px 0 0;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 13px;
+}
+
+.lineup-editor-body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 0;
+    padding: 24px;
+    flex-wrap: wrap;
+}
+
+/* Football Pitch */
+.pitch {
+    position: relative;
+    width: 340px;
+    height: 524px;
+    background-color: #3a9a3a;
+    background-image: repeating-linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0) 0px,
+        rgba(0, 0, 0, 0) 46px,
+        rgba(0, 0, 0, 0.07) 46px,
+        rgba(0, 0, 0, 0.07) 92px
+    );
+    border: 3px solid rgba(255, 255, 255, 0.8);
+    border-radius: 3px;
+    touch-action: none;
+    flex-shrink: 0;
+    overflow: visible;
+}
+
+/* Pitch markings */
+.pm-halfway {
+    position: absolute;
+    left: 0; right: 0;
+    top: 50%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.7);
+    pointer-events: none;
+}
+
+.pm-center-circle {
+    position: absolute;
+    width: 88px;
+    height: 88px;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.pm-center-dot {
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 2;
+}
+
+.pm-penalty {
+    position: absolute;
+    width: 59%;
+    height: 16%;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    left: 20.5%;
+    pointer-events: none;
+}
+
+.pm-penalty.top {
+    border-top: none;
+    top: 0;
+}
+
+.pm-penalty.bottom {
+    border-bottom: none;
+    bottom: 0;
+}
+
+.pm-goal {
+    position: absolute;
+    width: 28%;
+    height: 5%;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    left: 36%;
+    background: rgba(255, 255, 255, 0.08);
+    pointer-events: none;
+}
+
+.pm-goal.top {
+    border-top: none;
+    top: 0;
+}
+
+.pm-goal.bottom {
+    border-bottom: none;
+    bottom: 0;
+}
+
+/* Player tokens on pitch */
+.player-token {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: grab;
+    user-select: none;
+    z-index: 10;
+    transform: translate(-50%, -50%);
+}
+
+.player-token.token-dragging {
+    cursor: grabbing;
+    z-index: 100;
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.6));
+}
+
+.player-token.view-only {
+    cursor: default;
+    pointer-events: none;
+}
+
+.token-jersey {
+    width: 48px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 13px;
+    color: white;
+    clip-path: polygon(
+        20% 0%, 80% 0%,
+        100% 18%, 84% 30%, 84% 100%,
+        16% 100%, 16% 30%, 0% 18%
+    );
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    transition: transform 0.1s;
+}
+
+.player-token:not(.view-only):hover .token-jersey {
+    transform: scale(1.08);
+}
+
+.token-jersey.red {
+    background: #DC3545;
+}
+
+.token-jersey.black {
+    background: #333333;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.token-name {
+    font-size: 9.5px;
+    color: white;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 1), 0 0 8px rgba(0, 0, 0, 0.8);
+    text-align: center;
+    max-width: 64px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+}
+
+/* Lineup status bar */
+.lineup-status {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 16px 24px;
+    flex-wrap: wrap;
+}
+
+.lineup-status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    color: white;
+}
+
+.lineup-status-item.submitted {
+    background: rgba(40, 167, 69, 0.2);
+    border: 1px solid rgba(40, 167, 69, 0.5);
+}
+
+.lineup-status-item.pending {
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.35);
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Submitted / view screen title area */
+.lineup-view-header {
+    text-align: center;
+    padding: 24px 24px 8px;
+    color: white;
+}
+
+.lineup-view-header h2 {
+    margin: 0 0 4px;
+    font-size: 22px;
+}
+
+.lineup-view-header p {
+    color: rgba(255, 255, 255, 0.55);
+    margin: 0;
+    font-size: 14px;
+}
+
+/* OTP badges on team-selection pregame cards */
+.otp-badges {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 10px 0;
+}
+
+.otp-badge {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.otp-badge.red {
+    background: #FFF0F0;
+    border: 1px solid #FFCDD2;
+}
+
+.otp-badge.black {
+    background: #F5F5F5;
+    border: 1px solid #E0E0E0;
+}
+
+.otp-badge-label {
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.otp-badge-code {
+    font-family: monospace;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    flex: 1;
+    text-align: center;
+}
+
+.otp-badge.red .otp-badge-code { color: #B71C1C; }
+.otp-badge.black .otp-badge-code { color: #212121; }
+
+.btn-copy-otp {
+    background: none;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    opacity: 0.65;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.btn-copy-otp:hover { opacity: 1; }
+
+.lineup-status-badges {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.lineup-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.lineup-status-badge.done {
+    background: #D4EDDA;
+    color: #155724;
+}
+
+.lineup-status-badge.pending {
+    background: #FFF3CD;
+    color: #856404;
+}
+
+.btn-view-lineup {
+    background: var(--primary-color);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    transition: background 0.2s;
+    display: inline-block;
+}
+
+.btn-view-lineup:hover {
+    background: #3A7BC8;
+}
+
+@media (max-width: 600px) {
+    .pitch {
+        width: 280px;
+        height: 431px;
+    }
+
+    .lineup-editor-body {
+        padding: 12px;
+    }
+
+    .lineup-editor-header {
+        padding: 12px 16px;
+    }
+}
+
 /* Pregame / Team Selection */
 .pregame-grid {
     display: grid;
