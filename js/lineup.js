@@ -199,6 +199,7 @@ function makeToken(id, name, team, x, y, draggable) {
     el.dataset.playerId = id;
     el.style.left       = x + '%';
     el.style.top        = y + '%';
+    if (draggable) el.style.touchAction = 'none';
 
     const initials = name.split(' ').map(w => w[0] || '').join('').substring(0, 2).toUpperCase();
     const first    = name.split(' ')[0];
@@ -213,7 +214,6 @@ function makeToken(id, name, team, x, y, draggable) {
 // ── Drag & Drop ────────────────────────────────────
 function initDragDrop() {
     const pitch = document.getElementById('pitch');
-    pitch.classList.add('pitch-editable');
     pitch.addEventListener('pointerdown',  onDown);
     pitch.addEventListener('pointermove',  onMove);
     pitch.addEventListener('pointerup',    onUp);

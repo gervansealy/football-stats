@@ -1727,10 +1727,6 @@ body.admin .nav-links a.admin-only {
     overflow: visible;
 }
 
-/* Only block touch scrolling on the editable pitch */
-.pitch-editable {
-    touch-action: none;
-}
 
 /* Pitch markings */
 .pm-halfway {
