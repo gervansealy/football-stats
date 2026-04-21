@@ -159,8 +159,12 @@ window.showTeamPlayers = function (pregameId, team) {
     const data = teamDataCache[pregameId];
     if (!data) return;
 
-    const teamPlayers = data[team] || [];
     const captainId   = team === 'red' ? data.redCaptain : data.blackCaptain;
+    const teamPlayers = [...(data[team] || [])].sort((a, b) => {
+        if (a.id === captainId) return -1;
+        if (b.id === captainId) return 1;
+        return 0;
+    });
     const label       = team === 'red' ? '🔴 Red Team' : '⚫ Black Team';
 
     document.getElementById('teamPopupTitle').textContent = label;
