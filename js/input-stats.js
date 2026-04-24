@@ -244,10 +244,12 @@ async function saveGameStats() {
     if (!teamResults.black) { alert('Please select a result for Black Team'); return; }
 
     const playerStats = {};
+    const teamArrays  = { red: [], black: [] };
+    const captainIds  = { red: '', black: '' };
 
     ['red', 'black'].forEach(team => {
         const result    = teamResults[team];
-        const captainId = document.getElementById(`${team}CaptainSelect`)?.value || '';
+        captainIds[team] = document.getElementById(`${team}CaptainSelect`)?.value || '';
         const section   = document.querySelector(`.team-section[data-team="${team}"]`);
         if (!section) return;
 
@@ -255,7 +257,9 @@ async function saveGameStats() {
             const playerId   = card.dataset.playerId;
             const goals      = parseInt(card.querySelector('.stat-goals').value) || 0;
             const cleanSheet = card.querySelector('.stat-cleansheet').checked;
-            const isCaptain  = playerId === captainId;
+            const isCaptain  = playerId === captainIds[team];
+
+            teamArrays[team].push(playerId);
 
             playerStats[playerId] = {
                 win:         result === 'win'  ? 1 : 0,
@@ -277,10 +281,14 @@ async function saveGameStats() {
 
     try {
         await addDoc(collection(db, 'games'), {
-            date:        gameDate,
-            year:        new Date(gameDate).getFullYear(),
+            date:         gameDate,
+            year:         new Date(gameDate).getFullYear(),
             playerStats,
-            createdAt:   new Date().toISOString()
+            redTeam:      teamArrays.red,
+            blackTeam:    teamArrays.black,
+            redCaptain:   captainIds.red   || null,
+            blackCaptain: captainIds.black || null,
+            createdAt:    new Date().toISOString()
         });
 
         if (pregameId) {

@@ -335,8 +335,33 @@ window.openGameDetailModal = async function(gameId) {
         </div>
     `).join('');
     
+    let lineupHTML = '';
+    if (gameData.redTeam?.length || gameData.blackTeam?.length) {
+        const renderLineupTeam = (teamIds, captainId, label, teamClass) => {
+            if (!teamIds?.length) return '';
+            const items = teamIds.map(id => {
+                const p = allPlayers.find(pl => pl.id === id);
+                if (!p) return '';
+                const isCaptain = id === captainId;
+                return `<li class="lineup-history-player${isCaptain ? ' lineup-history-captain' : ''}">${isCaptain ? '⭐ ' : ''}${p.firstName} ${p.lastName}</li>`;
+            }).join('');
+            return `<div class="lineup-history-team ${teamClass}"><h4>${label}</h4><ul class="lineup-history-list">${items}</ul></div>`;
+        };
+
+        lineupHTML = `
+            <div class="game-lineups-history">
+                <h3>Captain Lineups</h3>
+                <div class="lineups-history-grid">
+                    ${renderLineupTeam(gameData.redTeam, gameData.redCaptain, '🔴 Red Team', 'lineup-history-red')}
+                    ${renderLineupTeam(gameData.blackTeam, gameData.blackCaptain, '⚫ Black Team', 'lineup-history-black')}
+                </div>
+            </div>
+        `;
+    }
+
     content.innerHTML = `
         <h2>Game on ${formattedDate}</h2>
+        ${lineupHTML}
         <div class="game-detail-layout">
             <div class="game-player-stats">
                 <h3>Player Results</h3>

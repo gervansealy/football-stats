@@ -761,6 +761,71 @@ h1 {
     }
 }
 
+/* Captain Lineups in Game History Modal */
+.game-lineups-history {
+    margin-bottom: 20px;
+}
+
+.game-lineups-history h3 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    color: var(--text-primary);
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 8px;
+}
+
+.lineups-history-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.lineup-history-team {
+    background: white;
+    border-radius: 8px;
+    padding: 14px 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+
+.lineup-history-team h4 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    font-weight: 700;
+    padding-bottom: 6px;
+    border-bottom: 2px solid currentColor;
+}
+
+.lineup-history-red h4  { color: #B71C1C; border-color: #B71C1C; }
+.lineup-history-black h4 { color: #333;    border-color: #333; }
+
+.lineup-history-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.lineup-history-player {
+    padding: 5px 0;
+    font-size: 13px;
+    color: var(--text-primary);
+    border-bottom: 1px solid #F0F0F0;
+}
+
+.lineup-history-player:last-child {
+    border-bottom: none;
+}
+
+.lineup-history-captain {
+    font-weight: 700;
+    color: #CC8800;
+}
+
+@media (max-width: 600px) {
+    .lineups-history-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .input-form {
     background: var(--card-bg);
     padding: 30px;
