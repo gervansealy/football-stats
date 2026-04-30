@@ -1689,220 +1689,154 @@ body.admin .nav-links a.admin-only {
 
 /* Highlights Grid */
 /* ====================================================
-   Highlights — UEFA-style redesign
+   Highlights — compact centred layout
    ==================================================== */
 .highlights-grid {
     display: flex;
     flex-direction: column;
-    gap: 28px;
-    padding: 4px 0 20px;
+    gap: 16px;
+    padding: 4px 0 12px;
 }
 
-/* Section */
 .hl-section {}
 
-/* Section header banner */
+/* Slim section header */
 .hl-header {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 18px 24px;
-    border-radius: 12px;
-    margin-bottom: 16px;
-    position: relative;
-    overflow: hidden;
+    justify-content: center;
+    gap: 10px;
+    padding: 8px 20px;
+    border-radius: 8px;
+    margin-bottom: 10px;
 }
 
-.hl-header::before {
-    content: '';
-    position: absolute;
-    right: -30px;
-    top: -30px;
-    width: 140px;
-    height: 140px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.06);
-    pointer-events: none;
-}
+.hl-header-leader    { background: linear-gradient(90deg, #2D1367 0%, #5B21B6 50%, #7C3AED 100%); }
+.hl-header-performers{ background: linear-gradient(90deg, #0c1a35 0%, #1248A0 50%, #1976D2 100%); }
+.hl-header-bottom    { background: linear-gradient(90deg, #1a0505 0%, #991B1B 50%, #DC2626 100%); }
 
-.hl-header::after {
-    content: '';
-    position: absolute;
-    right: 40px;
-    bottom: -50px;
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.04);
-    pointer-events: none;
-}
-
-.hl-header-leader {
-    background: linear-gradient(135deg, #1e0a3c 0%, #4C1D95 55%, #6D28D9 100%);
-}
-
-.hl-header-performers {
-    background: linear-gradient(135deg, #0c1a35 0%, #1248A0 55%, #1976D2 100%);
-}
-
-.hl-header-bottom {
-    background: linear-gradient(135deg, #1a0505 0%, #991B1B 55%, #DC2626 100%);
-}
-
-.hl-header-icon {
-    font-size: 40px;
-    line-height: 1;
-    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
-    flex-shrink: 0;
-    z-index: 1;
-}
-
-.hl-header-text {
-    flex: 1;
-    z-index: 1;
-}
-
+.hl-header-icon  { font-size: 20px; line-height: 1; flex-shrink: 0; }
 .hl-header-title {
-    font-size: 22px;
+    font-size: 14px;
     font-weight: 900;
     color: #fff;
     text-transform: uppercase;
-    letter-spacing: 2.5px;
-    line-height: 1.1;
+    letter-spacing: 2px;
 }
 
-.hl-header-sub {
-    font-size: 11px;
-    color: rgba(255,255,255,0.55);
-    font-weight: 500;
-    letter-spacing: 0.8px;
-    margin-top: 4px;
-    text-transform: uppercase;
-}
-
-/* Cards row */
+/* Cards row — always centred */
 .hl-cards-row {
     display: flex;
-    gap: 14px;
+    gap: 12px;
     flex-wrap: wrap;
-}
-
-.hl-row-center {
     justify-content: center;
 }
 
-/* Individual player card */
+/* Player card */
 .hc-card {
     background: #fff;
-    border-radius: 14px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border-radius: 12px;
+    box-shadow: 0 3px 14px rgba(0,0,0,0.08);
     flex: 1;
-    min-width: 210px;
-    max-width: 320px;
+    min-width: 190px;
+    max-width: 300px;
     overflow: hidden;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
-    border-top: 5px solid var(--hc-accent, #4A90E2);
+    border-top: 4px solid var(--hc-accent, #4A90E2);
 }
 
 .hc-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 32px rgba(0,0,0,0.14);
-}
-
-.hl-row-center .hc-card {
-    min-width: 270px;
-    max-width: 400px;
+    transform: translateY(-4px);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.13);
 }
 
 .hc-card-badge {
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 2px;
     color: var(--hc-accent, #4A90E2);
-    padding: 12px 16px 0;
+    padding: 9px 14px 0;
+    text-align: center;
 }
 
 .hc-player-row {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 10px 16px 14px;
+    gap: 11px;
+    padding: 7px 14px 10px;
 }
 
 .hc-avatar-wrap { flex-shrink: 0; }
 
 .hc-avatar {
-    width: 60px;
-    height: 60px;
+    width: 46px;
+    height: 46px;
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid var(--hc-accent, #4A90E2);
+    border: 2px solid var(--hc-accent, #4A90E2);
     background: #f3f4f6;
 }
 
 .hc-avatar-fallback {
-    width: 60px;
-    height: 60px;
+    width: 46px;
+    height: 46px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 800;
-    font-size: 20px;
+    font-size: 16px;
     color: #fff;
 }
 
-.hc-player-info {
-    flex: 1;
-    min-width: 0;
-}
+.hc-player-info { flex: 1; min-width: 0; }
 
 .hc-name {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 700;
     color: #111827;
     line-height: 1.2;
 }
 
 .hc-stat-main {
-    font-size: 20px;
+    font-size: 17px;
     font-weight: 900;
     color: var(--hc-accent, #4A90E2);
-    margin-top: 4px;
+    margin-top: 3px;
     line-height: 1;
 }
 
 /* Mini bar chart */
 .hc-chart {
-    padding: 10px 16px 14px;
+    padding: 7px 14px 10px;
     border-top: 1px solid #f0f2f5;
     background: #fafbfc;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 5px;
 }
 
 .hc-bar-row {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
 }
 
 .hc-bar-label {
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.4px;
     color: #9ca3af;
-    width: 52px;
+    width: 48px;
     flex-shrink: 0;
 }
 
 .hc-bar-track {
     flex: 1;
-    height: 6px;
+    height: 5px;
     background: #e5e7eb;
     border-radius: 3px;
     overflow: hidden;
@@ -1915,10 +1849,10 @@ body.admin .nav-links a.admin-only {
 }
 
 .hc-bar-val {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     color: #374151;
-    width: 22px;
+    width: 20px;
     text-align: right;
     flex-shrink: 0;
 }
@@ -1959,16 +1893,13 @@ body.admin .nav-links a.admin-only {
 .anim-shake { animation: hl-shake 2.2s ease-in-out infinite; }
 
 @media (max-width: 768px) {
-    .hl-header-title { font-size: 17px; letter-spacing: 1.5px; }
-    .hl-header-icon  { font-size: 30px; }
-    .hl-cards-row    { flex-direction: column; }
-    .hc-card         { max-width: 100%; }
-    .hl-row-center .hc-card { min-width: unset; max-width: 100%; }
+    .hl-cards-row { flex-direction: column; align-items: center; }
+    .hc-card      { max-width: 100%; min-width: unset; width: 100%; }
 }
 
 @media (max-width: 480px) {
-    .hl-header { padding: 14px 16px; }
-    .hl-header-title { font-size: 14px; }
+    .hl-header       { padding: 7px 14px; }
+    .hl-header-title { font-size: 12px; letter-spacing: 1.5px; }
 }
 
 /* Modal body */

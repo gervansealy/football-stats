@@ -332,21 +332,15 @@ function displayHighlights(players) {
         <div class="hl-section">
             <div class="hl-header hl-header-leader">
                 <span class="hl-header-icon">⭐</span>
-                <div class="hl-header-text">
-                    <div class="hl-header-title">Leader of the Pack</div>
-                    <div class="hl-header-sub">Season's best captain</div>
-                </div>
+                <span class="hl-header-title">Leader of the Pack</span>
             </div>
-            <div class="hl-cards-row hl-row-center">${leaderCards}</div>
+            <div class="hl-cards-row">${leaderCards}</div>
         </div>` : ''}
 
         <div class="hl-section">
             <div class="hl-header hl-header-performers">
                 <span class="hl-header-icon">🏆</span>
-                <div class="hl-header-text">
-                    <div class="hl-header-title">High Performers</div>
-                    <div class="hl-header-sub">Season's top achievers</div>
-                </div>
+                <span class="hl-header-title">High Performers</span>
             </div>
             <div class="hl-cards-row">${performerCards}</div>
         </div>
@@ -354,10 +348,7 @@ function displayHighlights(players) {
         <div class="hl-section">
             <div class="hl-header hl-header-bottom">
                 <span class="hl-header-icon">📉</span>
-                <div class="hl-header-text">
-                    <div class="hl-header-title">Bottom of the Barrel</div>
-                    <div class="hl-header-sub">Room for improvement</div>
-                </div>
+                <span class="hl-header-title">Bottom of the Barrel</span>
             </div>
             <div class="hl-cards-row">${bottomCards}</div>
         </div>
