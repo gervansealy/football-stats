@@ -1815,6 +1815,14 @@ body.admin .nav-links a.admin-only {
 .highlight-blue .highlight-stat  { color: #1565C0; }
 .highlight-blue .highlight-avatar-fallback { background: var(--primary-color); }
 
+.highlight-purple {
+    background: linear-gradient(135deg, #F5F0FF 0%, #E1D5F7 100%);
+    border: 2px solid #7C3AED;
+}
+.highlight-purple .highlight-label { color: #5B21B6; }
+.highlight-purple .highlight-stat  { color: #5B21B6; }
+.highlight-purple .highlight-avatar-fallback { background: #7C3AED; }
+
 .highlight-orange {
     background: linear-gradient(135deg, #FFF8F0 0%, #FFE0B2 100%);
     border: 2px solid #FB8C00;

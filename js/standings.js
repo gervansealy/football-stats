@@ -260,25 +260,28 @@ function displayHighlights(players) {
         return;
     }
 
-    const topPlayer   = players[0];
-    const lastPlayer  = players[players.length - 1];
-    const maxGoals    = Math.max(...players.map(p => p.goals));
-    const maxWins     = Math.max(...players.map(p => p.wins));
-    const maxLosses   = Math.max(...players.map(p => p.losses));
+    const topPlayer      = players[0];
+    const lastPlayer     = players[players.length - 1];
+    const maxGoals       = Math.max(...players.map(p => p.goals));
+    const maxWins        = Math.max(...players.map(p => p.wins));
+    const maxLosses      = Math.max(...players.map(p => p.losses));
+    const maxCaptainWins = Math.max(...players.map(p => p.captainWins));
 
-    const tiedTop    = players.filter(p => p.points === topPlayer.points && p.wins === topPlayer.wins && p.winPercentage === topPlayer.winPercentage);
-    const tiedBottom = players.filter(p => p.points === lastPlayer.points && p.wins === lastPlayer.wins && p.winPercentage === lastPlayer.winPercentage);
-    const tiedGoals  = players.filter(p => p.goals   === maxGoals);
-    const tiedWins   = players.filter(p => p.wins    === maxWins);
-    const tiedLosses = players.filter(p => p.losses  === maxLosses);
+    const tiedTop        = players.filter(p => p.points === topPlayer.points && p.wins === topPlayer.wins && p.winPercentage === topPlayer.winPercentage);
+    const tiedBottom     = players.filter(p => p.points === lastPlayer.points && p.wins === lastPlayer.wins && p.winPercentage === lastPlayer.winPercentage);
+    const tiedGoals      = players.filter(p => p.goals       === maxGoals);
+    const tiedWins       = players.filter(p => p.wins        === maxWins);
+    const tiedLosses     = players.filter(p => p.losses      === maxLosses);
+    const tiedCaptainWins = players.filter(p => p.captainWins === maxCaptainWins && maxCaptainWins > 0);
 
     const highlights = [
-        { icon: '🏆', animClass: 'anim-bounce',     title: 'Top Player',    tied: tiedTop,    stat: `${topPlayer.points} pts`,    cardClass: 'highlight-gold'   },
-        { icon: '⚽', animClass: 'anim-spin',       title: 'Most Goals',    tied: tiedGoals,  stat: `${maxGoals} goals`,          cardClass: 'highlight-green'  },
-        { icon: '👑', animClass: 'anim-pulse-glow', title: 'Most Wins',     tied: tiedWins,   stat: `${maxWins} wins`,            cardClass: 'highlight-blue'   },
-        { icon: '📉', animClass: 'anim-drop',       title: 'Most Losses',   tied: tiedLosses, stat: `${maxLosses} losses`,        cardClass: 'highlight-orange' },
-        { icon: '🗑️', animClass: 'anim-shake',     title: 'Biggest Loser', tied: tiedBottom, stat: `${lastPlayer.points} pts`,  cardClass: 'highlight-red'    }
-    ];
+        { icon: '🏆', animClass: 'anim-bounce',     title: 'Top Player',    tied: tiedTop,         stat: `${topPlayer.points} pts`,      cardClass: 'highlight-gold'   },
+        { icon: '⚽', animClass: 'anim-spin',       title: 'Most Goals',    tied: tiedGoals,       stat: `${maxGoals} goals`,            cardClass: 'highlight-green'  },
+        { icon: '👑', animClass: 'anim-pulse-glow', title: 'Most Wins',     tied: tiedWins,        stat: `${maxWins} wins`,              cardClass: 'highlight-blue'   },
+        { icon: '⭐', animClass: 'anim-pulse-glow', title: 'Best Captain',  tied: tiedCaptainWins, stat: `${maxCaptainWins} captain win${maxCaptainWins !== 1 ? 's' : ''}`, cardClass: 'highlight-purple' },
+        { icon: '📉', animClass: 'anim-drop',       title: 'Most Losses',   tied: tiedLosses,      stat: `${maxLosses} losses`,          cardClass: 'highlight-orange' },
+        { icon: '🗑️', animClass: 'anim-shake',     title: 'Biggest Loser', tied: tiedBottom,      stat: `${lastPlayer.points} pts`,     cardClass: 'highlight-red'    }
+    ].filter(h => h.tied.length > 0);
 
     grid.innerHTML = highlights.map(h => {
         const playersHtml = h.tied.map(p => {
