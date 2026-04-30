@@ -13,6 +13,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadPlayers();
     await loadPointValues();
     loadGameHistory();
+
+    const params = new URLSearchParams(window.location.search);
+    const gameId = params.get('game');
+    if (gameId) {
+        openGameDetailModal(gameId);
+    }
 });
 
 async function loadPlayers() {

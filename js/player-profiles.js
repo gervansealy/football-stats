@@ -392,10 +392,106 @@ async function getPlayerStats(playerId) {
     return stats;
 }
 
+function buildGameBreakdownSection(playerId, allGames) {
+    const categories = [
+        {
+            label: 'Wins',
+            filter: g => (g.playerStats?.[playerId]?.win || 0) > 0,
+            detail: g => {
+                const v = g.playerStats[playerId].win;
+                return `${v} win${v > 1 ? 's' : ''}`;
+            }
+        },
+        {
+            label: 'Goals',
+            filter: g => (g.playerStats?.[playerId]?.goals || 0) > 0,
+            detail: g => {
+                const v = g.playerStats[playerId].goals;
+                return `${v} goal${v > 1 ? 's' : ''}`;
+            }
+        },
+        {
+            label: 'Captain Losses',
+            filter: g => (g.playerStats?.[playerId]?.captainLoss || 0) > 0,
+            detail: () => 'Captain Loss'
+        },
+        {
+            label: 'Games Played',
+            filter: g => g.playerStats?.[playerId] != null,
+            detail: null
+        },
+        {
+            label: 'Losses',
+            filter: g => (g.playerStats?.[playerId]?.loss || 0) > 0,
+            detail: g => {
+                const v = g.playerStats[playerId].loss;
+                return `${v} loss${v > 1 ? 'es' : ''}`;
+            }
+        },
+        {
+            label: 'Captain Wins',
+            filter: g => (g.playerStats?.[playerId]?.captainWin || 0) > 0,
+            detail: () => 'Captain Win'
+        }
+    ];
+
+    const itemsHTML = categories.map(cat => {
+        const matching = allGames
+            .filter(cat.filter)
+            .sort((a, b) => b.date.localeCompare(a.date));
+
+        const count = matching.length;
+        const countClass = count === 0 ? 'zero' : '';
+
+        let listHTML = '<p class="breakdown-empty">No games</p>';
+        if (count > 0) {
+            const byYear = {};
+            matching.forEach(game => {
+                const year = game.year || new Date(game.date + 'T12:00:00').getFullYear();
+                if (!byYear[year]) byYear[year] = [];
+                byYear[year].push(game);
+            });
+
+            listHTML = Object.keys(byYear)
+                .sort((a, b) => b - a)
+                .map(year => {
+                    const links = byYear[year].map(game => {
+                        const d = new Date(game.date + 'T12:00:00');
+                        const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        const detail = cat.detail ? ` — ${cat.detail(game)}` : '';
+                        return `<a href="game-history.html?game=${game.id}" class="breakdown-game-link">${label}${detail}</a>`;
+                    }).join('');
+                    return `<div class="breakdown-year-group"><div class="breakdown-year-label">${year}</div>${links}</div>`;
+                }).join('');
+        }
+
+        return `
+            <details class="breakdown-item">
+                <summary>
+                    <div class="breakdown-header-left">
+                        <span class="breakdown-label">${cat.label}</span>
+                        <span class="breakdown-count ${countClass}">${count}</span>
+                    </div>
+                    <span class="breakdown-arrow">▼</span>
+                </summary>
+                <div class="breakdown-list">${listHTML}</div>
+            </details>`;
+    }).join('');
+
+    return `
+        <div class="game-breakdown-section">
+            <h3>Game Breakdown</h3>
+            <div class="breakdown-accordion">${itemsHTML}</div>
+        </div>`;
+}
+
 window.showPlayerDetail = async function(playerId) {
     const playerDoc = await getDoc(doc(db, 'players', playerId));
     const player = playerDoc.data();
     const stats = await getPlayerStats(playerId);
+
+    const allGamesSnapshot = await getDocs(collection(db, 'games'));
+    const allGames = allGamesSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
     const detailImageUrl = convertToDirectLink(player.headshotLink);
     const avatarContent = player.headshotLink 
@@ -509,6 +605,7 @@ window.showPlayerDetail = async function(playerId) {
             </div>
         </div>
         ${videosSection}
+        ${buildGameBreakdownSection(playerId, allGames)}
     `;
 
     document.getElementById('playerDetailContent').innerHTML = content;

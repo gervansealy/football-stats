@@ -1262,6 +1262,137 @@ body.admin .nav-links a.admin-only {
     border-radius: 8px;
 }
 
+/* Game Breakdown Section */
+.game-breakdown-section {
+    margin-top: 20px;
+    padding: 15px 20px;
+    background: var(--background);
+    border-radius: 8px;
+}
+
+.game-breakdown-section h3 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+}
+
+.breakdown-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.breakdown-item {
+    background: white;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.breakdown-item summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    gap: 10px;
+}
+
+.breakdown-item summary::-webkit-details-marker {
+    display: none;
+}
+
+.breakdown-item summary:hover {
+    background: #f8fafb;
+}
+
+.breakdown-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.breakdown-label {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.breakdown-count {
+    background: var(--primary-color);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    min-width: 26px;
+    text-align: center;
+}
+
+.breakdown-count.zero {
+    background: var(--text-secondary);
+}
+
+.breakdown-arrow {
+    font-size: 11px;
+    color: var(--text-secondary);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+
+.breakdown-item[open] .breakdown-arrow {
+    transform: rotate(180deg);
+}
+
+.breakdown-list {
+    padding: 8px 14px 12px;
+    border-top: 1px solid var(--border-color);
+}
+
+.breakdown-year-group {
+    margin-bottom: 10px;
+}
+
+.breakdown-year-group:last-child {
+    margin-bottom: 0;
+}
+
+.breakdown-year-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.breakdown-game-link {
+    display: block;
+    padding: 5px 8px;
+    font-size: 13px;
+    color: var(--primary-color);
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background 0.15s;
+    margin-bottom: 2px;
+}
+
+.breakdown-game-link:hover {
+    background: #ebf4ff;
+    text-decoration: underline;
+}
+
+.breakdown-empty {
+    font-size: 13px;
+    color: var(--text-secondary);
+    padding: 4px 0;
+    font-style: italic;
+}
+
 .videos-section h3 {
     margin: 0 0 12px 0;
     font-size: 16px;
