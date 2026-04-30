@@ -455,13 +455,22 @@ function buildGameBreakdownSection(playerId, allGames) {
             listHTML = Object.keys(byYear)
                 .sort((a, b) => b - a)
                 .map(year => {
+                    const yearCount = byYear[year].length;
                     const links = byYear[year].map(game => {
                         const d = new Date(game.date + 'T12:00:00');
                         const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                         const detail = cat.detail ? ` — ${cat.detail(game)}` : '';
                         return `<a href="game-history.html?game=${game.id}" class="breakdown-game-link">${label}${detail}</a>`;
                     }).join('');
-                    return `<div class="breakdown-year-group"><div class="breakdown-year-label">${year}</div>${links}</div>`;
+                    return `
+                        <details class="breakdown-year-item">
+                            <summary class="breakdown-year-summary">
+                                <span class="breakdown-year-name">${year}</span>
+                                <span class="breakdown-year-badge">${yearCount}</span>
+                                <span class="breakdown-arrow-sm">▼</span>
+                            </summary>
+                            <div class="breakdown-year-games">${links}</div>
+                        </details>`;
                 }).join('');
         }
 
@@ -478,11 +487,7 @@ function buildGameBreakdownSection(playerId, allGames) {
             </details>`;
     }).join('');
 
-    return `
-        <div class="game-breakdown-section">
-            <h3>Game Breakdown</h3>
-            <div class="breakdown-accordion">${itemsHTML}</div>
-        </div>`;
+    return `<div class="breakdown-inline"><div class="breakdown-accordion">${itemsHTML}</div></div>`;
 }
 
 window.showPlayerDetail = async function(playerId) {
@@ -569,43 +574,19 @@ window.showPlayerDetail = async function(playerId) {
                     <div>${player.weight ? player.weight + ' lbs' : 'N/A'}</div>
                 </div>
                 <div class="info-row">
-                    <div class="info-label">Games Played:</div>
-                    <div>${stats.games}</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Wins:</div>
-                    <div>${stats.wins}</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Losses:</div>
-                    <div>${stats.losses}</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Goals:</div>
-                    <div>${stats.goals}</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Captain Wins:</div>
-                    <div>${stats.captainWins}</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Captain Losses:</div>
-                    <div>${stats.captainLosses}</div>
-                </div>
-                <div class="info-row">
                     <div class="info-label">Total Points:</div>
                     <div><strong>${stats.points}</strong></div>
                 </div>
                 ${player.hobbies ? `
-                <div class="info-row">
+                <div class="info-row info-row-full">
                     <div class="info-label">Hobbies:</div>
                     <div>${player.hobbies}</div>
                 </div>
                 ` : ''}
+                ${buildGameBreakdownSection(playerId, allGames)}
             </div>
         </div>
         ${videosSection}
-        ${buildGameBreakdownSection(playerId, allGames)}
     `;
 
     document.getElementById('playerDetailContent').innerHTML = content;
