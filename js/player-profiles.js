@@ -408,7 +408,8 @@ function buildGameBreakdownSection(playerId, allGames) {
             detail: g => {
                 const v = g.playerStats[playerId].goals;
                 return `${v} goal${v > 1 ? 's' : ''}`;
-            }
+            },
+            total: games => games.reduce((sum, g) => sum + (g.playerStats?.[playerId]?.goals || 0), 0)
         },
         {
             label: 'Captain Losses',
@@ -440,11 +441,11 @@ function buildGameBreakdownSection(playerId, allGames) {
             .filter(cat.filter)
             .sort((a, b) => b.date.localeCompare(a.date));
 
-        const count = matching.length;
+        const count = cat.total ? cat.total(matching) : matching.length;
         const countClass = count === 0 ? 'zero' : '';
 
         let listHTML = '<p class="breakdown-empty">No games</p>';
-        if (count > 0) {
+        if (matching.length > 0) {
             const byYear = {};
             matching.forEach(game => {
                 const year = game.year || new Date(game.date + 'T12:00:00').getFullYear();
@@ -455,7 +456,9 @@ function buildGameBreakdownSection(playerId, allGames) {
             listHTML = Object.keys(byYear)
                 .sort((a, b) => b - a)
                 .map(year => {
-                    const yearCount = byYear[year].length;
+                    const yearCount = cat.total
+                        ? byYear[year].reduce((sum, g) => sum + (g.playerStats?.[playerId]?.goals || 0), 0)
+                        : byYear[year].length;
                     const links = byYear[year].map(game => {
                         const d = new Date(game.date + 'T12:00:00');
                         const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
