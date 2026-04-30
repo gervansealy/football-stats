@@ -316,26 +316,25 @@ function displayHighlights(players) {
         biggestLoser: [{key:'losses',      label:'Losses',    color:'#EF4444'},{key:'wins',   label:'Wins',     color:'#4A90E2'},{key:'goals',      label:'Goals',    color:'#10B981'}]
     };
 
-    const leaderCards     = tiedCaptainWins.map(p => buildCard(p, 'Best Captain',   `${maxCaptainWins} captain win${maxCaptainWins !== 1 ? 's' : ''}`, B.bestCaptain,  '#7C3AED')).join('');
+    const mvpCards        = tiedTop.map(p => buildCard(p, 'Top Player', `${topPlayer.points} pts`, B.topPlayer, '#D97706')).join('');
     const performerCards  = [
-        ...tiedTop.map(p    => buildCard(p, 'Top Player',   `${topPlayer.points} pts`, B.topPlayer,   '#D97706')),
+        ...tiedCaptainWins.map(p => buildCard(p, 'Best Captain', `${maxCaptainWins} captain win${maxCaptainWins !== 1 ? 's' : ''}`, B.bestCaptain, '#7C3AED')),
         ...tiedGoals.map(p  => buildCard(p, 'Most Goals',   `${maxGoals} goals`,       B.mostGoals,   '#10B981')),
         ...tiedWins.map(p   => buildCard(p, 'Most Wins',    `${maxWins} wins`,         B.mostWins,    '#4A90E2'))
     ].join('');
     const bottomCards     = [
-        ...tiedLosses.map(p  => buildCard(p, 'Most Losses',   `${maxLosses} losses`,    B.mostLosses,   '#FB8C00')),
+        ...tiedLosses.map(p  => buildCard(p, 'Most Losses',   `${maxLosses} losses`,      B.mostLosses,   '#FB8C00')),
         ...tiedBottom.map(p  => buildCard(p, 'Biggest Loser', `${lastPlayer.points} pts`, B.biggestLoser, '#EF4444'))
     ].join('');
 
     grid.innerHTML = `
-        ${leaderCards ? `
         <div class="hl-section">
             <div class="hl-header hl-header-leader">
-                <span class="hl-header-icon">⭐</span>
-                <span class="hl-header-title">Leader of the Pack</span>
+                <span class="hl-header-icon">🏅</span>
+                <span class="hl-header-title">MVP</span>
             </div>
-            <div class="hl-cards-row">${leaderCards}</div>
-        </div>` : ''}
+            <div class="hl-cards-row">${mvpCards}</div>
+        </div>
 
         <div class="hl-section">
             <div class="hl-header hl-header-performers">
