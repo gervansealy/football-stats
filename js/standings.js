@@ -267,43 +267,101 @@ function displayHighlights(players) {
     const maxLosses      = Math.max(...players.map(p => p.losses));
     const maxCaptainWins = Math.max(...players.map(p => p.captainWins));
 
-    const tiedTop        = players.filter(p => p.points === topPlayer.points && p.wins === topPlayer.wins && p.winPercentage === topPlayer.winPercentage);
-    const tiedBottom     = players.filter(p => p.points === lastPlayer.points && p.wins === lastPlayer.wins && p.winPercentage === lastPlayer.winPercentage);
-    const tiedGoals      = players.filter(p => p.goals       === maxGoals);
-    const tiedWins       = players.filter(p => p.wins        === maxWins);
-    const tiedLosses     = players.filter(p => p.losses      === maxLosses);
+    const tiedTop         = players.filter(p => p.points === topPlayer.points && p.wins === topPlayer.wins && p.winPercentage === topPlayer.winPercentage);
+    const tiedBottom      = players.filter(p => p.points === lastPlayer.points && p.wins === lastPlayer.wins && p.winPercentage === lastPlayer.winPercentage);
+    const tiedGoals       = players.filter(p => p.goals       === maxGoals);
+    const tiedWins        = players.filter(p => p.wins        === maxWins);
+    const tiedLosses      = players.filter(p => p.losses      === maxLosses);
     const tiedCaptainWins = players.filter(p => p.captainWins === maxCaptainWins && maxCaptainWins > 0);
 
-    const highlights = [
-        { icon: '🏆', animClass: 'anim-bounce',     title: 'Top Player',    tied: tiedTop,         stat: `${topPlayer.points} pts`,      cardClass: 'highlight-gold'   },
-        { icon: '⚽', animClass: 'anim-spin',       title: 'Most Goals',    tied: tiedGoals,       stat: `${maxGoals} goals`,            cardClass: 'highlight-green'  },
-        { icon: '👑', animClass: 'anim-pulse-glow', title: 'Most Wins',     tied: tiedWins,        stat: `${maxWins} wins`,              cardClass: 'highlight-blue'   },
-        { icon: '⭐', animClass: 'anim-pulse-glow', title: 'Best Captain',  tied: tiedCaptainWins, stat: `${maxCaptainWins} captain win${maxCaptainWins !== 1 ? 's' : ''}`, cardClass: 'highlight-purple' },
-        { icon: '📉', animClass: 'anim-drop',       title: 'Most Losses',   tied: tiedLosses,      stat: `${maxLosses} losses`,          cardClass: 'highlight-orange' },
-        { icon: '🗑️', animClass: 'anim-shake',     title: 'Biggest Loser', tied: tiedBottom,      stat: `${lastPlayer.points} pts`,     cardClass: 'highlight-red'    }
-    ].filter(h => h.tied.length > 0);
-
-    grid.innerHTML = highlights.map(h => {
-        const playersHtml = h.tied.map(p => {
-            const url = convertToDirectLink(p.headshotLink);
-            const avatarHtml = url
-                ? `<img src="${url}" alt="${p.firstName}" class="highlight-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                   <div class="highlight-avatar-fallback" style="display:none;">${p.firstName.charAt(0)}${p.lastName.charAt(0)}</div>`
-                : `<div class="highlight-avatar-fallback">${p.firstName.charAt(0)}${p.lastName.charAt(0)}</div>`;
-            return `<div class="highlight-player-row">
-                ${avatarHtml}
-                <span class="highlight-player-name" onclick="openPlayerProfileModal('${p.id}')">${p.name}</span>
+    function buildBars(player, bars) {
+        return bars.map(bar => {
+            const val = player[bar.key] || 0;
+            const max = Math.max(...players.map(p => p[bar.key] || 0)) || 1;
+            const pct = Math.round((val / max) * 100);
+            return `<div class="hc-bar-row">
+                <span class="hc-bar-label">${bar.label}</span>
+                <div class="hc-bar-track"><div class="hc-bar-fill" style="width:${pct}%;background:${bar.color}"></div></div>
+                <span class="hc-bar-val">${val}</span>
             </div>`;
         }).join('');
+    }
 
+    function buildCard(player, badge, statStr, bars, accent) {
+        const url = convertToDirectLink(player.headshotLink);
+        const avatarHtml = url
+            ? `<img src="${url}" alt="${player.firstName}" class="hc-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+               <div class="hc-avatar-fallback" style="display:none;background:${accent}">${player.firstName.charAt(0)}${player.lastName.charAt(0)}</div>`
+            : `<div class="hc-avatar-fallback" style="background:${accent}">${player.firstName.charAt(0)}${player.lastName.charAt(0)}</div>`;
         return `
-        <div class="highlight-card ${h.cardClass}">
-            <span class="highlight-icon ${h.animClass}">${h.icon}</span>
-            <div class="highlight-label">${h.title}</div>
-            <div class="highlight-players-list">${playersHtml}</div>
-            <div class="highlight-stat">${h.stat}</div>
-        </div>`;
-    }).join('');
+            <div class="hc-card" style="--hc-accent:${accent}" onclick="openPlayerProfileModal('${player.id}')">
+                <div class="hc-card-badge">${badge}</div>
+                <div class="hc-player-row">
+                    <div class="hc-avatar-wrap">${avatarHtml}</div>
+                    <div class="hc-player-info">
+                        <div class="hc-name">${player.name}</div>
+                        <div class="hc-stat-main">${statStr}</div>
+                    </div>
+                </div>
+                <div class="hc-chart">${buildBars(player, bars)}</div>
+            </div>`;
+    }
+
+    const B = {
+        topPlayer:    [{key:'points',      label:'Points',    color:'#D97706'},{key:'wins',   label:'Wins',     color:'#4A90E2'},{key:'goals',      label:'Goals',    color:'#10B981'}],
+        mostGoals:    [{key:'goals',       label:'Goals',     color:'#10B981'},{key:'wins',   label:'Wins',     color:'#4A90E2'},{key:'points',     label:'Points',   color:'#D97706'}],
+        mostWins:     [{key:'wins',        label:'Wins',      color:'#4A90E2'},{key:'goals',  label:'Goals',    color:'#10B981'},{key:'cleanSheets',label:'Clean Sh.',color:'#6366F1'}],
+        bestCaptain:  [{key:'captainWins', label:'Cap. Wins', color:'#7C3AED'},{key:'wins',   label:'Wins',     color:'#4A90E2'},{key:'goals',      label:'Goals',    color:'#10B981'}],
+        mostLosses:   [{key:'losses',      label:'Losses',    color:'#EF4444'},{key:'games',  label:'Games',    color:'#6B7280'},{key:'goals',      label:'Goals',    color:'#10B981'}],
+        biggestLoser: [{key:'losses',      label:'Losses',    color:'#EF4444'},{key:'wins',   label:'Wins',     color:'#4A90E2'},{key:'goals',      label:'Goals',    color:'#10B981'}]
+    };
+
+    const leaderCards     = tiedCaptainWins.map(p => buildCard(p, 'Best Captain',   `${maxCaptainWins} captain win${maxCaptainWins !== 1 ? 's' : ''}`, B.bestCaptain,  '#7C3AED')).join('');
+    const performerCards  = [
+        ...tiedTop.map(p    => buildCard(p, 'Top Player',   `${topPlayer.points} pts`, B.topPlayer,   '#D97706')),
+        ...tiedGoals.map(p  => buildCard(p, 'Most Goals',   `${maxGoals} goals`,       B.mostGoals,   '#10B981')),
+        ...tiedWins.map(p   => buildCard(p, 'Most Wins',    `${maxWins} wins`,         B.mostWins,    '#4A90E2'))
+    ].join('');
+    const bottomCards     = [
+        ...tiedLosses.map(p  => buildCard(p, 'Most Losses',   `${maxLosses} losses`,    B.mostLosses,   '#FB8C00')),
+        ...tiedBottom.map(p  => buildCard(p, 'Biggest Loser', `${lastPlayer.points} pts`, B.biggestLoser, '#EF4444'))
+    ].join('');
+
+    grid.innerHTML = `
+        ${leaderCards ? `
+        <div class="hl-section">
+            <div class="hl-header hl-header-leader">
+                <span class="hl-header-icon">⭐</span>
+                <div class="hl-header-text">
+                    <div class="hl-header-title">Leader of the Pack</div>
+                    <div class="hl-header-sub">Season's best captain</div>
+                </div>
+            </div>
+            <div class="hl-cards-row hl-row-center">${leaderCards}</div>
+        </div>` : ''}
+
+        <div class="hl-section">
+            <div class="hl-header hl-header-performers">
+                <span class="hl-header-icon">🏆</span>
+                <div class="hl-header-text">
+                    <div class="hl-header-title">High Performers</div>
+                    <div class="hl-header-sub">Season's top achievers</div>
+                </div>
+            </div>
+            <div class="hl-cards-row">${performerCards}</div>
+        </div>
+
+        <div class="hl-section">
+            <div class="hl-header hl-header-bottom">
+                <span class="hl-header-icon">📉</span>
+                <div class="hl-header-text">
+                    <div class="hl-header-title">Bottom of the Barrel</div>
+                    <div class="hl-header-sub">Room for improvement</div>
+                </div>
+            </div>
+            <div class="hl-cards-row">${bottomCards}</div>
+        </div>
+    `;
 }
 
 function convertToDirectLink(url) {
