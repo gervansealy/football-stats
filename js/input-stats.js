@@ -288,6 +288,7 @@ async function saveGameStats() {
             blackTeam:    teamArrays.black,
             redCaptain:   captainIds.red   || null,
             blackCaptain: captainIds.black || null,
+            lineupId:     pregameId        || null,
             createdAt:    new Date().toISOString()
         });
 

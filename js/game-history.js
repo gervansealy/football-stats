@@ -246,6 +246,63 @@ async function calculateStandingsAtDate(targetDate) {
     return players;
 }
 
+function getDefaultPosition(index, total) {
+    const F = {
+        1:  [[50,85]],
+        2:  [[50,85],[50,20]],
+        3:  [[50,85],[30,48],[70,48]],
+        4:  [[50,85],[25,65],[50,62],[75,65]],
+        5:  [[50,85],[25,65],[75,65],[30,38],[70,38]],
+        6:  [[50,85],[20,68],[50,68],[80,68],[35,36],[65,36]],
+        7:  [[50,85],[20,70],[45,70],[70,70],[30,44],[60,44],[50,22]],
+        8:  [[50,85],[18,70],[38,70],[62,70],[82,70],[28,44],[50,44],[72,44]],
+        9:  [[50,85],[18,70],[38,70],[62,70],[82,70],[25,46],[50,46],[75,46],[50,22]],
+        10: [[50,85],[18,72],[36,72],[54,72],[72,72],[22,48],[44,48],[66,48],[88,48],[50,24]],
+        11: [[50,85],[18,72],[36,72],[54,72],[72,72],[22,48],[44,48],[66,48],[35,25],[50,18],[65,25]],
+    };
+    const n   = Math.min(total, 11);
+    const pos = F[n] || F[11];
+    if (index < pos.length) return { x: pos[index][0], y: pos[index][1] };
+    return { x: 20 + (index % 4) * 20, y: 12 + Math.floor(index / 4) * 18 };
+}
+
+function buildDefaultLineup(teamIds) {
+    return teamIds.map((id, index) => {
+        const p   = allPlayers.find(pl => pl.id === id);
+        const name = p ? `${p.firstName} ${p.lastName}` : id;
+        const pos  = getDefaultPosition(index, teamIds.length);
+        return { id, name, x: pos.x, y: pos.y };
+    });
+}
+
+function pitchMarkingsHTML() {
+    return `
+        <div class="pm-goal top"></div>
+        <div class="pm-penalty top"></div>
+        <div class="pm-halfway"></div>
+        <div class="pm-center-circle"></div>
+        <div class="pm-center-dot"></div>
+        <div class="pm-penalty bottom"></div>
+        <div class="pm-goal bottom"></div>
+    `;
+}
+
+function playerTokenHTML(player, team, captainId) {
+    const isCaptain = player.id === captainId;
+    const initials  = (player.name || player.id).split(' ').map(w => w[0] || '').join('').substring(0, 2).toUpperCase();
+    const first     = (player.name || player.id).split(' ')[0];
+    return `<div class="player-token view-only${isCaptain ? ' token-captain' : ''}" style="left:${player.x}%;top:${player.y}%;">
+        <div class="token-jersey ${team}">${initials}</div>
+        <div class="token-name">${first}</div>
+        ${isCaptain ? '<div class="token-captain-star">C</div>' : ''}
+    </div>`;
+}
+
+function buildPitchHTML(lineup, team, captainId) {
+    const tokens = (lineup || []).map(p => playerTokenHTML(p, team, captainId)).join('');
+    return `<div class="pitch">${pitchMarkingsHTML()}${tokens}</div>`;
+}
+
 window.openGameDetailModal = async function(gameId) {
     const gameDoc = await getDoc(doc(db, 'games', gameId));
     if (!gameDoc.exists()) return;
@@ -343,23 +400,37 @@ window.openGameDetailModal = async function(gameId) {
     
     let lineupHTML = '';
     if (gameData.redTeam?.length || gameData.blackTeam?.length) {
-        const renderLineupTeam = (teamIds, captainId, label, teamClass) => {
-            if (!teamIds?.length) return '';
-            const items = teamIds.map(id => {
-                const p = allPlayers.find(pl => pl.id === id);
-                if (!p) return '';
-                const isCaptain = id === captainId;
-                return `<li class="lineup-history-player${isCaptain ? ' lineup-history-captain' : ''}">${isCaptain ? '⭐ ' : ''}${p.firstName} ${p.lastName}</li>`;
-            }).join('');
-            return `<div class="lineup-history-team ${teamClass}"><h4>${label}</h4><ul class="lineup-history-list">${items}</ul></div>`;
-        };
+        let redLineup   = [];
+        let blackLineup = [];
+
+        if (gameData.lineupId) {
+            const lineupDoc = await getDoc(doc(db, 'lineups', gameData.lineupId));
+            if (lineupDoc.exists()) {
+                const ld = lineupDoc.data();
+                redLineup   = ld.redLineup   || [];
+                blackLineup = ld.blackLineup || [];
+            }
+        }
+
+        if (redLineup.length === 0 && gameData.redTeam?.length) {
+            redLineup = buildDefaultLineup(gameData.redTeam);
+        }
+        if (blackLineup.length === 0 && gameData.blackTeam?.length) {
+            blackLineup = buildDefaultLineup(gameData.blackTeam);
+        }
 
         lineupHTML = `
             <div class="game-lineups-history">
                 <h3>Captain Lineups</h3>
-                <div class="lineups-history-grid">
-                    ${renderLineupTeam(gameData.redTeam, gameData.redCaptain, '🔴 Red Team', 'lineup-history-red')}
-                    ${renderLineupTeam(gameData.blackTeam, gameData.blackCaptain, '⚫ Black Team', 'lineup-history-black')}
+                <div class="dual-pitch-view" style="padding:0 0 20px 0;">
+                    <div class="pitch-panel">
+                        <div class="pitch-panel-title red">🔴 Red Team</div>
+                        <div style="position:relative;">${buildPitchHTML(redLineup, 'red', gameData.redCaptain)}</div>
+                    </div>
+                    <div class="pitch-panel">
+                        <div class="pitch-panel-title black">⚫ Black Team</div>
+                        <div style="position:relative;">${buildPitchHTML(blackLineup, 'black', gameData.blackCaptain)}</div>
+                    </div>
                 </div>
             </div>
         `;
