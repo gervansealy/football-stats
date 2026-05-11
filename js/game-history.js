@@ -1,6 +1,6 @@
 import { db } from './firebase-config.js';
 import { checkAuth } from './auth.js';
-import { collection, query, orderBy, onSnapshot, getDocs, doc, updateDoc, deleteDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { collection, query, orderBy, where, onSnapshot, getDocs, doc, updateDoc, deleteDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 let currentUserRole = 'viewer';
 let allPlayers = [];
@@ -407,6 +407,16 @@ window.openGameDetailModal = async function(gameId) {
             const lineupDoc = await getDoc(doc(db, 'lineups', gameData.lineupId));
             if (lineupDoc.exists()) {
                 const ld = lineupDoc.data();
+                redLineup   = ld.redLineup   || [];
+                blackLineup = ld.blackLineup || [];
+            }
+        }
+
+        // Fallback: find lineup by matching date (for games saved before lineupId was stored)
+        if (redLineup.length === 0 && blackLineup.length === 0) {
+            const lineupsSnap = await getDocs(query(collection(db, 'lineups'), where('date', '==', gameData.date)));
+            if (!lineupsSnap.empty) {
+                const ld = lineupsSnap.docs[0].data();
                 redLineup   = ld.redLineup   || [];
                 blackLineup = ld.blackLineup || [];
             }
