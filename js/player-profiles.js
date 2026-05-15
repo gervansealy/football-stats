@@ -98,16 +98,17 @@ window.openEditModal = async function(playerId) {
     videoLinksContainer.innerHTML = '';
     
     if (player.highlightVideos && player.highlightVideos.length > 0) {
-        document.getElementById('highlightVideos').value = player.highlightVideos[0] || '';
-        
+        const first = player.highlightVideos[0];
+        const firstUrl = typeof first === 'string' ? first : (first?.url || '');
+        const firstName = typeof first === 'string' ? '' : (first?.name || '');
+        document.getElementById('highlightVideoUrl').value = firstUrl;
+        document.getElementById('highlightVideoName').value = firstName;
+
         for (let i = 1; i < player.highlightVideos.length; i++) {
-            const div = document.createElement('div');
-            div.className = 'form-group';
-            div.innerHTML = `
-                <label>Video ${i + 1}:</label>
-                <input type="url" class="video-link" placeholder="Paste video link" value="${player.highlightVideos[i]}">
-            `;
-            videoLinksContainer.appendChild(div);
+            const v = player.highlightVideos[i];
+            const url = typeof v === 'string' ? v : (v?.url || '');
+            const name = typeof v === 'string' ? '' : (v?.name || '');
+            addVideoField(url, name);
         }
     }
     
@@ -128,15 +129,18 @@ window.deletePlayer = async function(playerId, playerName) {
     }
 };
 
-function addVideoField() {
+function addVideoField(url = '', name = '') {
     const container = document.getElementById('videoLinksContainer');
     const index = container.children.length;
-    
+
     const div = document.createElement('div');
     div.className = 'form-group';
     div.innerHTML = `
         <label>Video ${index + 2}:</label>
-        <input type="url" class="video-link" placeholder="Paste video link">
+        <div class="video-entry-row">
+            <input type="text" class="video-name" placeholder="Video name (e.g. Luke finisher)" value="${name}">
+            <input type="url" class="video-link" placeholder="Paste video link" value="${url}">
+        </div>
     `;
     container.appendChild(div);
 }
@@ -145,12 +149,14 @@ async function handlePlayerSubmit(e) {
     e.preventDefault();
 
     const videoLinks = [];
-    const mainVideo = document.getElementById('highlightVideos').value.trim();
-    if (mainVideo) videoLinks.push(mainVideo);
+    const mainUrl = document.getElementById('highlightVideoUrl').value.trim();
+    const mainName = document.getElementById('highlightVideoName').value.trim();
+    if (mainUrl) videoLinks.push({ url: mainUrl, name: mainName || 'Highlight Video 1' });
 
-    document.querySelectorAll('.video-link').forEach(input => {
-        const link = input.value.trim();
-        if (link) videoLinks.push(link);
+    document.querySelectorAll('#videoLinksContainer .form-group').forEach((entry, i) => {
+        const url = entry.querySelector('.video-link')?.value.trim();
+        const name = entry.querySelector('.video-name')?.value.trim();
+        if (url) videoLinks.push({ url, name: name || `Highlight Video ${videoLinks.length + 1}` });
     });
 
     const playerData = {
@@ -510,34 +516,33 @@ window.showPlayerDetail = async function(playerId) {
 
     let videosSection = '';
     if (player.highlightVideos && player.highlightVideos.length > 0) {
-        const videoButtons = player.highlightVideos.map((link, index) => {
+        const videoButtons = player.highlightVideos.map((video, index) => {
+            const link = typeof video === 'string' ? video : (video?.url || '');
+            const videoName = (typeof video === 'string' ? '' : video?.name) || `Highlight Video ${index + 1}`;
+            if (!link) return '';
+
             const isDriveVideo = link.includes('drive.google.com');
             const videoId = `video-${playerDoc.id}-${index}`;
-            
+
             if (isDriveVideo) {
-                // For Google Drive, use direct download link for HTML5 video player
                 const match = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
                 const fileId = match ? match[1] : null;
                 if (!fileId) return '';
-                
-                // Use direct download link that works with HTML5 video
                 const driveDirectLink = `https://drive.google.com/uc?export=download&id=${fileId}`;
                 return `
                     <div class="video-file-box" data-drive-video="${driveDirectLink}" data-video-id="${videoId}">
                         <div class="video-icon">🎬</div>
-                        <div class="video-file-name">Highlight Video ${index + 1}</div>
+                        <div class="video-file-name">${videoName}</div>
                         <div class="video-play-icon">▶</div>
                     </div>
                 `;
             } else {
-                // For YouTube and Vimeo, use embed link
                 const embedLink = convertToEmbedLink(link);
                 if (!embedLink) return '';
-                
                 return `
                     <div class="video-file-box" data-embed-link="${embedLink}" data-video-id="${videoId}">
                         <div class="video-icon">🎬</div>
-                        <div class="video-file-name">Highlight Video ${index + 1}</div>
+                        <div class="video-file-name">${videoName}</div>
                         <div class="video-play-icon">▶</div>
                     </div>
                 `;
@@ -545,12 +550,23 @@ window.showPlayerDetail = async function(playerId) {
         }).join('');
 
         if (videoButtons) {
+            const videoCount = player.highlightVideos.filter(v => v).length;
             videosSection = `
                 <div class="videos-section">
-                    <h3>Highlight Videos</h3>
-                    <div class="video-file-list">
-                        ${videoButtons}
-                    </div>
+                    <details class="breakdown-item videos-dropdown">
+                        <summary>
+                            <div class="breakdown-header-left">
+                                <span class="breakdown-label">Highlight Videos</span>
+                                <span class="breakdown-count">${videoCount}</span>
+                            </div>
+                            <span class="breakdown-arrow">▼</span>
+                        </summary>
+                        <div class="breakdown-list">
+                            <div class="video-file-list">
+                                ${videoButtons}
+                            </div>
+                        </div>
+                    </details>
                 </div>
             `;
         }

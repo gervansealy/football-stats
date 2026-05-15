@@ -550,44 +550,57 @@ window.openPlayerProfileModal = async function(playerId) {
         
         let videosSection = '';
         if (player.highlightVideos && player.highlightVideos.length > 0) {
-            const videoButtons = player.highlightVideos.map((link, index) => {
+            const videoButtons = player.highlightVideos.map((video, index) => {
+                const link = typeof video === 'string' ? video : (video?.url || '');
+                const videoName = (typeof video === 'string' ? '' : video?.name) || `Highlight Video ${index + 1}`;
+                if (!link) return '';
+
                 const isDriveVideo = link.includes('drive.google.com');
                 const videoId = `video-${playerDoc.id}-${index}`;
-                
+
                 if (isDriveVideo) {
                     const match = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
                     const fileId = match ? match[1] : null;
                     if (!fileId) return '';
-                    
                     const driveDirectLink = `https://drive.google.com/uc?export=download&id=${fileId}`;
                     return `
                         <div class="video-file-box" data-drive-video="${driveDirectLink}" data-video-id="${videoId}">
                             <div class="video-icon">🎬</div>
-                            <div class="video-file-name">Highlight Video ${index + 1}</div>
+                            <div class="video-file-name">${videoName}</div>
                             <div class="video-play-icon">▶</div>
                         </div>
                     `;
                 } else {
                     const embedLink = convertToEmbedLink(link);
                     if (!embedLink) return '';
-                    
                     return `
                         <div class="video-file-box" data-embed-link="${embedLink}" data-video-id="${videoId}">
                             <div class="video-icon">🎬</div>
-                            <div class="video-file-name">Highlight Video ${index + 1}</div>
+                            <div class="video-file-name">${videoName}</div>
                             <div class="video-play-icon">▶</div>
                         </div>
                     `;
                 }
             }).join('');
-            
+
             if (videoButtons) {
+                const videoCount = player.highlightVideos.filter(v => v).length;
                 videosSection = `
                     <div class="videos-section">
-                        <h3>Highlight Videos</h3>
-                        <div class="video-file-list">
-                            ${videoButtons}
-                        </div>
+                        <details class="breakdown-item videos-dropdown">
+                            <summary>
+                                <div class="breakdown-header-left">
+                                    <span class="breakdown-label">Highlight Videos</span>
+                                    <span class="breakdown-count">${videoCount}</span>
+                                </div>
+                                <span class="breakdown-arrow">▼</span>
+                            </summary>
+                            <div class="breakdown-list">
+                                <div class="video-file-list">
+                                    ${videoButtons}
+                                </div>
+                            </div>
+                        </details>
                     </div>
                 `;
             }

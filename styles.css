@@ -1257,9 +1257,30 @@ body.admin .nav-links a.admin-only {
 
 .videos-section {
     margin-top: 20px;
-    padding: 15px 20px;
     background: var(--background);
     border-radius: 8px;
+}
+
+.videos-dropdown {
+    width: 100%;
+}
+
+.videos-dropdown .breakdown-list {
+    padding: 10px 14px 14px;
+}
+
+.video-entry-row {
+    display: flex;
+    gap: 8px;
+}
+
+.video-entry-row input[type="text"],
+.video-entry-row input[type="url"] {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
 }
 
 /* Game Breakdown Section */
@@ -1469,10 +1490,6 @@ body.admin .nav-links a.admin-only {
     border-top: 1px solid var(--border-color);
 }
 
-.videos-section h3 {
-    margin: 0 0 12px 0;
-    font-size: 16px;
-}
 
 .video-file-list {
     display: flex;

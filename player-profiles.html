@@ -75,8 +75,11 @@
                     <small>💡 For Google Drive: Right-click image → Share → "Anyone with the link" → Copy link</small>
                 </div>
                 <div class="form-group">
-                    <label for="highlightVideos">Highlight Videos:</label>
-                    <textarea id="highlightVideos" rows="2" placeholder="Paste video link (YouTube or Google Drive)"></textarea>
+                    <label>Highlight Videos:</label>
+                    <div class="video-entry-row">
+                        <input type="text" id="highlightVideoName" placeholder="Video name (e.g. Diego cap)">
+                        <input type="url" id="highlightVideoUrl" placeholder="Paste video link (YouTube, Vimeo or Google Drive)">
+                    </div>
                     <small>💡 YouTube links are automatically embedded for best compatibility</small>
                 </div>
                 <div id="videoLinksContainer"></div>
