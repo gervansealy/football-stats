@@ -13,14 +13,15 @@ let isAdmin = false;
 const teamDataCache = {};
 
 const TEAM_COLORS = {
-    red:    { name: 'Red',    emoji: '🔴', hex: '#DC3545', bg: '#FFCDD2', text: '#B71C1C', lightBg: '#FFF0F0', border: '#FFCDD2' },
-    black:  { name: 'Black',  emoji: '⚫', hex: '#333333', bg: '#424242', text: '#ffffff', lightBg: '#F5F5F5', border: '#E0E0E0' },
-    blue:   { name: 'Blue',   emoji: '🔵', hex: '#1976D2', bg: '#BBDEFB', text: '#0D47A1', lightBg: '#E3F2FD', border: '#90CAF9' },
-    green:  { name: 'Green',  emoji: '🟢', hex: '#2E7D32', bg: '#C8E6C9', text: '#1B5E20', lightBg: '#E8F5E9', border: '#A5D6A7' },
-    white:  { name: 'White',  emoji: '⚪', hex: '#9E9E9E', bg: '#EEEEEE', text: '#424242', lightBg: '#FAFAFA', border: '#BDBDBD' },
-    yellow: { name: 'Yellow', emoji: '🟡', hex: '#F9A825', bg: '#FFF9C4', text: '#F57F17', lightBg: '#FFFDE7', border: '#FFF176' },
-    orange: { name: 'Orange', emoji: '🟠', hex: '#F57C00', bg: '#FFE0B2', text: '#E65100', lightBg: '#FFF3E0', border: '#FFCC80' },
-    purple: { name: 'Purple', emoji: '🟣', hex: '#7B1FA2', bg: '#E1BEE7', text: '#4A148C', lightBg: '#F3E5F5', border: '#CE93D8' },
+    //                                                              text = on-badge  darkText = on-light-bg
+    red:    { name: 'Red',    emoji: '🔴', hex: '#DC3545', bg: '#FFCDD2', text: '#B71C1C', darkText: '#B71C1C', lightBg: '#FFF0F0', border: '#FFCDD2' },
+    black:  { name: 'Black',  emoji: '⚫', hex: '#333333', bg: '#424242', text: '#ffffff', darkText: '#212121', lightBg: '#F5F5F5', border: '#E0E0E0' },
+    blue:   { name: 'Blue',   emoji: '🔵', hex: '#1976D2', bg: '#BBDEFB', text: '#0D47A1', darkText: '#0D47A1', lightBg: '#E3F2FD', border: '#90CAF9' },
+    green:  { name: 'Green',  emoji: '🟢', hex: '#2E7D32', bg: '#C8E6C9', text: '#1B5E20', darkText: '#1B5E20', lightBg: '#E8F5E9', border: '#A5D6A7' },
+    white:  { name: 'White',  emoji: '⚪', hex: '#9E9E9E', bg: '#EEEEEE', text: '#424242', darkText: '#424242', lightBg: '#FAFAFA', border: '#BDBDBD' },
+    yellow: { name: 'Yellow', emoji: '🟡', hex: '#F9A825', bg: '#FFF9C4', text: '#F57F17', darkText: '#F57F17', lightBg: '#FFFDE7', border: '#FFF176' },
+    orange: { name: 'Orange', emoji: '🟠', hex: '#F57C00', bg: '#FFE0B2', text: '#E65100', darkText: '#E65100', lightBg: '#FFF3E0', border: '#FFCC80' },
+    purple: { name: 'Purple', emoji: '🟣', hex: '#7B1FA2', bg: '#E1BEE7', text: '#4A148C', darkText: '#4A148C', lightBg: '#F3E5F5', border: '#CE93D8' },
 };
 
 let newTeam1Color  = 'red';
@@ -141,12 +142,12 @@ function renderPregameCards() {
             <div class="otp-badges">
                 <div class="otp-badge" style="background:${t1.lightBg};border:1px solid ${t1.border};">
                     <span class="otp-badge-label">${t1.emoji}</span>
-                    <span class="otp-badge-code" style="color:${t1.text};">${pg.redOTP || '—'}</span>
+                    <span class="otp-badge-code" style="color:${t1.darkText};">${pg.redOTP || '—'}</span>
                     <button class="btn-copy-otp" onclick="copyLineupLink('${baseURL}lineup.html?otp=${pg.redOTP}', this)">Copy Link</button>
                 </div>
                 <div class="otp-badge" style="background:${t2.lightBg};border:1px solid ${t2.border};">
                     <span class="otp-badge-label">${t2.emoji}</span>
-                    <span class="otp-badge-code" style="color:${t2.text};">${pg.blackOTP || '—'}</span>
+                    <span class="otp-badge-code" style="color:${t2.darkText};">${pg.blackOTP || '—'}</span>
                     <button class="btn-copy-otp" onclick="copyLineupLink('${baseURL}lineup.html?otp=${pg.blackOTP}', this)">Copy Link</button>
                 </div>
             </div>
@@ -175,13 +176,13 @@ function renderPregameCards() {
                         <button class="team-label-badge team-label-btn" style="background:${t1.bg};color:${t1.text};" onclick="showTeamPlayers('${pg.id}','red')">
                             ${t1.emoji} ${t1.name} Team <span class="team-player-count">${redPlayers.length}</span>
                         </button>
-                        ${redCaptainName ? `<p class="captain-display" style="color:${t1.text};">⭐ Captain: ${redCaptainName}</p>` : ''}
+                        ${redCaptainName ? `<p class="captain-display" style="color:${t1.darkText};">⭐ Captain: ${redCaptainName}</p>` : ''}
                     </div>
                     <div class="team-preview" style="background:${t2.lightBg};border:1px solid ${t2.border};">
                         <button class="team-label-badge team-label-btn" style="background:${t2.bg};color:${t2.text};" onclick="showTeamPlayers('${pg.id}','black')">
                             ${t2.emoji} ${t2.name} Team <span class="team-player-count">${blackPlayers.length}</span>
                         </button>
-                        ${blackCaptainName ? `<p class="captain-display" style="color:${t2.text};">⭐ Captain: ${blackCaptainName}</p>` : ''}
+                        ${blackCaptainName ? `<p class="captain-display" style="color:${t2.darkText};">⭐ Captain: ${blackCaptainName}</p>` : ''}
                     </div>
                 </div>
 
