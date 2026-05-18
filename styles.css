@@ -2637,6 +2637,46 @@ body.admin .nav-links a.admin-only {
     margin-bottom: 20px;
 }
 
+.team-col-header {
+    margin-bottom: 10px;
+}
+
+.team-col-header h4 {
+    margin: 0 0 8px 0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.color-swatches {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 2px 0 4px;
+}
+
+.color-swatch {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.color-swatch:hover {
+    transform: scale(1.2);
+}
+
+.color-swatch.active {
+    border-color: #fff;
+    transform: scale(1.15);
+    box-shadow: 0 0 0 2px #333;
+}
+
 .team-selector-col h4 {
     margin: 0 0 10px 0;
     padding: 8px 12px;

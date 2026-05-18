@@ -27,7 +27,7 @@
         <div class="page-header">
             <div>
                 <h1>Team Selection</h1>
-                <p class="subtitle">Pre-select Red &amp; Black teams before the game. Enter stats after.</p>
+                <p class="subtitle">Pre-select teams before the game. Enter stats after.</p>
             </div>
             <button id="newPregameBtn" class="btn-primary" style="width: auto;">+ New Pre-Selection</button>
         </div>
@@ -50,8 +50,11 @@
                     <input type="date" id="pregameDate" class="form-input">
                 </div>
                 <div class="team-selector-columns">
-                    <div class="team-selector-col red-col">
-                        <h4>🔴 Red Team</h4>
+                    <div class="team-selector-col" id="newTeam1Col">
+                        <div class="team-col-header">
+                            <h4 id="newTeam1Label"></h4>
+                            <div class="color-swatches" id="newTeam1Swatches"></div>
+                        </div>
                         <input type="text" id="redTeamSearch" class="player-search-input" placeholder="Search players...">
                         <div id="redTeamCheckboxes" class="player-checkbox-list"></div>
                         <div class="captain-select-row">
@@ -59,8 +62,11 @@
                             <select id="redCaptain" class="captain-select"><option value="">— Select Captain —</option></select>
                         </div>
                     </div>
-                    <div class="team-selector-col black-col">
-                        <h4>⚫ Black Team</h4>
+                    <div class="team-selector-col" id="newTeam2Col">
+                        <div class="team-col-header">
+                            <h4 id="newTeam2Label"></h4>
+                            <div class="color-swatches" id="newTeam2Swatches"></div>
+                        </div>
                         <input type="text" id="blackTeamSearch" class="player-search-input" placeholder="Search players...">
                         <div id="blackTeamCheckboxes" class="player-checkbox-list"></div>
                         <div class="captain-select-row">
@@ -88,8 +94,11 @@
                     <input type="date" id="editPregameDate" class="form-input">
                 </div>
                 <div class="team-selector-columns">
-                    <div class="team-selector-col red-col">
-                        <h4>🔴 Red Team</h4>
+                    <div class="team-selector-col" id="editTeam1Col">
+                        <div class="team-col-header">
+                            <h4 id="editTeam1Label"></h4>
+                            <div class="color-swatches" id="editTeam1Swatches"></div>
+                        </div>
                         <input type="text" id="editRedTeamSearch" class="player-search-input" placeholder="Search players...">
                         <div id="editRedTeamCheckboxes" class="player-checkbox-list"></div>
                         <div class="captain-select-row">
@@ -97,8 +106,11 @@
                             <select id="editRedCaptain" class="captain-select"><option value="">— Select Captain —</option></select>
                         </div>
                     </div>
-                    <div class="team-selector-col black-col">
-                        <h4>⚫ Black Team</h4>
+                    <div class="team-selector-col" id="editTeam2Col">
+                        <div class="team-col-header">
+                            <h4 id="editTeam2Label"></h4>
+                            <div class="color-swatches" id="editTeam2Swatches"></div>
+                        </div>
                         <input type="text" id="editBlackTeamSearch" class="player-search-input" placeholder="Search players...">
                         <div id="editBlackTeamCheckboxes" class="player-checkbox-list"></div>
                         <div class="captain-select-row">

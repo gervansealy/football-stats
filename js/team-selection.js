@@ -10,8 +10,23 @@ let lineupStatusCache = {};
 let currentPregames   = [];
 let isAdmin = false;
 
-// Cache for popup: pregameId → { red: [{id,name}], black: [{id,name}], redCaptain, blackCaptain }
 const teamDataCache = {};
+
+const TEAM_COLORS = {
+    red:    { name: 'Red',    emoji: '🔴', hex: '#DC3545', bg: '#FFCDD2', text: '#B71C1C', lightBg: '#FFF0F0', border: '#FFCDD2' },
+    black:  { name: 'Black',  emoji: '⚫', hex: '#333333', bg: '#424242', text: '#ffffff', lightBg: '#F5F5F5', border: '#E0E0E0' },
+    blue:   { name: 'Blue',   emoji: '🔵', hex: '#1976D2', bg: '#BBDEFB', text: '#0D47A1', lightBg: '#E3F2FD', border: '#90CAF9' },
+    green:  { name: 'Green',  emoji: '🟢', hex: '#2E7D32', bg: '#C8E6C9', text: '#1B5E20', lightBg: '#E8F5E9', border: '#A5D6A7' },
+    white:  { name: 'White',  emoji: '⚪', hex: '#9E9E9E', bg: '#EEEEEE', text: '#424242', lightBg: '#FAFAFA', border: '#BDBDBD' },
+    yellow: { name: 'Yellow', emoji: '🟡', hex: '#F9A825', bg: '#FFF9C4', text: '#F57F17', lightBg: '#FFFDE7', border: '#FFF176' },
+    orange: { name: 'Orange', emoji: '🟠', hex: '#F57C00', bg: '#FFE0B2', text: '#E65100', lightBg: '#FFF3E0', border: '#FFCC80' },
+    purple: { name: 'Purple', emoji: '🟣', hex: '#7B1FA2', bg: '#E1BEE7', text: '#4A148C', lightBg: '#F3E5F5', border: '#CE93D8' },
+};
+
+let newTeam1Color  = 'red';
+let newTeam2Color  = 'black';
+let editTeam1Color = 'red';
+let editTeam2Color = 'black';
 
 // ── OTP generator ────────────────────────────────────
 function generateOTP() {
@@ -57,6 +72,33 @@ async function loadPlayers() {
     );
 }
 
+// ── Color picker ──────────────────────────────────────
+function initColorPicker(swatchesId, labelId, defaultColor, onPick) {
+    const swatchesEl = document.getElementById(swatchesId);
+    const labelEl    = document.getElementById(labelId);
+
+    function applyColor(colorKey) {
+        const c = TEAM_COLORS[colorKey];
+        swatchesEl.querySelectorAll('.color-swatch').forEach(s =>
+            s.classList.toggle('active', s.dataset.color === colorKey)
+        );
+        labelEl.textContent        = `${c.emoji} ${c.name} Team`;
+        labelEl.style.background   = c.bg;
+        labelEl.style.color        = c.text;
+        onPick(colorKey);
+    }
+
+    swatchesEl.innerHTML = Object.entries(TEAM_COLORS).map(([key, c]) =>
+        `<span class="color-swatch${key === defaultColor ? ' active' : ''}" data-color="${key}" style="background:${c.hex}" title="${c.name}"></span>`
+    ).join('');
+
+    swatchesEl.querySelectorAll('.color-swatch').forEach(s =>
+        s.addEventListener('click', () => applyColor(s.dataset.color))
+    );
+
+    applyColor(defaultColor);
+}
+
 // ── Render cards ─────────────────────────────────────
 function renderPregameCards() {
     const container = document.getElementById('pregamesContainer');
@@ -75,16 +117,21 @@ function renderPregameCards() {
         const redPlayers   = (pg.redTeam   || []).map(id => ({ id, name: (pg.redTeamNames   || {})[id] || id }));
         const blackPlayers = (pg.blackTeam || []).map(id => ({ id, name: (pg.blackTeamNames || {})[id] || id }));
 
-        // Store in cache for popup (no JSON in onclick attributes)
+        const t1Key = pg.team1Color || 'red';
+        const t2Key = pg.team2Color || 'black';
+        const t1    = TEAM_COLORS[t1Key] || TEAM_COLORS.red;
+        const t2    = TEAM_COLORS[t2Key] || TEAM_COLORS.black;
+
         teamDataCache[pg.id] = {
             red: redPlayers, black: blackPlayers,
-            redCaptain: pg.redCaptain || null, blackCaptain: pg.blackCaptain || null
+            redCaptain: pg.redCaptain || null, blackCaptain: pg.blackCaptain || null,
+            team1Color: t1Key, team2Color: t2Key,
         };
 
         const redCaptainName   = pg.redCaptain   ? (pg.redTeamNames   || {})[pg.redCaptain]   || '' : '';
         const blackCaptainName = pg.blackCaptain ? (pg.blackTeamNames || {})[pg.blackCaptain] || '' : '';
 
-        const ld = lineupStatusCache[pg.id] || {};
+        const ld        = lineupStatusCache[pg.id] || {};
         const redDone   = ld.redSubmitted   || false;
         const blackDone = ld.blackSubmitted || false;
 
@@ -92,14 +139,14 @@ function renderPregameCards() {
 
         const adminControls = isAdmin ? `
             <div class="otp-badges">
-                <div class="otp-badge red">
-                    <span class="otp-badge-label">🔴</span>
-                    <span class="otp-badge-code">${pg.redOTP || '—'}</span>
+                <div class="otp-badge" style="background:${t1.lightBg};border:1px solid ${t1.border};">
+                    <span class="otp-badge-label">${t1.emoji}</span>
+                    <span class="otp-badge-code" style="color:${t1.text};">${pg.redOTP || '—'}</span>
                     <button class="btn-copy-otp" onclick="copyLineupLink('${baseURL}lineup.html?otp=${pg.redOTP}', this)">Copy Link</button>
                 </div>
-                <div class="otp-badge black">
-                    <span class="otp-badge-label">⚫</span>
-                    <span class="otp-badge-code">${pg.blackOTP || '—'}</span>
+                <div class="otp-badge" style="background:${t2.lightBg};border:1px solid ${t2.border};">
+                    <span class="otp-badge-label">${t2.emoji}</span>
+                    <span class="otp-badge-code" style="color:${t2.text};">${pg.blackOTP || '—'}</span>
                     <button class="btn-copy-otp" onclick="copyLineupLink('${baseURL}lineup.html?otp=${pg.blackOTP}', this)">Copy Link</button>
                 </div>
             </div>
@@ -124,23 +171,23 @@ function renderPregameCards() {
                 </div>
 
                 <div class="pregame-teams">
-                    <div class="team-preview red-team-preview">
-                        <button class="team-label-badge red team-label-btn" onclick="showTeamPlayers('${pg.id}','red')">
-                            🔴 Red Team <span class="team-player-count">${redPlayers.length}</span>
+                    <div class="team-preview" style="background:${t1.lightBg};border:1px solid ${t1.border};">
+                        <button class="team-label-badge team-label-btn" style="background:${t1.bg};color:${t1.text};" onclick="showTeamPlayers('${pg.id}','red')">
+                            ${t1.emoji} ${t1.name} Team <span class="team-player-count">${redPlayers.length}</span>
                         </button>
-                        ${redCaptainName ? `<p class="captain-display red-captain">⭐ Captain: ${redCaptainName}</p>` : ''}
+                        ${redCaptainName ? `<p class="captain-display" style="color:${t1.text};">⭐ Captain: ${redCaptainName}</p>` : ''}
                     </div>
-                    <div class="team-preview black-team-preview">
-                        <button class="team-label-badge black team-label-btn" onclick="showTeamPlayers('${pg.id}','black')">
-                            ⚫ Black Team <span class="team-player-count">${blackPlayers.length}</span>
+                    <div class="team-preview" style="background:${t2.lightBg};border:1px solid ${t2.border};">
+                        <button class="team-label-badge team-label-btn" style="background:${t2.bg};color:${t2.text};" onclick="showTeamPlayers('${pg.id}','black')">
+                            ${t2.emoji} ${t2.name} Team <span class="team-player-count">${blackPlayers.length}</span>
                         </button>
-                        ${blackCaptainName ? `<p class="captain-display black-captain">⭐ Captain: ${blackCaptainName}</p>` : ''}
+                        ${blackCaptainName ? `<p class="captain-display" style="color:${t2.text};">⭐ Captain: ${blackCaptainName}</p>` : ''}
                     </div>
                 </div>
 
                 <div class="lineup-status-badges">
-                    <span class="lineup-status-badge ${redDone   ? 'done' : 'pending'}">🔴 ${redDone   ? '✓ Lineup Set' : '⏳ Lineup Pending'}</span>
-                    <span class="lineup-status-badge ${blackDone ? 'done' : 'pending'}">⚫ ${blackDone ? '✓ Lineup Set' : '⏳ Lineup Pending'}</span>
+                    <span class="lineup-status-badge ${redDone   ? 'done' : 'pending'}">${t1.emoji} ${redDone   ? '✓ Lineup Set' : '⏳ Lineup Pending'}</span>
+                    <span class="lineup-status-badge ${blackDone ? 'done' : 'pending'}">${t2.emoji} ${blackDone ? '✓ Lineup Set' : '⏳ Lineup Pending'}</span>
                 </div>
 
                 ${adminControls}
@@ -165,9 +212,11 @@ window.showTeamPlayers = function (pregameId, team) {
         if (b.id === captainId) return 1;
         return 0;
     });
-    const label       = team === 'red' ? '🔴 Red Team' : '⚫ Black Team';
 
-    document.getElementById('teamPopupTitle').textContent = label;
+    const colorKey = team === 'red' ? (data.team1Color || 'red') : (data.team2Color || 'black');
+    const c        = TEAM_COLORS[colorKey] || TEAM_COLORS.red;
+
+    document.getElementById('teamPopupTitle').textContent = `${c.emoji} ${c.name} Team`;
     document.getElementById('teamPopupList').innerHTML = teamPlayers.length
         ? teamPlayers.map(p => `
             <li class="${p.id === captainId ? 'popup-captain' : ''}">
@@ -207,7 +256,6 @@ function buildPlayerCheckboxes(containerId, captainSelectId, selectedIds = [], c
         </label>
     `).join('');
 
-    // Wire checkbox changes → update captain select
     container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
         cb.addEventListener('change', () => refreshCaptainSelect(containerId, captainSelectId));
     });
@@ -244,14 +292,22 @@ function wireSearchInput(searchId, listId) {
 
 // ── New pregame ───────────────────────────────────────
 function openNewPregameModal() {
+    newTeam1Color = 'red';
+    newTeam2Color = 'black';
+
     const today = new Date();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
     document.getElementById('pregameDate').value = `${today.getFullYear()}-${mm}-${dd}`;
+
     buildPlayerCheckboxes('redTeamCheckboxes',   'redCaptain');
     buildPlayerCheckboxes('blackTeamCheckboxes', 'blackCaptain');
     wireSearchInput('redTeamSearch',   'redTeamCheckboxes');
     wireSearchInput('blackTeamSearch', 'blackTeamCheckboxes');
+
+    initColorPicker('newTeam1Swatches', 'newTeam1Label', 'red',   c => { newTeam1Color = c; });
+    initColorPicker('newTeam2Swatches', 'newTeam2Label', 'black', c => { newTeam2Color = c; });
+
     document.getElementById('pregameModal').style.display = 'block';
 }
 
@@ -262,8 +318,11 @@ window.savePregame = async function () {
     const redTeam   = getCheckedIds('redTeamCheckboxes');
     const blackTeam = getCheckedIds('blackTeamCheckboxes');
 
-    if (redTeam.length === 0)   { alert('Please select at least one player for Red Team');   return; }
-    if (blackTeam.length === 0) { alert('Please select at least one player for Black Team'); return; }
+    const t1Name = TEAM_COLORS[newTeam1Color].name;
+    const t2Name = TEAM_COLORS[newTeam2Color].name;
+
+    if (redTeam.length === 0)   { alert(`Please select at least one player for ${t1Name} Team`);   return; }
+    if (blackTeam.length === 0) { alert(`Please select at least one player for ${t2Name} Team`); return; }
 
     const overlap = redTeam.filter(id => blackTeam.includes(id));
     if (overlap.length > 0) { alert('A player cannot be on both teams'); return; }
@@ -285,6 +344,7 @@ window.savePregame = async function () {
         await addDoc(collection(db, 'pregames'), {
             date, redTeam, blackTeam, redTeamNames, blackTeamNames,
             redCaptain, blackCaptain,
+            team1Color: newTeam1Color, team2Color: newTeam2Color,
             redOTP: generateOTP(), blackOTP: generateOTP(),
             createdAt: new Date().toISOString(),
         });
@@ -300,6 +360,9 @@ window.openEditPregameModal = async function (pregameId) {
     if (!pgDoc.exists()) return;
 
     const pg = pgDoc.data();
+    editTeam1Color = pg.team1Color || 'red';
+    editTeam2Color = pg.team2Color || 'black';
+
     document.getElementById('editPregameId').value   = pregameId;
     document.getElementById('editPregameDate').value = pg.date;
 
@@ -307,6 +370,10 @@ window.openEditPregameModal = async function (pregameId) {
     buildPlayerCheckboxes('editBlackTeamCheckboxes', 'editBlackCaptain', pg.blackTeam || [], pg.blackCaptain || '');
     wireSearchInput('editRedTeamSearch',   'editRedTeamCheckboxes');
     wireSearchInput('editBlackTeamSearch', 'editBlackTeamCheckboxes');
+
+    initColorPicker('editTeam1Swatches', 'editTeam1Label', editTeam1Color, c => { editTeam1Color = c; });
+    initColorPicker('editTeam2Swatches', 'editTeam2Label', editTeam2Color, c => { editTeam2Color = c; });
+
     document.getElementById('editPregameModal').style.display = 'block';
 };
 
@@ -318,8 +385,11 @@ window.saveEditPregame = async function () {
     const redTeam   = getCheckedIds('editRedTeamCheckboxes');
     const blackTeam = getCheckedIds('editBlackTeamCheckboxes');
 
-    if (redTeam.length === 0)   { alert('Please select at least one player for Red Team');   return; }
-    if (blackTeam.length === 0) { alert('Please select at least one player for Black Team'); return; }
+    const t1Name = TEAM_COLORS[editTeam1Color].name;
+    const t2Name = TEAM_COLORS[editTeam2Color].name;
+
+    if (redTeam.length === 0)   { alert(`Please select at least one player for ${t1Name} Team`);   return; }
+    if (blackTeam.length === 0) { alert(`Please select at least one player for ${t2Name} Team`); return; }
 
     const overlap = redTeam.filter(id => blackTeam.includes(id));
     if (overlap.length > 0) { alert('A player cannot be on both teams'); return; }
@@ -341,6 +411,7 @@ window.saveEditPregame = async function () {
         await updateDoc(doc(db, 'pregames', pregameId), {
             date, redTeam, blackTeam, redTeamNames, blackTeamNames,
             redCaptain, blackCaptain,
+            team1Color: editTeam1Color, team2Color: editTeam2Color,
             updatedAt: new Date().toISOString(),
         });
         document.getElementById('editPregameModal').style.display = 'none';
