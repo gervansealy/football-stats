@@ -6,6 +6,24 @@ import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/fi
 
 const ADMIN_EMAIL = 'gervansealy@gmail.com';
 
+const TEAM_COLORS = {
+    red:    { hex: '#DC3545', textColor: '#fff', border: '',                    emoji: '🔴', name: 'Red'    },
+    black:  { hex: '#333333', textColor: '#fff', border: 'rgba(255,255,255,0.2)', emoji: '⚫', name: 'Black'  },
+    blue:   { hex: '#1976D2', textColor: '#fff', border: '',                    emoji: '🔵', name: 'Blue'   },
+    green:  { hex: '#2E7D32', textColor: '#fff', border: '',                    emoji: '🟢', name: 'Green'  },
+    white:  { hex: '#E8E8E8', textColor: '#333', border: '#aaa',                emoji: '⚪', name: 'White'  },
+    yellow: { hex: '#F9A825', textColor: '#333', border: '',                    emoji: '🟡', name: 'Yellow' },
+    orange: { hex: '#F57C00', textColor: '#fff', border: '',                    emoji: '🟠', name: 'Orange' },
+    purple: { hex: '#7B1FA2', textColor: '#fff', border: '',                    emoji: '🟣', name: 'Purple' },
+};
+
+function getTeamColor(team, pregame) {
+    const key = team === 'red'
+        ? (pregame?.team1Color || 'red')
+        : (pregame?.team2Color || 'black');
+    return TEAM_COLORS[key] || TEAM_COLORS[team] || TEAM_COLORS.red;
+}
+
 // ── State ──────────────────────────────────────────
 let currentPregame = null;
 let currentTeam    = null;   // 'red' | 'black'
@@ -19,10 +37,10 @@ let dragOffsetY    = 0;
 
 // ── Entry ──────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-    const params  = new URLSearchParams(window.location.search);
-    const otp     = params.get('otp');
-    const viewId  = params.get('view');
-    const adminId = params.get('admin');
+    const params    = new URLSearchParams(window.location.search);
+    const otp       = params.get('otp');
+    const viewId    = params.get('view');
+    const adminId   = params.get('admin');
     const adminTeam = params.get('team');
 
     document.getElementById('otpInput')?.addEventListener('keydown', e => {
@@ -41,9 +59,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function showSection(which) {
-    document.getElementById('otpSection').style.display  = which === 'otp'    ? 'flex'  : 'none';
+    document.getElementById('otpSection').style.display    = which === 'otp'    ? 'flex'  : 'none';
     document.getElementById('editorSection').style.display = which === 'editor' ? 'block' : 'none';
-    document.getElementById('viewSection').style.display = which === 'view'   ? 'block' : 'none';
+    document.getElementById('viewSection').style.display   = which === 'view'   ? 'block' : 'none';
 }
 
 // ── OTP Flow ───────────────────────────────────────
@@ -51,10 +69,10 @@ window.verifyOTP = async function () {
     const otp = document.getElementById('otpInput').value.toUpperCase().trim();
     if (!otp) return;
     const btn = document.querySelector('#otpSection .btn-login');
-    btn.disabled = true;
+    btn.disabled    = true;
     btn.textContent = 'Checking…';
     await processOTP(otp);
-    btn.disabled = false;
+    btn.disabled  = false;
     btn.innerHTML = 'Continue <span class="arrow">→</span>';
 };
 
@@ -65,7 +83,7 @@ async function processOTP(otp) {
 
         snap.forEach(d => {
             const data = d.data();
-            if (data.redOTP === otp)   { found = { id: d.id, ...data }; team = 'red'; }
+            if (data.redOTP === otp)        { found = { id: d.id, ...data }; team = 'red'; }
             else if (data.blackOTP === otp) { found = { id: d.id, ...data }; team = 'black'; }
         });
 
@@ -74,16 +92,14 @@ async function processOTP(otp) {
             return;
         }
 
-        // If already submitted, switch to view mode
         const lineupDoc = await getDoc(doc(db, 'lineups', found.id));
         if (lineupDoc.exists()) {
-            const ld = lineupDoc.data();
+            const ld        = lineupDoc.data();
             const submitted = team === 'red' ? ld.redSubmitted : ld.blackSubmitted;
             if (submitted) {
                 await initViewMode(found.id);
                 return;
             }
-            // Load draft positions
             const existing = team === 'red' ? ld.redLineup : ld.blackLineup;
             if (existing) {
                 existing.forEach(p => {
@@ -107,15 +123,15 @@ async function processOTP(otp) {
 
 function showOTPError(msg) {
     const el = document.getElementById('otpError');
-    el.textContent = msg;
-    el.style.display = 'block';
+    el.textContent    = msg;
+    el.style.display  = 'block';
 }
 
 // ── Build team player list from pregame doc ─────────
 function buildTeamPlayers() {
-    const ids      = currentTeam === 'red' ? currentPregame.redTeam  : currentPregame.blackTeam;
-    const nameMap  = currentTeam === 'red' ? (currentPregame.redTeamNames  || {})
-                                           : (currentPregame.blackTeamNames || {});
+    const ids     = currentTeam === 'red' ? currentPregame.redTeam  : currentPregame.blackTeam;
+    const nameMap = currentTeam === 'red' ? (currentPregame.redTeamNames  || {})
+                                          : (currentPregame.blackTeamNames || {});
     teamPlayers = ids.map(id => ({ id, name: nameMap[id] || id }));
 }
 
@@ -137,7 +153,6 @@ function getDefaultPosition(index, total) {
     const n   = Math.min(total, 11);
     const pos = F[n] || F[11];
     if (index < pos.length) return { x: pos[index][0], y: pos[index][1] };
-    // overflow grid
     return { x: 20 + (index % 4) * 20, y: 12 + Math.floor(index / 4) * 18 };
 }
 
@@ -151,16 +166,16 @@ function applyDefaultPositions() {
 
 // ── Editor ─────────────────────────────────────────
 function initEditor() {
+    const tc        = getTeamColor(currentTeam, currentPregame);
     const date      = new Date(currentPregame.date + 'T12:00:00');
     const formatted = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-    const label     = currentTeam === 'red' ? '🔴 Red Team' : '⚫ Black Team';
 
-    document.getElementById('editorTitle').textContent    = `${label} Lineup`;
+    document.getElementById('editorTitle').textContent    = `${tc.emoji} ${tc.name} Team Lineup`;
     document.getElementById('editorSubtitle').textContent = formatted;
 
     const captainId = currentTeam === 'red' ? currentPregame.redCaptain : currentPregame.blackCaptain;
     showSection('editor');
-    renderTokensOnPitch('pitch', [{ team: currentTeam, players: teamPlayers }], true, captainId);
+    renderTokensOnPitch('pitch', [{ team: currentTeam, players: teamPlayers }], true, captainId, tc);
     initDragDrop();
 
     document.getElementById('submitLineupBtn').addEventListener('click', submitLineup);
@@ -168,8 +183,7 @@ function initEditor() {
 
 // ── Token rendering ────────────────────────────────
 
-/** Render one team's players onto a pitch, or show the pending overlay. */
-function renderTeamPitch(pitchId, pendingId, lineup, team, captainId = null) {
+function renderTeamPitch(pitchId, pendingId, lineup, team, captainId = null, tc = TEAM_COLORS.red) {
     const pitch   = document.getElementById(pitchId);
     const pending = document.getElementById(pendingId);
     pitch.querySelectorAll('.player-token').forEach(t => t.remove());
@@ -179,22 +193,21 @@ function renderTeamPitch(pitchId, pendingId, lineup, team, captainId = null) {
         return;
     }
     if (pending) pending.style.display = 'none';
-    lineup.forEach(p => pitch.appendChild(makeToken(p.id, p.name || p.id, team, p.x, p.y, false, p.id === captainId)));
+    lineup.forEach(p => pitch.appendChild(makeToken(p.id, p.name || p.id, team, p.x, p.y, false, p.id === captainId, tc)));
 }
 
-/** Render the editor's own team on the editing pitch. */
-function renderTokensOnPitch(pitchId, groups, draggable, captainId = null) {
+function renderTokensOnPitch(pitchId, groups, draggable, captainId = null, tc = TEAM_COLORS.red) {
     const pitch = document.getElementById(pitchId);
     pitch.querySelectorAll('.player-token').forEach(t => t.remove());
     groups.forEach(({ team, players }) => {
         players.forEach(p => {
             const pos = placedPlayers[p.id] || { x: 50, y: 50 };
-            pitch.appendChild(makeToken(p.id, p.name, team, pos.x, pos.y, draggable, p.id === captainId));
+            pitch.appendChild(makeToken(p.id, p.name, team, pos.x, pos.y, draggable, p.id === captainId, tc));
         });
     });
 }
 
-function makeToken(id, name, team, x, y, draggable, isCaptain = false) {
+function makeToken(id, name, team, x, y, draggable, isCaptain = false, tc = TEAM_COLORS.red) {
     const el = document.createElement('div');
     el.className        = 'player-token' + (draggable ? '' : ' view-only') + (isCaptain ? ' token-captain' : '');
     el.dataset.playerId = id;
@@ -202,11 +215,12 @@ function makeToken(id, name, team, x, y, draggable, isCaptain = false) {
     el.style.top        = y + '%';
     if (draggable) el.style.touchAction = 'none';
 
-    const initials = name.split(' ').map(w => w[0] || '').join('').substring(0, 2).toUpperCase();
-    const first    = name.split(' ')[0];
+    const initials   = name.split(' ').map(w => w[0] || '').join('').substring(0, 2).toUpperCase();
+    const first      = name.split(' ')[0];
+    const borderStyle = tc.border ? `border:1px solid ${tc.border};` : '';
 
     el.innerHTML = `
-        <div class="token-jersey ${team}">${initials}</div>
+        <div class="token-jersey" style="background:${tc.hex};color:${tc.textColor};${borderStyle}">${initials}</div>
         <div class="token-name">${first}</div>
         ${isCaptain ? '<div class="token-captain-star">C</div>' : ''}
     `;
@@ -216,9 +230,9 @@ function makeToken(id, name, team, x, y, draggable, isCaptain = false) {
 // ── Drag & Drop ────────────────────────────────────
 function initDragDrop() {
     const pitch = document.getElementById('pitch');
-    pitch.addEventListener('pointerdown',  onDown);
-    pitch.addEventListener('pointermove',  onMove);
-    pitch.addEventListener('pointerup',    onUp);
+    pitch.addEventListener('pointerdown',   onDown);
+    pitch.addEventListener('pointermove',   onMove);
+    pitch.addEventListener('pointerup',     onUp);
     pitch.addEventListener('pointercancel', onUp);
 }
 
@@ -232,8 +246,8 @@ function onDown(e) {
     token.classList.add('token-dragging');
 
     const pr = document.getElementById('pitch').getBoundingClientRect();
-    const pX = (e.clientX - pr.left)  / pr.width  * 100;
-    const pY = (e.clientY - pr.top)   / pr.height * 100;
+    const pX = (e.clientX - pr.left) / pr.width  * 100;
+    const pY = (e.clientY - pr.top)  / pr.height * 100;
     dragOffsetX = pX - parseFloat(token.style.left);
     dragOffsetY = pY - parseFloat(token.style.top);
 }
@@ -241,8 +255,8 @@ function onDown(e) {
 function onMove(e) {
     if (!draggingToken) return;
     const pr = document.getElementById('pitch').getBoundingClientRect();
-    const pX = (e.clientX - pr.left)  / pr.width  * 100;
-    const pY = (e.clientY - pr.top)   / pr.height * 100;
+    const pX = (e.clientX - pr.left) / pr.width  * 100;
+    const pY = (e.clientY - pr.top)  / pr.height * 100;
 
     const x = Math.max(3, Math.min(97, pX - dragOffsetX));
     const y = Math.max(3, Math.min(97, pY - dragOffsetY));
@@ -276,11 +290,11 @@ async function submitLineup() {
     try {
         const key = currentTeam;
         await setDoc(doc(db, 'lineups', currentPregame.id), {
-            pregameId:            currentPregame.id,
-            date:                 currentPregame.date,
-            [`${key}Lineup`]:     lineupData,
-            [`${key}Submitted`]:  true,
-            [`${key}SubmittedAt`]: new Date().toISOString(),
+            pregameId:              currentPregame.id,
+            date:                   currentPregame.date,
+            [`${key}Lineup`]:       lineupData,
+            [`${key}Submitted`]:    true,
+            [`${key}SubmittedAt`]:  new Date().toISOString(),
         }, { merge: true });
 
         await initViewMode(currentPregame.id);
@@ -309,38 +323,54 @@ async function initViewMode(pregameId) {
     const ld   = ldDoc.exists() ? ldDoc.data() : {};
     const date = new Date(pg.date + 'T12:00:00');
 
+    const t1 = getTeamColor('red',   pg);
+    const t2 = getTeamColor('black', pg);
+
     document.getElementById('viewTitle').textContent    = 'Match Lineup';
     document.getElementById('viewSubtitle').textContent = date.toLocaleDateString('en-US', {
         weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
     });
 
-    const redLineup    = ld.redLineup    || [];
-    const blackLineup  = ld.blackLineup  || [];
-    const redDone      = ld.redSubmitted   || false;
-    const blackDone    = ld.blackSubmitted || false;
+    // Update panel title labels and colors
+    const redTitle   = document.getElementById('redPanelTitle');
+    const blackTitle = document.getElementById('blackPanelTitle');
+    if (redTitle) {
+        redTitle.textContent      = `${t1.emoji} ${t1.name} Team`;
+        redTitle.style.background = `${t1.hex}55`;
+        redTitle.style.border     = `1px solid ${t1.hex}99`;
+        redTitle.style.color      = '#fff';
+    }
+    if (blackTitle) {
+        blackTitle.textContent      = `${t2.emoji} ${t2.name} Team`;
+        blackTitle.style.background = `${t2.hex}55`;
+        blackTitle.style.border     = `1px solid ${t2.hex}99`;
+        blackTitle.style.color      = '#fff';
+    }
 
-    // Status badges
+    const redLineup   = ld.redLineup    || [];
+    const blackLineup = ld.blackLineup  || [];
+    const redDone     = ld.redSubmitted   || false;
+    const blackDone   = ld.blackSubmitted || false;
+
     document.getElementById('lineupStatus').innerHTML = `
-        <div class="lineup-status-item ${redDone   ? 'submitted' : 'pending'}">🔴 Red: ${redDone   ? '✓ Set' : '⏳ Pending'}</div>
-        <div class="lineup-status-item ${blackDone ? 'submitted' : 'pending'}">⚫ Black: ${blackDone ? '✓ Set' : '⏳ Pending'}</div>
+        <div class="lineup-status-item ${redDone   ? 'submitted' : 'pending'}">${t1.emoji} ${t1.name}: ${redDone   ? '✓ Set' : '⏳ Pending'}</div>
+        <div class="lineup-status-item ${blackDone ? 'submitted' : 'pending'}">${t2.emoji} ${t2.name}: ${blackDone ? '✓ Set' : '⏳ Pending'}</div>
     `;
 
-    // Build combined placed map for rendering
     placedPlayers = {};
     [...redLineup, ...blackLineup].forEach(p => { placedPlayers[p.id] = { x: p.x, y: p.y }; });
 
-    renderTeamPitch('redViewPitch',   'redPitchPending',   redLineup,   'red',   pg.redCaptain   || null);
-    renderTeamPitch('blackViewPitch', 'blackPitchPending', blackLineup, 'black', pg.blackCaptain || null);
+    renderTeamPitch('redViewPitch',   'redPitchPending',   redLineup,   'red',   pg.redCaptain   || null, t1);
+    renderTeamPitch('blackViewPitch', 'blackPitchPending', blackLineup, 'black', pg.blackCaptain || null, t2);
     showSection('view');
 
-    // Check if admin for edit buttons (no redirect if not logged in)
     onAuthStateChanged(auth, user => {
         if (user && user.email === ADMIN_EMAIL) {
             const adminBtns = document.getElementById('viewAdminBtns');
             adminBtns.style.display = 'flex';
             adminBtns.innerHTML = `
-                <button onclick="adminEditTeam('${pregameId}','red')"   class="btn-secondary" style="background:#DC3545;color:white;border:none;">Edit Red Lineup</button>
-                <button onclick="adminEditTeam('${pregameId}','black')" class="btn-secondary" style="border:none;">Edit Black Lineup</button>
+                <button onclick="adminEditTeam('${pregameId}','red')"   class="btn-secondary" style="background:${t1.hex};color:${t1.textColor};border:none;">Edit ${t1.name} Lineup</button>
+                <button onclick="adminEditTeam('${pregameId}','black')" class="btn-secondary" style="background:${t2.hex};color:${t2.textColor};border:none;">Edit ${t2.name} Lineup</button>
             `;
         }
     });
@@ -348,7 +378,6 @@ async function initViewMode(pregameId) {
 
 // ── Admin edit ─────────────────────────────────────
 async function initAdminEdit(pregameId, team) {
-    // Verify admin via Firebase Auth
     await new Promise(resolve => {
         onAuthStateChanged(auth, user => {
             if (!user || user.email !== ADMIN_EMAIL) {
