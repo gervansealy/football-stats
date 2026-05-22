@@ -7,6 +7,17 @@ let allPlayers = [];
 let cachedGames = []; // Cache games for performance
 let cachedPointValues = null; // Cache point values
 
+const TEAM_COLORS = {
+    red:    { name: 'Red',    emoji: '🔴', hex: '#DC3545' },
+    black:  { name: 'Black',  emoji: '⚫', hex: '#333333' },
+    blue:   { name: 'Blue',   emoji: '🔵', hex: '#1976D2' },
+    green:  { name: 'Green',  emoji: '🟢', hex: '#2E7D32' },
+    white:  { name: 'White',  emoji: '⚪', hex: '#9E9E9E' },
+    yellow: { name: 'Yellow', emoji: '🟡', hex: '#F9A825' },
+    orange: { name: 'Orange', emoji: '🟠', hex: '#F57C00' },
+    purple: { name: 'Purple', emoji: '🟣', hex: '#7B1FA2' },
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
     const authData = await checkAuth();
     currentUserRole = authData.role;
@@ -287,19 +298,19 @@ function pitchMarkingsHTML() {
     `;
 }
 
-function playerTokenHTML(player, team, captainId) {
+function playerTokenHTML(player, hex, captainId) {
     const isCaptain = player.id === captainId;
     const initials  = (player.name || player.id).split(' ').map(w => w[0] || '').join('').substring(0, 2).toUpperCase();
     const first     = (player.name || player.id).split(' ')[0];
     return `<div class="player-token view-only${isCaptain ? ' token-captain' : ''}" style="left:${player.x}%;top:${player.y}%;">
-        <div class="token-jersey ${team}">${initials}</div>
+        <div class="token-jersey" style="background:${hex};">${initials}</div>
         <div class="token-name">${first}</div>
         ${isCaptain ? '<div class="token-captain-star">C</div>' : ''}
     </div>`;
 }
 
-function buildPitchHTML(lineup, team, captainId) {
-    const tokens = (lineup || []).map(p => playerTokenHTML(p, team, captainId)).join('');
+function buildPitchHTML(lineup, hex, captainId) {
+    const tokens = (lineup || []).map(p => playerTokenHTML(p, hex, captainId)).join('');
     return `<div class="pitch">${pitchMarkingsHTML()}${tokens}</div>`;
 }
 
@@ -429,17 +440,20 @@ window.openGameDetailModal = async function(gameId) {
             blackLineup = buildDefaultLineup(gameData.blackTeam);
         }
 
+        const t1 = TEAM_COLORS[gameData.team1Color] || TEAM_COLORS.red;
+        const t2 = TEAM_COLORS[gameData.team2Color] || TEAM_COLORS.black;
+
         lineupHTML = `
             <div class="game-lineups-history">
                 <h3>Captain Lineups</h3>
                 <div class="dual-pitch-view" style="padding:0 0 20px 0;">
                     <div class="pitch-panel">
-                        <div class="pitch-panel-title red">🔴 Red Team</div>
-                        <div style="position:relative;">${buildPitchHTML(redLineup, 'red', gameData.redCaptain)}</div>
+                        <div class="pitch-panel-title" style="background:${t1.hex}4D;border:1px solid ${t1.hex}8C;">${t1.emoji} ${t1.name} Team</div>
+                        <div style="position:relative;">${buildPitchHTML(redLineup, t1.hex, gameData.redCaptain)}</div>
                     </div>
                     <div class="pitch-panel">
-                        <div class="pitch-panel-title black">⚫ Black Team</div>
-                        <div style="position:relative;">${buildPitchHTML(blackLineup, 'black', gameData.blackCaptain)}</div>
+                        <div class="pitch-panel-title" style="background:${t2.hex}4D;border:1px solid ${t2.hex}8C;">${t2.emoji} ${t2.name} Team</div>
+                        <div style="position:relative;">${buildPitchHTML(blackLineup, t2.hex, gameData.blackCaptain)}</div>
                     </div>
                 </div>
             </div>
