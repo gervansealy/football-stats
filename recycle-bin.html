@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recycle Bin - Football Database</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">Football Season Player Database</div>
+        <div class="nav-links">
+            <a href="standings.html">Standings</a>
+            <a href="game-history.html">Game History</a>
+            <a href="team-selection.html">Team Selection</a>
+            <a href="player-profiles.html">Player Profiles</a>
+            <a href="settings.html" class="admin-only">Settings</a>
+            <a href="recycle-bin.html" class="active admin-only">Recycle Bin</a>
+        </div>
+        <div class="nav-actions">
+            <span id="userRole" class="role-badge"></span>
+            <button id="changeRoleBtn" class="btn-secondary">Change Role</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>🗑️ Recycle Bin</h1>
+            <button id="emptyBinBtn" class="btn-danger admin-only" style="display:none;">Empty Bin</button>
+        </div>
+        <p class="recycle-bin-subtitle">Deleted players and games. Restore to recover, or permanently delete to remove forever.</p>
+
+        <div class="recycle-bin-filters">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="player">Players</button>
+            <button class="filter-btn" data-filter="game">Games</button>
+        </div>
+
+        <div id="recycleBinContainer">
+            <p class="loading-message">⏳ Loading recycle bin...</p>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal">
+        <div class="modal-content" style="max-width:420px;">
+            <div class="modal-header">
+                <h2 id="confirmModalTitle">Confirm</h2>
+                <span class="close" onclick="document.getElementById('confirmModal').style.display='none'">&times;</span>
+            </div>
+            <p id="confirmModalBody" style="padding:16px 0;"></p>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button class="btn-secondary" onclick="document.getElementById('confirmModal').style.display='none'">Cancel</button>
+                <button id="confirmModalAction" class="btn-danger">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/recycle-bin.js"></script>
+</body>
+</html>

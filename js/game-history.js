@@ -1,6 +1,6 @@
 import { db } from './firebase-config.js';
 import { checkAuth } from './auth.js';
-import { collection, query, orderBy, where, onSnapshot, getDocs, doc, updateDoc, deleteDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { collection, query, orderBy, where, onSnapshot, getDocs, doc, updateDoc, deleteDoc, getDoc, addDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 let currentUserRole = 'viewer';
 let allPlayers = [];
@@ -619,14 +619,21 @@ window.saveEditedGame = async function() {
 
 window.deleteGame = async function(gameId, formattedDate) {
     event.stopPropagation();
-    
-    if (!confirm(`Are you sure you want to delete the game on ${formattedDate}? This cannot be undone.`)) {
-        return;
-    }
-    
+
+    if (!confirm(`Move the game on ${formattedDate} to the Recycle Bin?`)) return;
+
     try {
+        const gameDoc = await getDoc(doc(db, 'games', gameId));
+        if (!gameDoc.exists()) return;
+
+        await setDoc(doc(db, 'trash', gameId), {
+            type: 'game',
+            originalId: gameId,
+            data: gameDoc.data(),
+            deletedAt: new Date().toISOString()
+        });
         await deleteDoc(doc(db, 'games', gameId));
-        alert('Game deleted successfully!');
+        alert('Game moved to Recycle Bin.');
     } catch (error) {
         console.error('Error deleting game:', error);
         alert('Error deleting game. Please try again.');

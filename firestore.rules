@@ -48,6 +48,11 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
     
+    // Trash (recycle bin) — admin only
+    match /trash/{trashId} {
+      allow read, write, delete: if isAdmin();
+    }
+
     // Deny all other access
     match /{document=**} {
       allow read, write: if false;

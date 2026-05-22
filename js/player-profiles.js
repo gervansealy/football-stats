@@ -1,6 +1,6 @@
 import { db } from './firebase-config.js';
 import { checkAuth } from './auth.js';
-import { collection, addDoc, getDocs, doc, getDoc, onSnapshot, query, where, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { collection, addDoc, getDocs, doc, getDoc, onSnapshot, query, where, updateDoc, deleteDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 let isAdmin = false;
 let editingPlayerId = null;
@@ -116,13 +116,20 @@ window.openEditModal = async function(playerId) {
 };
 
 window.deletePlayer = async function(playerId, playerName) {
-    if (!confirm(`Are you sure you want to delete ${playerName}? This action cannot be undone.`)) {
-        return;
-    }
-    
+    if (!confirm(`Move ${playerName} to the Recycle Bin?`)) return;
+
     try {
+        const playerDoc = await getDoc(doc(db, 'players', playerId));
+        if (!playerDoc.exists()) return;
+
+        await setDoc(doc(db, 'trash', playerId), {
+            type: 'player',
+            originalId: playerId,
+            data: playerDoc.data(),
+            deletedAt: new Date().toISOString()
+        });
         await deleteDoc(doc(db, 'players', playerId));
-        alert('Player deleted successfully!');
+        alert(`${playerName} moved to Recycle Bin.`);
     } catch (error) {
         console.error('Error deleting player:', error);
         alert('Error deleting player. Please try again.');

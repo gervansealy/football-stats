@@ -3195,3 +3195,156 @@ body.admin .nav-links a.admin-only {
     width: 44px;
     height: 44px;
 }
+
+/* ── Recycle Bin ─────────────────────────────────── */
+.recycle-bin-subtitle {
+    color: var(--text-secondary, #888);
+    margin: -8px 0 20px;
+    font-size: 14px;
+}
+
+.recycle-bin-filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.filter-btn {
+    padding: 6px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.15s, color 0.15s;
+}
+
+.filter-btn.active,
+.filter-btn:hover {
+    background: var(--primary-color, #2196F3);
+    color: #fff;
+    border-color: var(--primary-color, #2196F3);
+}
+
+.trash-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+}
+
+.trash-item-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.trash-type-icon {
+    font-size: 26px;
+    flex-shrink: 0;
+}
+
+.trash-item-info {
+    min-width: 0;
+}
+
+.trash-item-name {
+    font-weight: 600;
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.trash-item-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.trash-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.trash-badge-player {
+    background: #E3F2FD;
+    color: #1565C0;
+}
+
+.trash-badge-game {
+    background: #E8F5E9;
+    color: #2E7D32;
+}
+
+.trash-item-date {
+    font-size: 12px;
+    color: var(--text-secondary, #888);
+}
+
+.trash-item-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.btn-restore {
+    padding: 7px 14px;
+    border: 1.5px solid #2196F3;
+    border-radius: 6px;
+    background: transparent;
+    color: #2196F3;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.btn-restore:hover {
+    background: #2196F3;
+    color: #fff;
+}
+
+.btn-delete-perm {
+    padding: 7px 14px;
+    border: 1.5px solid #DC3545;
+    border-radius: 6px;
+    background: transparent;
+    color: #DC3545;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.btn-delete-perm:hover {
+    background: #DC3545;
+    color: #fff;
+}
+
+.btn-danger {
+    padding: 8px 18px;
+    background: #DC3545;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-danger:hover {
+    background: #b02a37;
+}
