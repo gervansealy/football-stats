@@ -136,10 +136,16 @@ function addVideoField(url = '', name = '') {
     const div = document.createElement('div');
     div.className = 'form-group';
     div.innerHTML = `
-        <label>Video ${index + 2}:</label>
-        <div class="video-entry-row">
-            <input type="text" class="video-name" placeholder="Video name (e.g. Luke finisher)" value="${name}">
-            <input type="url" class="video-link" placeholder="Paste video link" value="${url}">
+        <label>Highlight Video ${index + 2}:</label>
+        <div class="video-entry-stack">
+            <div class="video-entry-field">
+                <span class="video-field-label">Name</span>
+                <input type="text" class="video-name" placeholder="e.g. Luke finisher" value="${name}">
+            </div>
+            <div class="video-entry-field">
+                <span class="video-field-label">Link</span>
+                <input type="url" class="video-link" placeholder="Paste video link" value="${url}">
+            </div>
         </div>
     `;
     container.appendChild(div);

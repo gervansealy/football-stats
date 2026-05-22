@@ -1283,6 +1283,35 @@ body.admin .nav-links a.admin-only {
     font-size: 14px;
 }
 
+.video-entry-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.video-entry-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.video-field-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary, #888);
+    width: 34px;
+    flex-shrink: 0;
+}
+
+.video-entry-field input[type="text"],
+.video-entry-field input[type="url"] {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+}
+
 /* Game Breakdown Section */
 .game-breakdown-section {
     margin-top: 20px;
