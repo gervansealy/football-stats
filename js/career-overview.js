@@ -278,8 +278,8 @@ function attachStatCardListeners(section, playerId, allGames, videoCount) {
 
             if (statId === 'videos') {
                 if (!videoItems.length) return;
-                const listHTML = videoItems.map(item => `
-                    <div class="video-file-box" data-embed-link="${item.embedLink || ''}" data-drive-video="${item.driveLink || ''}">
+                const listHTML = videoItems.map((item, index) => `
+                    <div class="video-file-box" data-video-index="${index}" data-embed-link="${item.embedLink || ''}" data-drive-video="${item.driveLink || ''}">
                         <div class="video-icon">🎬</div>
                         <div class="video-file-name">${item.name}</div>
                         <div class="video-play-icon">▶</div>
@@ -291,12 +291,8 @@ function attachStatCardListeners(section, playerId, allGames, videoCount) {
                     box.addEventListener('click', (e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        const driveVideo = box.getAttribute('data-drive-video');
-                        const embedLink = box.getAttribute('data-embed-link');
-                        if (onVideoClick) {
-                            closeStatDetailModal();
-                            onVideoClick({ driveVideo, embedLink });
-                        }
+                        const index = parseInt(box.dataset.videoIndex, 10);
+                        if (onVideoClick) onVideoClick(videoItems, index);
                     });
                 });
                 return;

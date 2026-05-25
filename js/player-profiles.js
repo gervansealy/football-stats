@@ -2,6 +2,7 @@ import { db } from './firebase-config.js';
 import { checkAuth } from './auth.js';
 import { collection, addDoc, getDocs, doc, getDoc, onSnapshot, query, where, updateDoc, deleteDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { buildCareerOverviewSection, buildPlayerInfoCards, initCareerOverview } from './career-overview.js';
+import { openHighlightPlaylist } from './highlight-video-player.js';
 
 let isAdmin = false;
 let editingPlayerId = null;
@@ -504,9 +505,8 @@ window.showPlayerDetail = async function(playerId) {
     document.getElementById('playerDetailModal').style.display = 'block';
 
     const careerSection = document.getElementById('playerDetailContent').querySelector('.career-overview-section');
-    initCareerOverview(careerSection, playerId, allGames, videoItems.length, videoItems, ({ driveVideo, embedLink }) => {
-        if (driveVideo) openDriveVideoModal(driveVideo);
-        else if (embedLink) openVideoModal(embedLink);
+    initCareerOverview(careerSection, playerId, allGames, videoItems.length, videoItems, (items, startIndex) => {
+        openHighlightPlaylist(items, startIndex);
     });
 };
 
@@ -574,73 +574,6 @@ function getVideoThumbnail(url) {
     }
     return '';
 }
-
-window.openVideoModal = function(embedUrl) {
-    const modal = document.getElementById('videoModal');
-    const iframe = document.getElementById('videoModalIframe');
-    
-    if (!modal || !iframe) {
-        console.error('Video modal elements not found!');
-        return;
-    }
-    
-    iframe.src = embedUrl;
-    modal.style.display = 'block';
-};
-
-window.openDriveVideoModal = function(videoUrl) {
-    const modal = document.getElementById('videoModal');
-    const modalContent = modal.querySelector('.video-modal-content');
-    
-    if (!modal || !modalContent) {
-        console.error('Video modal elements not found!');
-        return;
-    }
-    
-    // Replace iframe with HTML5 video player for Google Drive
-    modalContent.innerHTML = `
-        <span class="close video-close" onclick="closeVideoModal()">&times;</span>
-        <video id="driveVideoPlayer" controls autoplay style="width: 100%; height: 675px; background: #000;">
-            <source src="${videoUrl}" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-    `;
-    
-    modal.style.display = 'block';
-    
-    // Start playing
-    setTimeout(() => {
-        const video = document.getElementById('driveVideoPlayer');
-        if (video) {
-            video.play().catch(err => console.log('Autoplay prevented:', err));
-        }
-    }, 100);
-};
-
-window.closeVideoModal = function() {
-    const modal = document.getElementById('videoModal');
-    const modalContent = modal.querySelector('.video-modal-content');
-    
-    // Stop any playing video
-    const video = document.getElementById('driveVideoPlayer');
-    if (video) {
-        video.pause();
-        video.src = '';
-    }
-    
-    // Reset to original iframe structure
-    modalContent.innerHTML = `
-        <span class="close video-close" onclick="closeVideoModal()">&times;</span>
-        <iframe id="videoModalIframe" frameborder="0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
-    `;
-    
-    const iframe = document.getElementById('videoModalIframe');
-    if (iframe) {
-        iframe.src = '';
-    }
-    
-    modal.style.display = 'none';
-};
 
 function calculateAge(birthday) {
     const birthDate = new Date(birthday);

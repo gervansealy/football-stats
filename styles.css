@@ -1387,6 +1387,10 @@ body.admin .nav-links a.admin-only {
     z-index: 1100;
 }
 
+#videoModal {
+    z-index: 1200;
+}
+
 #statDetailContent {
     padding: 0 20px 20px;
     max-height: 50vh;
@@ -1703,6 +1707,12 @@ body.admin .nav-links a.admin-only {
     box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
 }
 
+.video-file-box-active {
+    border-color: var(--primary-color);
+    background: #ebf4ff;
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
+}
+
 .video-icon {
     font-size: 24px;
     flex-shrink: 0;
@@ -1767,6 +1777,65 @@ body.admin .nav-links a.admin-only {
 
 .video-close:hover {
     background: rgba(255, 0, 0, 0.8);
+}
+
+.video-modal-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    background: #111;
+    color: white;
+    border-bottom: 1px solid #333;
+}
+
+.video-modal-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.video-modal-title {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.video-modal-counter {
+    font-size: 12px;
+    color: #aaa;
+}
+
+.video-modal-nav {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.video-nav-btn {
+    padding: 6px 12px;
+    border: 1px solid #555;
+    border-radius: 6px;
+    background: #222;
+    color: white;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.video-nav-btn:hover:not(:disabled) {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.video-nav-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 .video-modal-content iframe {

@@ -2,6 +2,7 @@ import { db } from './firebase-config.js';
 import { checkAuth } from './auth.js';
 import { collection, query, where, onSnapshot, getDocs, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { buildCareerOverviewSection, buildPlayerInfoCards, initCareerOverview } from './career-overview.js';
+import { openHighlightPlaylist } from './highlight-video-player.js';
 
 let currentYear = new Date().getFullYear();
 let unsubscribe = null;
@@ -502,65 +503,11 @@ window.openPlayerProfileModal = async function(playerId) {
         };
 
         const careerSection = modalContent.querySelector('.career-overview-section');
-        initCareerOverview(careerSection, playerId, allGames, videoItems.length, videoItems, ({ driveVideo, embedLink }) => {
-            if (driveVideo) openDriveVideoModal(driveVideo);
-            else if (embedLink) openVideoModal(embedLink);
+        initCareerOverview(careerSection, playerId, allGames, videoItems.length, videoItems, (items, startIndex) => {
+            openHighlightPlaylist(items, startIndex);
         });
     } catch (error) {
         console.error('Error opening player profile:', error);
         alert('Error loading player profile. Please try again.');
     }
-};
-
-window.openVideoModal = function(embedUrl) {
-    const modal = document.getElementById('videoModal');
-    const iframe = document.getElementById('videoModalIframe');
-    
-    if (!modal || !iframe) return;
-    
-    iframe.src = embedUrl;
-    modal.style.display = 'block';
-};
-
-window.openDriveVideoModal = function(videoUrl) {
-    const modal = document.getElementById('videoModal');
-    const modalContent = modal.querySelector('.video-modal-content');
-    
-    if (!modal || !modalContent) return;
-    
-    modalContent.innerHTML = `
-        <span class="close video-close" onclick="closeVideoModal()">&times;</span>
-        <video id="driveVideoPlayer" controls autoplay style="width: 100%; height: 675px; background: #000;">
-            <source src="${videoUrl}" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-    `;
-    
-    modal.style.display = 'block';
-    
-    setTimeout(() => {
-        const video = document.getElementById('driveVideoPlayer');
-        if (video) video.play().catch(err => console.log('Autoplay prevented:', err));
-    }, 100);
-};
-
-window.closeVideoModal = function() {
-    const modal = document.getElementById('videoModal');
-    const modalContent = modal.querySelector('.video-modal-content');
-    
-    const video = document.getElementById('driveVideoPlayer');
-    if (video) {
-        video.pause();
-        video.src = '';
-    }
-    
-    modalContent.innerHTML = `
-        <span class="close video-close" onclick="closeVideoModal()">&times;</span>
-        <iframe id="videoModalIframe" frameborder="0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
-    `;
-    
-    const iframe = document.getElementById('videoModalIframe');
-    if (iframe) iframe.src = '';
-    
-    modal.style.display = 'none';
 };
