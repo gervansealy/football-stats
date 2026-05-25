@@ -1301,6 +1301,15 @@ body.admin .nav-links a.admin-only {
     color: var(--text-primary);
 }
 
+.career-period-filters {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.career-year-select,
+.career-month-select,
 .career-period-select {
     padding: 8px 32px 8px 12px;
     border: 1px solid var(--border-color);
@@ -1309,7 +1318,11 @@ body.admin .nav-links a.admin-only {
     font-size: 14px;
     color: var(--text-primary);
     cursor: pointer;
-    min-width: 160px;
+    min-width: 120px;
+}
+
+.career-month-select:disabled {
+    display: none;
 }
 
 .career-stat-grid {
@@ -1839,8 +1852,14 @@ body.admin .nav-links a.admin-only {
         align-items: flex-start;
     }
 
-    .career-period-select {
+    .career-period-filters {
         width: 100%;
+    }
+
+    .career-year-select,
+    .career-month-select {
+        flex: 1;
+        min-width: 0;
     }
 
     .game-stats {

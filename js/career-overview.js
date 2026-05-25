@@ -110,41 +110,70 @@ function getCategoryCount(category, playerId, games) {
     return matching.length;
 }
 
-function formatMonthLabel(year, month) {
-    return new Date(Number(year), Number(month) - 1, 1).toLocaleDateString('en-US', {
-        month: 'long',
-        year: 'numeric'
+function getMonthsForYear(games, year) {
+    const months = new Set();
+    games.forEach(game => {
+        if (getGameYear(game) === year) {
+            months.add(getGameDate(game).getMonth() + 1);
+        }
     });
+    return [...months].sort((a, b) => b - a);
 }
 
-function buildPeriodOptions(games) {
+function formatMonthName(month) {
+    return new Date(2000, Number(month) - 1, 1).toLocaleDateString('en-US', { month: 'long' });
+}
+
+function buildYearOptions(games) {
     const years = new Set();
-    const monthKeys = new Set();
-
-    games.forEach(game => {
-        const d = getGameDate(game);
-        years.add(getGameYear(game));
-        monthKeys.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
-    });
-
-    const sortedYears = [...years].sort((a, b) => b - a);
-    const sortedMonths = [...monthKeys].sort((a, b) => b.localeCompare(a));
+    games.forEach(game => years.add(getGameYear(game)));
 
     let options = '<option value="all">All Years</option>';
-    options += '<optgroup label="Years">';
-    sortedYears.forEach(year => {
-        options += `<option value="year:${year}">${year}</option>`;
+    [...years].sort((a, b) => b - a).forEach(year => {
+        options += `<option value="${year}">${year}</option>`;
     });
-    options += '</optgroup>';
-    options += '<optgroup label="Months">';
-    sortedMonths.forEach(key => {
-        const [year, month] = key.split('-');
-        const label = formatMonthLabel(year, month);
-        options += `<option value="month:${key}">${label}</option>`;
-    });
-    options += '</optgroup>';
-
     return options;
+}
+
+function buildMonthOptions(games, year) {
+    if (!year || year === 'all') return '';
+
+    let options = '<option value="all">All Months</option>';
+    getMonthsForYear(games, Number(year)).forEach(month => {
+        const key = `${year}-${String(month).padStart(2, '0')}`;
+        options += `<option value="${key}">${formatMonthName(month)}</option>`;
+    });
+    return options;
+}
+
+function getCurrentPeriod(section) {
+    const year = section.querySelector('.career-year-select')?.value || 'all';
+    const month = section.querySelector('.career-month-select')?.value || 'all';
+
+    if (year === 'all') return 'all';
+    if (month === 'all') return `year:${year}`;
+    return `month:${month}`;
+}
+
+function syncMonthSelect(section, playerGames, selectedMonth = 'all') {
+    const yearSelect = section.querySelector('.career-year-select');
+    const monthSelect = section.querySelector('.career-month-select');
+    if (!yearSelect || !monthSelect) return;
+
+    const year = yearSelect.value;
+    if (year === 'all') {
+        monthSelect.innerHTML = '';
+        monthSelect.disabled = true;
+        monthSelect.hidden = true;
+        return;
+    }
+
+    monthSelect.hidden = false;
+    monthSelect.disabled = false;
+    monthSelect.innerHTML = buildMonthOptions(playerGames, year);
+    monthSelect.value = [...monthSelect.options].some(opt => opt.value === selectedMonth)
+        ? selectedMonth
+        : 'all';
 }
 
 function buildStatCardsHTML(playerId, games, videoCount) {
@@ -171,15 +200,19 @@ function buildStatCardsHTML(playerId, games, videoCount) {
 
 export function buildCareerOverviewSection(playerId, allGames, videoCount = 0) {
     const playerGames = getPlayerGames(allGames, playerId);
-    const periodOptions = buildPeriodOptions(playerGames);
+    const yearOptions = buildYearOptions(playerGames);
 
     return `
         <div class="career-overview-section" data-player-id="${playerId}">
             <div class="career-overview-header">
                 <h3 class="career-overview-title">Career Overview</h3>
-                <select class="career-period-select" aria-label="Filter career stats by period">
-                    ${periodOptions}
-                </select>
+                <div class="career-period-filters">
+                    <select class="career-year-select" aria-label="Filter career stats by year">
+                        ${yearOptions}
+                    </select>
+                    <select class="career-month-select" aria-label="Filter career stats by month" disabled hidden>
+                    </select>
+                </div>
             </div>
             <div class="career-stat-cards">
                 ${buildStatCardsHTML(playerId, playerGames, videoCount)}
@@ -224,7 +257,7 @@ function getPlayerGames(allGames, playerId) {
 }
 
 function updateStatCards(section, playerId, allGames, videoCount) {
-    const period = section.querySelector('.career-period-select')?.value || 'all';
+    const period = getCurrentPeriod(section);
     const filteredGames = filterGamesByPeriod(getPlayerGames(allGames, playerId), period);
     const cardsContainer = section.querySelector('.career-stat-cards');
     if (cardsContainer) {
@@ -234,7 +267,7 @@ function updateStatCards(section, playerId, allGames, videoCount) {
 }
 
 function attachStatCardListeners(section, playerId, allGames, videoCount) {
-    const period = section.querySelector('.career-period-select')?.value || 'all';
+    const period = getCurrentPeriod(section);
     const filteredGames = filterGamesByPeriod(getPlayerGames(allGames, playerId), period);
     const videoItems = section._videoItems || [];
     const onVideoClick = section._onVideoClick;
@@ -279,10 +312,20 @@ export function initCareerOverview(section, playerId, allGames, videoCount = 0, 
 
     section._videoItems = videoItems;
     section._onVideoClick = onVideoClick;
+    section._playerGames = getPlayerGames(allGames, playerId);
 
-    const periodSelect = section.querySelector('.career-period-select');
-    if (periodSelect) {
-        periodSelect.addEventListener('change', () => {
+    const yearSelect = section.querySelector('.career-year-select');
+    const monthSelect = section.querySelector('.career-month-select');
+
+    if (yearSelect) {
+        yearSelect.addEventListener('change', () => {
+            syncMonthSelect(section, section._playerGames);
+            updateStatCards(section, playerId, allGames, videoCount);
+        });
+    }
+
+    if (monthSelect) {
+        monthSelect.addEventListener('change', () => {
             updateStatCards(section, playerId, allGames, videoCount);
         });
     }
