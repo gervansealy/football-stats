@@ -14,6 +14,7 @@ const IFRAME_TEMPLATE = `
             <button type="button" class="video-nav-btn" id="videoPrevBtn">Previous</button>
             <button type="button" class="video-nav-btn" id="videoNextBtn">Next</button>
         </div>
+        <div class="video-modal-toolbar-spacer" aria-hidden="true"></div>
     </div>
     <iframe id="videoModalIframe" frameborder="0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
 `;
@@ -61,28 +62,24 @@ function updateToolbar() {
 
     if (titleEl) titleEl.textContent = item?.name || '';
     if (counterEl) counterEl.textContent = playlist.length > 1 ? `${currentIndex + 1} of ${playlist.length}` : '';
-    if (prevBtn) prevBtn.disabled = currentIndex <= 0;
-    if (nextBtn) nextBtn.disabled = currentIndex >= playlist.length - 1;
+    if (prevBtn) prevBtn.disabled = playlist.length <= 1;
+    if (nextBtn) nextBtn.disabled = playlist.length <= 1;
 }
 
 function playNextHighlight() {
-    if (currentIndex < playlist.length - 1) {
-        currentIndex += 1;
-        playCurrentHighlight();
-    }
+    if (playlist.length <= 1) return;
+    currentIndex = (currentIndex + 1) % playlist.length;
+    playCurrentHighlight();
 }
 
 function playPreviousHighlight() {
-    if (currentIndex > 0) {
-        currentIndex -= 1;
-        playCurrentHighlight();
-    }
+    if (playlist.length <= 1) return;
+    currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+    playCurrentHighlight();
 }
 
 function onHighlightEnded() {
-    if (currentIndex < playlist.length - 1) {
-        playNextHighlight();
-    }
+    if (playlist.length > 1) playNextHighlight();
 }
 
 function setupEmbedEndDetection(iframe) {
@@ -149,6 +146,7 @@ function playDriveHighlight(item) {
                 <button type="button" class="video-nav-btn" id="videoPrevBtn">Previous</button>
                 <button type="button" class="video-nav-btn" id="videoNextBtn">Next</button>
             </div>
+            <div class="video-modal-toolbar-spacer" aria-hidden="true"></div>
         </div>
         <video id="driveVideoPlayer" controls autoplay style="width: 100%; height: 675px; background: #000;">
             <source src="${item.driveLink}" type="video/mp4">

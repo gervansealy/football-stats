@@ -1780,11 +1780,11 @@ body.admin .nav-links a.admin-only {
 }
 
 .video-modal-toolbar {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    justify-content: space-between;
     gap: 12px;
-    padding: 10px 14px;
+    padding: 10px 60px 10px 14px;
     background: #111;
     color: white;
     border-bottom: 1px solid #333;
@@ -1795,7 +1795,7 @@ body.admin .nav-links a.admin-only {
     flex-direction: column;
     gap: 2px;
     min-width: 0;
-    flex: 1;
+    justify-self: start;
 }
 
 .video-modal-title {
@@ -1814,7 +1814,11 @@ body.admin .nav-links a.admin-only {
 .video-modal-nav {
     display: flex;
     gap: 8px;
-    flex-shrink: 0;
+    justify-self: center;
+}
+
+.video-modal-toolbar-spacer {
+    justify-self: end;
 }
 
 .video-nav-btn {
