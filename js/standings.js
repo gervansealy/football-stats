@@ -1,6 +1,7 @@
 import { db } from './firebase-config.js';
 import { checkAuth } from './auth.js';
 import { collection, query, where, onSnapshot, getDocs, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { buildCareerOverviewSection, buildPlayerInfoCards, initCareerOverview } from './career-overview.js';
 
 let currentYear = new Date().getFullYear();
 let unsubscribe = null;
@@ -405,118 +406,27 @@ function convertToEmbedLink(url) {
     return null;
 }
 
-function buildGameBreakdownSection(playerId, allGames, extraItemsHTML = '') {
-    const categories = [
-        {
-            label: 'Wins',
-            filter: g => (g.playerStats?.[playerId]?.win || 0) > 0,
-            detail: g => {
-                const v = g.playerStats[playerId].win;
-                return `${v} win${v > 1 ? 's' : ''}`;
-            }
-        },
-        {
-            label: 'Draws',
-            filter: g => (g.playerStats?.[playerId]?.draw || 0) > 0,
-            detail: g => {
-                const v = g.playerStats[playerId].draw;
-                return `${v} draw${v > 1 ? 's' : ''}`;
-            }
-        },
-        {
-            label: 'Goals',
-            filter: g => (g.playerStats?.[playerId]?.goals || 0) > 0,
-            detail: g => {
-                const v = g.playerStats[playerId].goals;
-                return `${v} goal${v > 1 ? 's' : ''}`;
-            },
-            total: games => games.reduce((sum, g) => sum + (g.playerStats?.[playerId]?.goals || 0), 0)
-        },
-        {
-            label: 'Captain Losses',
-            filter: g => (g.playerStats?.[playerId]?.captainLoss || 0) > 0,
-            detail: () => 'Captain Loss'
-        },
-        {
-            label: 'Games Played',
-            filter: g => g.playerStats?.[playerId] != null,
-            detail: null
-        },
-        {
-            label: 'Losses',
-            filter: g => (g.playerStats?.[playerId]?.loss || 0) > 0,
-            detail: g => {
-                const v = g.playerStats[playerId].loss;
-                return `${v} loss${v > 1 ? 'es' : ''}`;
-            }
-        },
-        {
-            label: 'Captain Wins',
-            filter: g => (g.playerStats?.[playerId]?.captainWin || 0) > 0,
-            detail: () => 'Captain Win'
-        },
-        {
-            label: 'Captain Draws',
-            filter: g => (g.playerStats?.[playerId]?.captainDraw || 0) > 0,
-            detail: () => 'Captain Draw'
-        }
-    ];
+function buildVideoItems(player) {
+    if (!player.highlightVideos?.length) return [];
 
-    const itemsHTML = categories.map(cat => {
-        const matching = allGames
-            .filter(cat.filter)
-            .sort((a, b) => b.date.localeCompare(a.date));
+    return player.highlightVideos.map((video, index) => {
+        const link = typeof video === 'string' ? video : (video?.url || '');
+        const name = (typeof video === 'string' ? '' : video?.name) || `Highlight Video ${index + 1}`;
+        if (!link) return null;
 
-        const count = cat.total ? cat.total(matching) : matching.length;
-        const countClass = count === 0 ? 'zero' : '';
+        let embedLink = '';
+        let driveLink = '';
 
-        let listHTML = '<p class="breakdown-empty">No games</p>';
-        if (matching.length > 0) {
-            const byYear = {};
-            matching.forEach(game => {
-                const year = game.year || new Date(game.date + 'T12:00:00').getFullYear();
-                if (!byYear[year]) byYear[year] = [];
-                byYear[year].push(game);
-            });
-
-            listHTML = Object.keys(byYear)
-                .sort((a, b) => b - a)
-                .map(year => {
-                    const yearCount = cat.total
-                        ? byYear[year].reduce((sum, g) => sum + (g.playerStats?.[playerId]?.goals || 0), 0)
-                        : byYear[year].length;
-                    const links = byYear[year].map(game => {
-                        const d = new Date(game.date + 'T12:00:00');
-                        const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                        const detail = cat.detail ? ` — ${cat.detail(game)}` : '';
-                        return `<a href="game-history.html?game=${game.id}" class="breakdown-game-link">${label}${detail}</a>`;
-                    }).join('');
-                    return `
-                        <details class="breakdown-year-item">
-                            <summary class="breakdown-year-summary">
-                                <span class="breakdown-year-name">${year}</span>
-                                <span class="breakdown-year-badge">${yearCount}</span>
-                                <span class="breakdown-arrow-sm">▼</span>
-                            </summary>
-                            <div class="breakdown-year-games">${links}</div>
-                        </details>`;
-                }).join('');
+        if (link.includes('drive.google.com')) {
+            const match = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            if (match) driveLink = `https://drive.google.com/uc?export=download&id=${match[1]}`;
+        } else {
+            embedLink = convertToEmbedLink(link) || '';
         }
 
-        return `
-            <details class="breakdown-item">
-                <summary>
-                    <div class="breakdown-header-left">
-                        <span class="breakdown-label">${cat.label}</span>
-                        <span class="breakdown-count ${countClass}">${count}</span>
-                    </div>
-                    <span class="breakdown-arrow">▼</span>
-                </summary>
-                <div class="breakdown-list">${listHTML}</div>
-            </details>`;
-    }).join('');
-
-    return `<div class="breakdown-inline"><div class="breakdown-accordion">${itemsHTML}${extraItemsHTML}</div></div>`;
+        if (!embedLink && !driveLink) return null;
+        return { name, embedLink, driveLink };
+    }).filter(Boolean);
 }
 
 window.openPlayerProfileModal = async function(playerId) {
@@ -560,63 +470,8 @@ window.openPlayerProfileModal = async function(playerId) {
             : `<div class="player-detail-avatar">⚽</div>`;
         
         const age = calculateAge(player.birthday);
-        
-        let videosSection = '';
-        if (player.highlightVideos && player.highlightVideos.length > 0) {
-            const videoButtons = player.highlightVideos.map((video, index) => {
-                const link = typeof video === 'string' ? video : (video?.url || '');
-                const videoName = (typeof video === 'string' ? '' : video?.name) || `Highlight Video ${index + 1}`;
-                if (!link) return '';
+        const videoItems = buildVideoItems(player);
 
-                const isDriveVideo = link.includes('drive.google.com');
-                const videoId = `video-${playerDoc.id}-${index}`;
-
-                if (isDriveVideo) {
-                    const match = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
-                    const fileId = match ? match[1] : null;
-                    if (!fileId) return '';
-                    const driveDirectLink = `https://drive.google.com/uc?export=download&id=${fileId}`;
-                    return `
-                        <div class="video-file-box" data-drive-video="${driveDirectLink}" data-video-id="${videoId}">
-                            <div class="video-icon">🎬</div>
-                            <div class="video-file-name">${videoName}</div>
-                            <div class="video-play-icon">▶</div>
-                        </div>
-                    `;
-                } else {
-                    const embedLink = convertToEmbedLink(link);
-                    if (!embedLink) return '';
-                    return `
-                        <div class="video-file-box" data-embed-link="${embedLink}" data-video-id="${videoId}">
-                            <div class="video-icon">🎬</div>
-                            <div class="video-file-name">${videoName}</div>
-                            <div class="video-play-icon">▶</div>
-                        </div>
-                    `;
-                }
-            }).join('');
-
-            if (videoButtons) {
-                const videoCount = player.highlightVideos.filter(v => v).length;
-                videosSection = `
-                    <details class="breakdown-item videos-dropdown">
-                        <summary>
-                            <div class="breakdown-header-left">
-                                <span class="breakdown-label">Highlight Videos</span>
-                                <span class="breakdown-count">${videoCount}</span>
-                            </div>
-                            <span class="breakdown-arrow">▼</span>
-                        </summary>
-                        <div class="breakdown-list">
-                            <div class="video-file-list">
-                                ${videoButtons}
-                            </div>
-                        </div>
-                    </details>
-                `;
-            }
-        }
-        
         const content = `
             <div class="player-detail-grid">
                 <div class="player-detail-left">
@@ -625,60 +480,32 @@ window.openPlayerProfileModal = async function(playerId) {
                     <p class="position">${player.position || 'Player'}</p>
                 </div>
                 <div class="player-detail-info">
-                    <div class="info-row">
-                        <div class="info-label">Age:</div>
-                        <div>${age}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Height:</div>
-                        <div>${player.height || 'N/A'}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Weight:</div>
-                        <div>${player.weight ? player.weight + ' lbs' : 'N/A'}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Total Points:</div>
-                        <div><strong>${stats.points}</strong></div>
-                    </div>
-                    ${player.hobbies ? `
-                    <div class="info-row info-row-full">
-                        <div class="info-label">Hobbies:</div>
-                        <div>${player.hobbies}</div>
-                    </div>
-                    ` : ''}
-                    ${buildGameBreakdownSection(playerId, allGames, videosSection)}
+                    ${buildPlayerInfoCards({
+                        age,
+                        height: player.height,
+                        weight: player.weight,
+                        points: stats.points,
+                        hobbies: player.hobbies
+                    })}
                 </div>
+                ${buildCareerOverviewSection(playerId, allGames, videoItems.length)}
             </div>
         `;
-        
+
         modalContent.innerHTML = content;
         document.getElementById('detailModalTitle').textContent = `${player.firstName} ${player.lastName}`;
         modal.style.display = 'block';
-        
-        // Close button handler
+
         const closeBtn = modal.querySelector('.close');
         closeBtn.onclick = function() {
             modal.style.display = 'none';
         };
-        
-        // Attach event listeners to video boxes
-        setTimeout(() => {
-            document.querySelectorAll('.video-file-box').forEach(box => {
-                box.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const driveVideo = this.getAttribute('data-drive-video');
-                    const embedLink = this.getAttribute('data-embed-link');
-                    
-                    if (driveVideo) {
-                        openDriveVideoModal(driveVideo);
-                    } else if (embedLink) {
-                        openVideoModal(embedLink);
-                    }
-                });
-            });
-        }, 50);
+
+        const careerSection = modalContent.querySelector('.career-overview-section');
+        initCareerOverview(careerSection, playerId, allGames, videoItems.length, videoItems, ({ driveVideo, embedLink }) => {
+            if (driveVideo) openDriveVideoModal(driveVideo);
+            else if (embedLink) openVideoModal(embedLink);
+        });
     } catch (error) {
         console.error('Error opening player profile:', error);
         alert('Error loading player profile. Please try again.');
