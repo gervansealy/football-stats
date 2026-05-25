@@ -110,6 +110,13 @@ function getCategoryCount(category, playerId, games) {
     return matching.length;
 }
 
+function formatMonthLabel(year, month) {
+    return new Date(Number(year), Number(month) - 1, 1).toLocaleDateString('en-US', {
+        month: 'long',
+        year: 'numeric'
+    });
+}
+
 function buildPeriodOptions(games) {
     const years = new Set();
     const monthKeys = new Set();
@@ -132,10 +139,7 @@ function buildPeriodOptions(games) {
     options += '<optgroup label="Months">';
     sortedMonths.forEach(key => {
         const [year, month] = key.split('-');
-        const label = getGameDate(`${year}-${month}-01`).toLocaleDateString('en-US', {
-            month: 'long',
-            year: 'numeric'
-        });
+        const label = formatMonthLabel(year, month);
         options += `<option value="month:${key}">${label}</option>`;
     });
     options += '</optgroup>';
