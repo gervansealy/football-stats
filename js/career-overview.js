@@ -293,7 +293,10 @@ function attachStatCardListeners(section, playerId, allGames, videoCount) {
                         e.stopPropagation();
                         const driveVideo = box.getAttribute('data-drive-video');
                         const embedLink = box.getAttribute('data-embed-link');
-                        if (onVideoClick) onVideoClick({ driveVideo, embedLink });
+                        if (onVideoClick) {
+                            closeStatDetailModal();
+                            onVideoClick({ driveVideo, embedLink });
+                        }
                     });
                 });
                 return;
