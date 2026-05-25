@@ -411,7 +411,7 @@ async function getPlayerStats(playerId) {
     return stats;
 }
 
-function buildGameBreakdownSection(playerId, allGames) {
+function buildGameBreakdownSection(playerId, allGames, extraItemsHTML = '') {
     const categories = [
         {
             label: 'Wins',
@@ -419,6 +419,14 @@ function buildGameBreakdownSection(playerId, allGames) {
             detail: g => {
                 const v = g.playerStats[playerId].win;
                 return `${v} win${v > 1 ? 's' : ''}`;
+            }
+        },
+        {
+            label: 'Draws',
+            filter: g => (g.playerStats?.[playerId]?.draw || 0) > 0,
+            detail: g => {
+                const v = g.playerStats[playerId].draw;
+                return `${v} draw${v > 1 ? 's' : ''}`;
             }
         },
         {
@@ -452,6 +460,11 @@ function buildGameBreakdownSection(playerId, allGames) {
             label: 'Captain Wins',
             filter: g => (g.playerStats?.[playerId]?.captainWin || 0) > 0,
             detail: () => 'Captain Win'
+        },
+        {
+            label: 'Captain Draws',
+            filter: g => (g.playerStats?.[playerId]?.captainDraw || 0) > 0,
+            detail: () => 'Captain Draw'
         }
     ];
 
@@ -509,7 +522,7 @@ function buildGameBreakdownSection(playerId, allGames) {
             </details>`;
     }).join('');
 
-    return `<div class="breakdown-inline"><div class="breakdown-accordion">${itemsHTML}</div></div>`;
+    return `<div class="breakdown-inline"><div class="breakdown-accordion">${itemsHTML}${extraItemsHTML}</div></div>`;
 }
 
 window.showPlayerDetail = async function(playerId) {
@@ -565,22 +578,20 @@ window.showPlayerDetail = async function(playerId) {
         if (videoButtons) {
             const videoCount = player.highlightVideos.filter(v => v).length;
             videosSection = `
-                <div class="videos-section">
-                    <details class="breakdown-item videos-dropdown">
-                        <summary>
-                            <div class="breakdown-header-left">
-                                <span class="breakdown-label">Highlight Videos</span>
-                                <span class="breakdown-count">${videoCount}</span>
-                            </div>
-                            <span class="breakdown-arrow">▼</span>
-                        </summary>
-                        <div class="breakdown-list">
-                            <div class="video-file-list">
-                                ${videoButtons}
-                            </div>
+                <details class="breakdown-item videos-dropdown">
+                    <summary>
+                        <div class="breakdown-header-left">
+                            <span class="breakdown-label">Highlight Videos</span>
+                            <span class="breakdown-count">${videoCount}</span>
                         </div>
-                    </details>
-                </div>
+                        <span class="breakdown-arrow">▼</span>
+                    </summary>
+                    <div class="breakdown-list">
+                        <div class="video-file-list">
+                            ${videoButtons}
+                        </div>
+                    </div>
+                </details>
             `;
         }
     }
@@ -615,10 +626,9 @@ window.showPlayerDetail = async function(playerId) {
                     <div>${player.hobbies}</div>
                 </div>
                 ` : ''}
-                ${buildGameBreakdownSection(playerId, allGames)}
+                ${buildGameBreakdownSection(playerId, allGames, videosSection)}
             </div>
         </div>
-        ${videosSection}
     `;
 
     document.getElementById('playerDetailContent').innerHTML = content;
