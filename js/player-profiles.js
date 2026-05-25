@@ -8,6 +8,14 @@ let editingPlayerId = null;
 let cachedGames = []; // Cache games for performance
 let cachedPointValues = null; // Cache point values
 
+function escapeHtmlAttr(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;');
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     const authData = await checkAuth();
     isAdmin = authData.role === 'admin';
@@ -264,15 +272,16 @@ function loadPlayers() {
                 ? `<div class="player-avatar-container"><img src="${imageUrl}" alt="${player.firstName}" class="player-avatar" onerror="this.style.display='none'; this.parentElement.innerHTML = '<div class=\\'player-avatar\\'>⚽</div>';"></div>` 
                 : `<div class="player-avatar">⚽</div>`;
 
+            const playerName = `${player.firstName} ${player.lastName}`;
             const editDeleteButtons = isAdmin ? `
                 <div class="player-actions">
-                    <button class="btn-edit" onclick="event.stopPropagation(); openEditModal('${playerId}');" title="Edit">✏️</button>
-                    <button class="btn-delete" onclick="event.stopPropagation(); deletePlayer('${playerId}', '${player.firstName} ${player.lastName}');" title="Delete">🗑️</button>
+                    <button type="button" class="btn-edit" data-player-id="${playerId}" title="Edit">✏️</button>
+                    <button type="button" class="btn-delete" data-player-id="${playerId}" data-player-name="${escapeHtmlAttr(playerName)}" title="Delete">🗑️</button>
                 </div>
             ` : '';
 
             return `
-                <div class="player-card" onclick="showPlayerDetail('${playerId}')">
+                <div class="player-card" data-player-id="${playerId}">
                     ${editDeleteButtons}
                     ${avatarContent}
                     <h3>${player.firstName} ${player.lastName}</h3>
@@ -300,6 +309,25 @@ function loadPlayers() {
         });
 
         container.innerHTML = playersHTML.join('');
+
+        container.querySelectorAll('.player-card').forEach(card => {
+            card.addEventListener('click', () => showPlayerDetail(card.dataset.playerId));
+        });
+
+        if (isAdmin) {
+            container.querySelectorAll('.btn-edit').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openEditModal(btn.dataset.playerId);
+                });
+            });
+            container.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deletePlayer(btn.dataset.playerId, btn.dataset.playerName);
+                });
+            });
+        }
     });
 }
 
