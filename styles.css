@@ -746,6 +746,12 @@ h1 {
     border: 1px solid #FFD700;
 }
 
+.stat-badge-compact.owngoal {
+    background: #FFF0E0;
+    color: #8B4000;
+    border: 1px solid #FFAA55;
+}
+
 .standings-table.compact {
     font-size: 13px;
 }
@@ -759,6 +765,102 @@ h1 {
     .game-detail-layout {
         grid-template-columns: 1fr;
     }
+}
+
+/* Live score display in input-stats */
+.live-score-display {
+    text-align: center;
+    padding: 16px 20px;
+    margin: 16px 0;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 2px solid var(--primary-color);
+}
+
+.lsd-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.lsd-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.lsd-team {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-transform: capitalize;
+    min-width: 70px;
+}
+
+.lsd-team:first-of-type { text-align: right; }
+.lsd-team:last-of-type  { text-align: left;  }
+
+.lsd-num {
+    font-size: 38px;
+    font-weight: 800;
+    color: var(--primary-color);
+    min-width: 44px;
+    text-align: center;
+    line-height: 1;
+}
+
+.lsd-sep {
+    font-size: 26px;
+    color: var(--text-secondary);
+    font-weight: 300;
+}
+
+/* Final score banner in game detail modal */
+.final-score-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #1557a0 100%);
+    border-radius: 10px;
+    margin-bottom: 20px;
+    color: white;
+}
+
+.fsb-team {
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: capitalize;
+    min-width: 90px;
+}
+
+.fsb-team:first-child { text-align: right;  }
+.fsb-team:last-child  { text-align: left;   }
+
+.fsb-num {
+    font-size: 44px;
+    font-weight: 800;
+    min-width: 52px;
+    text-align: center;
+    line-height: 1;
+}
+
+.fsb-sep {
+    font-size: 28px;
+    opacity: 0.6;
+    font-weight: 300;
+}
+
+/* Score on game history cards */
+.game-card-score {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
 }
 
 /* Captain Lineups in Game History Modal */

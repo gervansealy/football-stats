@@ -32,6 +32,18 @@ export const STAT_CATEGORIES = [
         }
     },
     {
+        id: 'ownGoals',
+        label: 'Own Goals',
+        icon: '🙈',
+        filter: (g, playerId) => (g.playerStats?.[playerId]?.ownGoals || 0) > 0,
+        getCount: (matching, playerId) =>
+            matching.reduce((sum, g) => sum + (g.playerStats?.[playerId]?.ownGoals || 0), 0),
+        detail: (g, playerId) => {
+            const v = g.playerStats[playerId].ownGoals;
+            return `${v} own goal${v > 1 ? 's' : ''}`;
+        }
+    },
+    {
         id: 'games',
         label: 'Games Played',
         icon: '🏟️',

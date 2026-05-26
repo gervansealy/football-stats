@@ -14,6 +14,10 @@ const teamResults = { red: null, black: null };
 // When Red wins → Black loses, Red draws → Black draws, etc.
 const complement = { win: 'loss', draw: 'draw', loss: 'win' };
 
+function capitalize(str) {
+    return str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     const authData = await checkAuth();
     if (authData.role !== 'admin') {
@@ -74,6 +78,10 @@ function renderPlayerCard(player) {
                     <label>Goals</label>
                     <input type="number" class="stat-goals" min="0" value="0">
                 </div>
+                <div class="stat-input-group">
+                    <label>Own Goals</label>
+                    <input type="number" class="stat-owngoals" min="0" value="0">
+                </div>
                 <div class="stat-input-group checkbox-group">
                     <label>Clean Sheet</label>
                     <input type="checkbox" class="stat-cleansheet">
@@ -123,6 +131,43 @@ function renderTeamSection(team, teamPlayers, captainId) {
             </div>
         </div>
     `;
+}
+
+function renderLiveScore() {
+    const t1Name = capitalize(pregameData?.team1Color || 'Red');
+    const t2Name = capitalize(pregameData?.team2Color || 'Black');
+    return `
+        <div id="liveScoreDisplay" class="live-score-display">
+            <div class="lsd-label">Final Score</div>
+            <div class="lsd-row">
+                <span class="lsd-team">${t1Name}</span>
+                <span class="lsd-num" id="lsdTeam1">0</span>
+                <span class="lsd-sep">–</span>
+                <span class="lsd-num" id="lsdTeam2">0</span>
+                <span class="lsd-team">${t2Name}</span>
+            </div>
+        </div>
+    `;
+}
+
+function updateLiveScore() {
+    const el1 = document.getElementById('lsdTeam1');
+    const el2 = document.getElementById('lsdTeam2');
+    if (!el1 || !el2) return;
+
+    let redGoals = 0, redOwnGoals = 0, blackGoals = 0, blackOwnGoals = 0;
+
+    document.querySelector('.team-section[data-team="red"]')?.querySelectorAll('.player-stat-card').forEach(card => {
+        redGoals    += parseInt(card.querySelector('.stat-goals').value)    || 0;
+        redOwnGoals += parseInt(card.querySelector('.stat-owngoals').value) || 0;
+    });
+    document.querySelector('.team-section[data-team="black"]')?.querySelectorAll('.player-stat-card').forEach(card => {
+        blackGoals    += parseInt(card.querySelector('.stat-goals').value)    || 0;
+        blackOwnGoals += parseInt(card.querySelector('.stat-owngoals').value) || 0;
+    });
+
+    el1.textContent = redGoals   + blackOwnGoals;
+    el2.textContent = blackGoals + redOwnGoals;
 }
 
 // ── Team result buttons ───────────────────────────
@@ -183,6 +228,8 @@ window.assignToTeam = function (playerId, team) {
         row.classList.remove('assigned-to-red', 'assigned-to-black');
         row.classList.add(`assigned-to-${team}`);
     }
+
+    updateLiveScore();
 };
 
 // ── Display ───────────────────────────────────────
@@ -206,6 +253,7 @@ function displayPlayerStats() {
 
         container.innerHTML =
             renderTeamSection('red',   redPlayers,   pregameData.redCaptain   || '') +
+            renderLiveScore() +
             renderTeamSection('black', blackPlayers, pregameData.blackCaptain || '');
 
     } else {
@@ -216,6 +264,7 @@ function displayPlayerStats() {
                 <a href="team-selection.html">create a pre-selection</a> for a faster workflow.
             </div>
             ${renderTeamSection('red',   [], '')}
+            ${renderLiveScore()}
             ${renderTeamSection('black', [], '')}
             <div class="unassigned-pool">
                 <div class="unassigned-pool-title">Players — assign to a team</div>
@@ -232,6 +281,11 @@ function displayPlayerStats() {
             </div>
         `;
     }
+
+    // Live score updates via event delegation
+    container.addEventListener('input', e => {
+        if (e.target.matches('.stat-goals, .stat-owngoals')) updateLiveScore();
+    });
 }
 
 // ── Save ──────────────────────────────────────────
@@ -255,7 +309,8 @@ async function saveGameStats() {
 
         section.querySelectorAll('.player-stat-card').forEach(card => {
             const playerId   = card.dataset.playerId;
-            const goals      = parseInt(card.querySelector('.stat-goals').value) || 0;
+            const goals      = parseInt(card.querySelector('.stat-goals').value)    || 0;
+            const ownGoals   = parseInt(card.querySelector('.stat-owngoals').value) || 0;
             const cleanSheet = card.querySelector('.stat-cleansheet').checked;
             const isCaptain  = playerId === captainIds[team];
 
@@ -266,6 +321,7 @@ async function saveGameStats() {
                 draw:        result === 'draw' ? 1 : 0,
                 loss:        result === 'loss' ? 1 : 0,
                 goals,
+                ownGoals,
                 cleanSheet,
                 captainWin:  isCaptain && result === 'win'  ? 1 : 0,
                 captainDraw: isCaptain && result === 'draw' ? 1 : 0,
@@ -279,6 +335,20 @@ async function saveGameStats() {
         return;
     }
 
+    // Compute final score: own goals count for the opposing team
+    let team1Score = 0, team2Score = 0;
+    teamArrays.red.forEach(id => {
+        team1Score += playerStats[id]?.goals    || 0;
+        team2Score += playerStats[id]?.ownGoals || 0;
+    });
+    teamArrays.black.forEach(id => {
+        team2Score += playerStats[id]?.goals    || 0;
+        team1Score += playerStats[id]?.ownGoals || 0;
+    });
+
+    const t1Name = capitalize(pregameData?.team1Color || 'Red');
+    const t2Name = capitalize(pregameData?.team2Color || 'Black');
+
     try {
         await addDoc(collection(db, 'games'), {
             date:         gameDate,
@@ -291,15 +361,16 @@ async function saveGameStats() {
             lineupId:     pregameId        || null,
             team1Color:   pregameData?.team1Color || 'red',
             team2Color:   pregameData?.team2Color || 'black',
+            score:        { team1: team1Score, team2: team2Score },
             createdAt:    new Date().toISOString()
         });
 
         if (pregameId) {
             await deleteDoc(doc(db, 'pregames', pregameId));
-            alert('Game stats saved! Pre-selection moved to game history.');
+            alert(`Game stats saved!\nFinal Score: ${t1Name} ${team1Score} – ${t2Name} ${team2Score}`);
             window.location.href = 'game-history.html';
         } else {
-            alert('Game stats saved successfully!');
+            alert(`Game stats saved!\nFinal Score: ${t1Name} ${team1Score} – ${t2Name} ${team2Score}`);
             window.location.reload();
         }
     } catch (error) {

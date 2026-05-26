@@ -80,6 +80,31 @@ function showLoadingIndicator() {
     container.innerHTML = '<p class="loading-message">⏳ Loading game history...</p>';
 }
 
+function computeGameScore(gameData) {
+    if (!gameData.redTeam && !gameData.blackTeam) return null;
+
+    // Use stored score if available, otherwise compute from playerStats
+    if (gameData.score) {
+        const t1 = TEAM_COLORS[gameData.team1Color] || TEAM_COLORS.red;
+        const t2 = TEAM_COLORS[gameData.team2Color] || TEAM_COLORS.black;
+        return { team1Score: gameData.score.team1, team2Score: gameData.score.team2, t1, t2 };
+    }
+
+    let team1Score = 0, team2Score = 0;
+    (gameData.redTeam || []).forEach(id => {
+        const s = gameData.playerStats?.[id];
+        if (s) { team1Score += s.goals || 0; team2Score += s.ownGoals || 0; }
+    });
+    (gameData.blackTeam || []).forEach(id => {
+        const s = gameData.playerStats?.[id];
+        if (s) { team2Score += s.goals || 0; team1Score += s.ownGoals || 0; }
+    });
+
+    const t1 = TEAM_COLORS[gameData.team1Color] || TEAM_COLORS.red;
+    const t2 = TEAM_COLORS[gameData.team2Color] || TEAM_COLORS.black;
+    return { team1Score, team2Score, t1, t2 };
+}
+
 function loadGameHistory() {
     showLoadingIndicator();
     const gamesQuery = query(collection(db, 'games'), orderBy('date', 'desc'));
@@ -112,6 +137,10 @@ function loadGameHistory() {
             });
 
             const playerCount = Object.keys(gameData.playerStats || {}).length;
+            const scoreData   = computeGameScore(gameData);
+            const scoreHTML   = scoreData
+                ? `<span class="game-card-score">${scoreData.t1.emoji} ${scoreData.t1.name} ${scoreData.team1Score} – ${scoreData.team2Score} ${scoreData.t2.name} ${scoreData.t2.emoji}</span>`
+                : `<span>⚽ ${playerCount} Players</span>`;
             
             const editDeleteButtons = currentUserRole === 'admin' ? `
                 <div class="game-card-actions">
@@ -127,7 +156,7 @@ function loadGameHistory() {
                         ${editDeleteButtons}
                     </div>
                     <div class="game-card-info">
-                        <span>⚽ ${playerCount} Players</span>
+                        ${scoreHTML}
                     </div>
                 </div>
             `);
@@ -345,6 +374,7 @@ window.openGameDetailModal = async function(gameId) {
         if (stats.draw > 0) badges.push(`<span class="stat-badge-compact draw">Draw ${stats.draw}</span>`);
         if (stats.loss > 0) badges.push(`<span class="stat-badge-compact loss">Loss ${stats.loss}</span>`);
         if (stats.goals > 0) badges.push(`<span class="stat-badge-compact goal">⚽ ${stats.goals} Goal${stats.goals > 1 ? 's' : ''}</span>`);
+        if ((stats.ownGoals || 0) > 0) badges.push(`<span class="stat-badge-compact owngoal">⚽ ${stats.ownGoals} Own Goal${stats.ownGoals > 1 ? 's' : ''}</span>`);
         if (stats.cleanSheet) badges.push(`<span class="stat-badge-compact cleansheet">Clean Sheet</span>`);
         if (stats.captainWin > 0) badges.push(`<span class="stat-badge-compact captain">⭐ Captain Win ${stats.captainWin}</span>`);
         if (stats.captainDraw > 0) badges.push(`<span class="stat-badge-compact captain">⭐ Captain Draw ${stats.captainDraw}</span>`);
@@ -460,8 +490,20 @@ window.openGameDetailModal = async function(gameId) {
         `;
     }
 
+    const scoreData = computeGameScore(gameData);
+    const finalScoreBanner = scoreData ? `
+        <div class="final-score-banner">
+            <span class="fsb-team">${scoreData.t1.emoji} ${scoreData.t1.name}</span>
+            <span class="fsb-num">${scoreData.team1Score}</span>
+            <span class="fsb-sep">–</span>
+            <span class="fsb-num">${scoreData.team2Score}</span>
+            <span class="fsb-team">${scoreData.t2.name} ${scoreData.t2.emoji}</span>
+        </div>
+    ` : '';
+
     content.innerHTML = `
         <h2>Game on ${formattedDate}</h2>
+        ${finalScoreBanner}
         ${lineupHTML}
         <div class="game-detail-layout">
             <div class="game-player-stats">
@@ -543,6 +585,11 @@ window.openEditGameModal = async function(gameId) {
                     <label>Goals:</label>
                     <input type="number" class="stat-goals" min="0" value="${stats.goals || 0}">
                 </div>
+
+                <div class="stat-input-group">
+                    <label>Own Goals:</label>
+                    <input type="number" class="stat-owngoals" min="0" value="${stats.ownGoals || 0}">
+                </div>
                 
                 <div class="stat-input-group captain-checkbox">
                     <label><strong>⭐ Captain:</strong></label>
@@ -575,19 +622,21 @@ window.saveEditedGame = async function() {
         const losses = parseInt(card.querySelector('.stat-loss').value) || 0;
         const cleanSheet = card.querySelector('.stat-cleansheet').checked;
         const goals = parseInt(card.querySelector('.stat-goals').value) || 0;
+        const ownGoals = parseInt(card.querySelector('.stat-owngoals').value) || 0;
         const isCaptain = card.querySelector('.stat-captain').checked;
         
         const captainWins = isCaptain ? wins : 0;
         const captainDraws = isCaptain ? draws : 0;
         const captainLosses = isCaptain ? losses : 0;
         
-        if (wins > 0 || draws > 0 || losses > 0 || cleanSheet || goals > 0) {
+        if (wins > 0 || draws > 0 || losses > 0 || cleanSheet || goals > 0 || ownGoals > 0) {
             playerStats[playerId] = {
                 win: wins,
                 draw: draws,
                 loss: losses,
                 cleanSheet: cleanSheet,
                 goals: goals,
+                ownGoals: ownGoals,
                 captainWin: captainWins,
                 captainDraw: captainDraws,
                 captainLoss: captainLosses
@@ -599,13 +648,27 @@ window.saveEditedGame = async function() {
         alert('Please enter stats for at least one player');
         return;
     }
+
+    // Recompute score from edited stats using stored team arrays
+    let team1Score = 0, team2Score = 0;
+    const gameRef = doc(db, 'games', gameId);
+    const gameSnap = await getDoc(gameRef);
+    const gameData = gameSnap.exists() ? gameSnap.data() : {};
+    (gameData.redTeam || []).forEach(id => {
+        team1Score += playerStats[id]?.goals    || 0;
+        team2Score += playerStats[id]?.ownGoals || 0;
+    });
+    (gameData.blackTeam || []).forEach(id => {
+        team2Score += playerStats[id]?.goals    || 0;
+        team1Score += playerStats[id]?.ownGoals || 0;
+    });
     
     try {
-        const gameRef = doc(db, 'games', gameId);
         await updateDoc(gameRef, {
             date: gameDate,
             year: new Date(gameDate).getFullYear(),
             playerStats: playerStats,
+            score: { team1: team1Score, team2: team2Score },
             updatedAt: new Date().toISOString()
         });
         

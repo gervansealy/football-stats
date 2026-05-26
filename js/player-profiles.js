@@ -339,6 +339,7 @@ function getPlayerStatsOptimized(playerId, gamesArray) {
         wins: 0,
         losses: 0,
         goals: 0,
+        ownGoals: 0,
         captainWins: 0,
         captainLosses: 0,
         points: 0
@@ -363,6 +364,7 @@ function getPlayerStatsOptimized(playerId, gamesArray) {
             stats.wins += playerStats.win || 0;
             stats.losses += playerStats.loss || 0;
             stats.goals += playerStats.goals || 0;
+            stats.ownGoals += playerStats.ownGoals || 0;
             stats.captainWins += playerStats.captainWin || 0;
             stats.captainLosses += playerStats.captainLoss || 0;
 
