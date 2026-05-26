@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function showLoadingIndicator() {
     const tbody = document.getElementById('standingsBody');
-    tbody.innerHTML = '<tr><td colspan="14" class="loading-message">⏳ Loading standings...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="15" class="loading-message">⏳ Loading standings...</td></tr>';
 }
 
 function loadStandings() {
@@ -172,6 +172,7 @@ function calculatePlayerStatsOptimized(playerId, gamesArray) {
         losses: 0,
         cleanSheets: 0,
         goals: 0,
+        ownGoals: 0,
         captainWins: 0,
         captainDraws: 0,
         captainLosses: 0,
@@ -190,6 +191,7 @@ function calculatePlayerStatsOptimized(playerId, gamesArray) {
             stats.losses += playerStats.loss || 0;
             stats.cleanSheets += playerStats.cleanSheet ? 1 : 0;
             stats.goals += playerStats.goals || 0;
+            stats.ownGoals += playerStats.ownGoals || 0;
             stats.captainWins += playerStats.captainWin || 0;
             stats.captainDraws += playerStats.captainDraw || 0;
             stats.captainLosses += playerStats.captainLoss || 0;
@@ -216,7 +218,7 @@ function displayStandings(players) {
     const tbody = document.getElementById('standingsBody');
     
     if (players.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="14" class="no-data">No players added yet</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="15" class="no-data">No players added yet</td></tr>';
         return;
     }
 
@@ -242,6 +244,7 @@ function displayStandings(players) {
             <td>${player.losses}</td>
             <td>${player.cleanSheets}</td>
             <td>${player.goals}</td>
+            <td>${player.ownGoals}</td>
             <td>${player.captainWins}</td>
             <td>${player.captainDraws}</td>
             <td>${player.captainLosses}</td>
