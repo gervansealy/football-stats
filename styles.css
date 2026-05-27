@@ -374,7 +374,24 @@ h1 {
 
 .subtitle {
     color: var(--text-secondary);
-    margin-bottom: 20px;
+    margin: 4px 0 0;
+}
+
+.gh-filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.gh-select {
+    padding: 8px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    background: var(--card-bg);
+    color: var(--text-primary);
+    cursor: pointer;
 }
 
 .year-selector {

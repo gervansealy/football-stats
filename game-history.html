@@ -24,8 +24,19 @@
     </nav>
 
     <div class="container">
-        <h1>Game History</h1>
-        <p class="subtitle">Click on any game to view details. Admins can edit or delete games.</p>
+        <div class="page-header">
+            <div>
+                <h1>Game History</h1>
+                <p class="subtitle">Click on any game to view details. Admins can edit or delete games.</p>
+            </div>
+            <div class="gh-filters">
+                <select id="ghYearSelect" class="gh-select">
+                    <option value="all">All Years</option>
+                </select>
+                <select id="ghMonthSelect" class="gh-select" disabled hidden>
+                </select>
+            </div>
+        </div>
 
         <div id="gameHistoryContainer" class="game-history-grid">
             <p class="no-data">No games recorded yet</p>

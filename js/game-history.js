@@ -6,6 +6,8 @@ let currentUserRole = 'viewer';
 let allPlayers = [];
 let cachedGames = []; // Cache games for performance
 let cachedPointValues = null; // Cache point values
+let activeYearFilter  = 'all';
+let activeMonthFilter = 'all';
 
 const TEAM_COLORS = {
     red:    { name: 'Red',    emoji: '🔴', hex: '#DC3545' },
@@ -24,6 +26,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadPlayers();
     await loadPointValues();
     loadGameHistory();
+
+    document.getElementById('ghYearSelect').addEventListener('change', function () {
+        activeYearFilter  = this.value;
+        activeMonthFilter = 'all';
+        syncGhMonthSelect();
+        renderFilteredGames();
+    });
+
+    document.getElementById('ghMonthSelect').addEventListener('change', function () {
+        activeMonthFilter = this.value;
+        renderFilteredGames();
+    });
 
     const params = new URLSearchParams(window.location.search);
     const gameId = params.get('game');
@@ -115,87 +129,142 @@ function loadGameHistory() {
         if (snapshot.empty) {
             container.innerHTML = '<p class="no-data">No games recorded yet</p>';
             cachedGames = [];
+            populateGhYearSelect();
             return;
         }
 
-        // Update cached games
         cachedGames = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
         }));
 
-        const gamesHTML = [];
-        
-        for (const gameDoc of snapshot.docs) {
-            const gameData = gameDoc.data();
-            // Fix timezone issue by adding 'T12:00:00' to treat as local noon
-            const date = new Date(gameData.date + 'T12:00:00');
-            const formattedDate = date.toLocaleDateString('en-US', { 
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-            });
+        populateGhYearSelect();
+        syncGhMonthSelect();
+        renderFilteredGames();
+    });
+}
 
-            const playerCount = Object.keys(gameData.playerStats || {}).length;
-            const scoreData   = computeGameScore(gameData);
+function populateGhYearSelect() {
+    const sel = document.getElementById('ghYearSelect');
+    const years = [...new Set(cachedGames.map(g => g.year || new Date(g.date + 'T12:00:00').getFullYear()))].sort((a, b) => b - a);
+    sel.innerHTML = '<option value="all">All Years</option>' +
+        years.map(y => `<option value="${y}"${String(y) === activeYearFilter ? ' selected' : ''}>${y}</option>`).join('');
+}
 
-            let scoreBodyHTML;
-            if (scoreData) {
-                const redCaptainPlayer   = allPlayers.find(p => p.id === gameData.redCaptain);
-                const blackCaptainPlayer = allPlayers.find(p => p.id === gameData.blackCaptain);
-                const t1Label = redCaptainPlayer
-                    ? `${redCaptainPlayer.firstName} ${redCaptainPlayer.lastName}`
-                    : scoreData.t1.name;
-                const t2Label = blackCaptainPlayer
-                    ? `${blackCaptainPlayer.firstName} ${blackCaptainPlayer.lastName}`
-                    : scoreData.t2.name;
+function syncGhMonthSelect() {
+    const monthSel = document.getElementById('ghMonthSelect');
+    if (activeYearFilter === 'all') {
+        monthSel.innerHTML = '';
+        monthSel.disabled = true;
+        monthSel.hidden   = true;
+        return;
+    }
+    const year = parseInt(activeYearFilter);
+    const months = [...new Set(
+        cachedGames
+            .filter(g => (g.year || new Date(g.date + 'T12:00:00').getFullYear()) === year)
+            .map(g => new Date(g.date + 'T12:00:00').getMonth() + 1)
+    )].sort((a, b) => b - a);
 
-                // Always show the higher-scoring team on the left
-                const leftFirst = scoreData.team1Score >= scoreData.team2Score;
-                const [leftHex, leftLabel, leftScore, rightScore, rightLabel, rightHex] = leftFirst
-                    ? [scoreData.t1.hex, t1Label, scoreData.team1Score, scoreData.team2Score, t2Label, scoreData.t2.hex]
-                    : [scoreData.t2.hex, t2Label, scoreData.team2Score, scoreData.team1Score, t1Label, scoreData.t1.hex];
+    monthSel.innerHTML = '<option value="all">All Months</option>' +
+        months.map(m => {
+            const name = new Date(2000, m - 1, 1).toLocaleDateString('en-US', { month: 'long' });
+            const val  = `${year}-${String(m).padStart(2, '0')}`;
+            return `<option value="${val}"${val === activeMonthFilter ? ' selected' : ''}>${name}</option>`;
+        }).join('');
+    monthSel.disabled = false;
+    monthSel.hidden   = false;
+}
 
-                scoreBodyHTML = `
-                    <div class="gc-score-row">
-                        <div class="gc-team gc-team-left">
-                            <span class="gc-dot" style="background:${leftHex};"></span>
-                            <span class="gc-name">${leftLabel}</span>
-                        </div>
-                        <div class="gc-scoreline">${leftScore} – ${rightScore}</div>
-                        <div class="gc-team gc-team-right">
-                            <span class="gc-name">${rightLabel}</span>
-                            <span class="gc-dot" style="background:${rightHex};"></span>
-                        </div>
-                    </div>`;
-            } else {
-                scoreBodyHTML = `<div class="gc-no-score">⚽ ${playerCount} Players</div>`;
-            }
-            
-            const editDeleteButtons = currentUserRole === 'admin' ? `
-                <div class="game-card-actions">
-                    <button class="btn-edit-small" onclick="openEditGameModal('${gameDoc.id}')" title="Edit">✏️</button>
-                    <button class="btn-delete-small" onclick="deleteGame('${gameDoc.id}', '${formattedDate}')" title="Delete">🗑️</button>
-                </div>
-            ` : '';
+function getFilteredGames() {
+    return cachedGames.filter(g => {
+        const d = new Date(g.date + 'T12:00:00');
+        const gameYear  = g.year || d.getFullYear();
+        const gameMonth = d.getMonth() + 1;
 
-            gamesHTML.push(`
-                <div class="game-card-compact" onclick="openGameDetailModal('${gameDoc.id}')">
-                    <div class="game-card-header">
-                        <div class="game-card-date">
-                            <span>📅</span>
-                            <strong>${formattedDate}</strong>
-                        </div>
-                        ${editDeleteButtons}
+        if (activeYearFilter !== 'all' && gameYear !== parseInt(activeYearFilter)) return false;
+        if (activeMonthFilter !== 'all') {
+            const [fy, fm] = activeMonthFilter.split('-').map(Number);
+            if (gameYear !== fy || gameMonth !== fm) return false;
+        }
+        return true;
+    });
+}
+
+function renderFilteredGames() {
+    const container = document.getElementById('gameHistoryContainer');
+    const games     = getFilteredGames();
+
+    if (games.length === 0) {
+        container.innerHTML = '<p class="no-data">No games found for the selected period.</p>';
+        return;
+    }
+
+    const gamesHTML = games.map(gameData => {
+        const gameId = gameData.id;
+        const date   = new Date(gameData.date + 'T12:00:00');
+        const formattedDate = date.toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric'
+        });
+
+        const playerCount = Object.keys(gameData.playerStats || {}).length;
+        const scoreData   = computeGameScore(gameData);
+
+        let scoreBodyHTML;
+        if (scoreData) {
+            const redCaptainPlayer   = allPlayers.find(p => p.id === gameData.redCaptain);
+            const blackCaptainPlayer = allPlayers.find(p => p.id === gameData.blackCaptain);
+            const t1Label = redCaptainPlayer
+                ? `${redCaptainPlayer.firstName} ${redCaptainPlayer.lastName}`
+                : scoreData.t1.name;
+            const t2Label = blackCaptainPlayer
+                ? `${blackCaptainPlayer.firstName} ${blackCaptainPlayer.lastName}`
+                : scoreData.t2.name;
+
+            const leftFirst = scoreData.team1Score >= scoreData.team2Score;
+            const [leftHex, leftLabel, leftScore, rightScore, rightLabel, rightHex] = leftFirst
+                ? [scoreData.t1.hex, t1Label, scoreData.team1Score, scoreData.team2Score, t2Label, scoreData.t2.hex]
+                : [scoreData.t2.hex, t2Label, scoreData.team2Score, scoreData.team1Score, t1Label, scoreData.t1.hex];
+
+            scoreBodyHTML = `
+                <div class="gc-score-row">
+                    <div class="gc-team gc-team-left">
+                        <span class="gc-dot" style="background:${leftHex};"></span>
+                        <span class="gc-name">${leftLabel}</span>
                     </div>
-                    <div class="game-card-divider"></div>
-                    ${scoreBodyHTML}
-                </div>
-            `);
+                    <div class="gc-scoreline">${leftScore} – ${rightScore}</div>
+                    <div class="gc-team gc-team-right">
+                        <span class="gc-name">${rightLabel}</span>
+                        <span class="gc-dot" style="background:${rightHex};"></span>
+                    </div>
+                </div>`;
+        } else {
+            scoreBodyHTML = `<div class="gc-no-score">⚽ ${playerCount} Players</div>`;
         }
 
-        container.innerHTML = gamesHTML.join('');
+        const editDeleteButtons = currentUserRole === 'admin' ? `
+            <div class="game-card-actions">
+                <button class="btn-edit-small" onclick="openEditGameModal('${gameId}')" title="Edit">✏️</button>
+                <button class="btn-delete-small" onclick="deleteGame('${gameId}', '${formattedDate}')" title="Delete">🗑️</button>
+            </div>
+        ` : '';
+
+        return `
+            <div class="game-card-compact" onclick="openGameDetailModal('${gameId}')">
+                <div class="game-card-header">
+                    <div class="game-card-date">
+                        <span>📅</span>
+                        <strong>${formattedDate}</strong>
+                    </div>
+                    ${editDeleteButtons}
+                </div>
+                <div class="game-card-divider"></div>
+                ${scoreBodyHTML}
+            </div>
+        `;
     });
+
+    container.innerHTML = gamesHTML.join('');
 }
 
 // OPTIMIZED: Calculate standings from cached data
