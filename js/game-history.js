@@ -230,11 +230,11 @@ function renderFilteredGames() {
                 <div class="gc-score-row">
                     <div class="gc-team gc-team-left">
                         <span class="gc-dot" style="background:${leftHex};"></span>
-                        <span class="gc-name">${leftLabel}</span>
+                        <span class="gc-name">${leftLabel.split(' ')[0]}<span class="gc-name-last">${leftLabel.split(' ').slice(1).join(' ')}</span></span>
                     </div>
                     <div class="gc-scoreline">${leftScore} – ${rightScore}</div>
                     <div class="gc-team gc-team-right">
-                        <span class="gc-name">${rightLabel}</span>
+                        <span class="gc-name gc-name-right">${rightLabel.split(' ')[0]}<span class="gc-name-last">${rightLabel.split(' ').slice(1).join(' ')}</span></span>
                         <span class="gc-dot" style="background:${rightHex};"></span>
                     </div>
                 </div>`;
@@ -592,15 +592,47 @@ window.openGameDetailModal = async function(gameId) {
     }
 
     const scoreData = computeGameScore(gameData);
-    const finalScoreBanner = scoreData ? `
-        <div class="final-score-banner">
-            <span class="fsb-team">${scoreData.t1.emoji} ${scoreData.t1.name}</span>
-            <span class="fsb-num">${scoreData.team1Score}</span>
-            <span class="fsb-sep">–</span>
-            <span class="fsb-num">${scoreData.team2Score}</span>
-            <span class="fsb-team">${scoreData.t2.name} ${scoreData.t2.emoji}</span>
-        </div>
-    ` : '';
+    let finalScoreBanner = '';
+    if (scoreData) {
+        const redCaptainPlayer   = allPlayers.find(p => p.id === gameData.redCaptain);
+        const blackCaptainPlayer = allPlayers.find(p => p.id === gameData.blackCaptain);
+        const t1Name = redCaptainPlayer
+            ? `${redCaptainPlayer.firstName} ${redCaptainPlayer.lastName}`
+            : scoreData.t1.name;
+        const t2Name = blackCaptainPlayer
+            ? `${blackCaptainPlayer.firstName} ${blackCaptainPlayer.lastName}`
+            : scoreData.t2.name;
+
+        const leftFirst = scoreData.team1Score >= scoreData.team2Score;
+        const [leftHex, leftName, leftScore, rightScore, rightName, rightHex] = leftFirst
+            ? [scoreData.t1.hex, t1Name, scoreData.team1Score, scoreData.team2Score, t2Name, scoreData.t2.hex]
+            : [scoreData.t2.hex, t2Name, scoreData.team2Score, scoreData.team1Score, t1Name, scoreData.t1.hex];
+
+        const [lFirst, ...lRest] = leftName.split(' ');
+        const [rFirst, ...rRest] = rightName.split(' ');
+
+        finalScoreBanner = `
+            <div class="final-score-banner">
+                <div class="fsb-team">
+                    <span class="fsb-dot" style="background:${leftHex};"></span>
+                    <div class="fsb-name">
+                        <span>${lFirst}</span>
+                        ${lRest.length ? `<span>${lRest.join(' ')}</span>` : ''}
+                    </div>
+                </div>
+                <span class="fsb-num">${leftScore}</span>
+                <span class="fsb-sep">–</span>
+                <span class="fsb-num">${rightScore}</span>
+                <div class="fsb-team fsb-team-right">
+                    <div class="fsb-name fsb-name-right">
+                        <span>${rFirst}</span>
+                        ${rRest.length ? `<span>${rRest.join(' ')}</span>` : ''}
+                    </div>
+                    <span class="fsb-dot" style="background:${rightHex};"></span>
+                </div>
+            </div>
+        `;
+    }
 
     content.innerHTML = `
         <h2>Game on ${formattedDate}</h2>

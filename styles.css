@@ -697,12 +697,25 @@ h1 {
 }
 
 .gc-name {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
+.gc-name-first,
+.gc-name .gc-name-last {
     font-size: 13px;
     font-weight: 600;
     color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+}
+
+.gc-name .gc-name-last {
+    font-weight: 400;
+    color: var(--text-secondary);
+}
+
+.gc-name-right {
+    text-align: right;
 }
 
 .gc-scoreline {
@@ -896,14 +909,45 @@ h1 {
 }
 
 .fsb-team {
-    font-size: 16px;
-    font-weight: 700;
-    text-transform: capitalize;
-    min-width: 90px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
 }
 
-.fsb-team:first-child { text-align: right;  }
-.fsb-team:last-child  { text-align: left;   }
+.fsb-team-right {
+    justify-content: flex-end;
+}
+
+.fsb-dot {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: inline-block;
+    border: 2px solid rgba(255,255,255,0.5);
+}
+
+.fsb-name {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+}
+
+.fsb-name span:first-child {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.fsb-name span:last-child:not(:first-child) {
+    font-size: 13px;
+    font-weight: 400;
+    opacity: 0.85;
+}
+
+.fsb-name-right {
+    text-align: right;
+}
 
 .fsb-num {
     font-size: 44px;
