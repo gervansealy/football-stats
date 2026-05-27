@@ -138,9 +138,28 @@ function loadGameHistory() {
 
             const playerCount = Object.keys(gameData.playerStats || {}).length;
             const scoreData   = computeGameScore(gameData);
-            const scoreHTML   = scoreData
-                ? `<span class="game-card-score">${scoreData.t1.emoji} ${scoreData.t1.name} ${scoreData.team1Score} – ${scoreData.team2Score} ${scoreData.t2.name} ${scoreData.t2.emoji}</span>`
-                : `<span>⚽ ${playerCount} Players</span>`;
+
+            let scoreHTML;
+            if (scoreData) {
+                const redCaptainPlayer   = allPlayers.find(p => p.id === gameData.redCaptain);
+                const blackCaptainPlayer = allPlayers.find(p => p.id === gameData.blackCaptain);
+                const t1Label = redCaptainPlayer
+                    ? `${redCaptainPlayer.firstName} ${redCaptainPlayer.lastName}`
+                    : scoreData.t1.name;
+                const t2Label = blackCaptainPlayer
+                    ? `${blackCaptainPlayer.firstName} ${blackCaptainPlayer.lastName}`
+                    : scoreData.t2.name;
+
+                // Always show the higher-scoring team on the left
+                const leftFirst = scoreData.team1Score >= scoreData.team2Score;
+                const [leftEmoji, leftLabel, leftScore, rightScore, rightLabel, rightEmoji] = leftFirst
+                    ? [scoreData.t1.emoji, t1Label, scoreData.team1Score, scoreData.team2Score, t2Label, scoreData.t2.emoji]
+                    : [scoreData.t2.emoji, t2Label, scoreData.team2Score, scoreData.team1Score, t1Label, scoreData.t1.emoji];
+
+                scoreHTML = `<span class="game-card-score">${leftEmoji} ${leftLabel} ${leftScore} – ${rightScore} ${rightLabel} ${rightEmoji}</span>`;
+            } else {
+                scoreHTML = `<span>⚽ ${playerCount} Players</span>`;
+            }
             
             const editDeleteButtons = currentUserRole === 'admin' ? `
                 <div class="game-card-actions">
