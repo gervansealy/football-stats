@@ -139,7 +139,7 @@ function loadGameHistory() {
             const playerCount = Object.keys(gameData.playerStats || {}).length;
             const scoreData   = computeGameScore(gameData);
 
-            let scoreHTML;
+            let scoreBodyHTML;
             if (scoreData) {
                 const redCaptainPlayer   = allPlayers.find(p => p.id === gameData.redCaptain);
                 const blackCaptainPlayer = allPlayers.find(p => p.id === gameData.blackCaptain);
@@ -152,13 +152,24 @@ function loadGameHistory() {
 
                 // Always show the higher-scoring team on the left
                 const leftFirst = scoreData.team1Score >= scoreData.team2Score;
-                const [leftEmoji, leftLabel, leftScore, rightScore, rightLabel, rightEmoji] = leftFirst
-                    ? [scoreData.t1.emoji, t1Label, scoreData.team1Score, scoreData.team2Score, t2Label, scoreData.t2.emoji]
-                    : [scoreData.t2.emoji, t2Label, scoreData.team2Score, scoreData.team1Score, t1Label, scoreData.t1.emoji];
+                const [leftHex, leftLabel, leftScore, rightScore, rightLabel, rightHex] = leftFirst
+                    ? [scoreData.t1.hex, t1Label, scoreData.team1Score, scoreData.team2Score, t2Label, scoreData.t2.hex]
+                    : [scoreData.t2.hex, t2Label, scoreData.team2Score, scoreData.team1Score, t1Label, scoreData.t1.hex];
 
-                scoreHTML = `<span class="game-card-score">${leftEmoji} ${leftLabel} ${leftScore} – ${rightScore} ${rightLabel} ${rightEmoji}</span>`;
+                scoreBodyHTML = `
+                    <div class="gc-score-row">
+                        <div class="gc-team gc-team-left">
+                            <span class="gc-dot" style="background:${leftHex};"></span>
+                            <span class="gc-name">${leftLabel}</span>
+                        </div>
+                        <div class="gc-scoreline">${leftScore} – ${rightScore}</div>
+                        <div class="gc-team gc-team-right">
+                            <span class="gc-name">${rightLabel}</span>
+                            <span class="gc-dot" style="background:${rightHex};"></span>
+                        </div>
+                    </div>`;
             } else {
-                scoreHTML = `<span>⚽ ${playerCount} Players</span>`;
+                scoreBodyHTML = `<div class="gc-no-score">⚽ ${playerCount} Players</div>`;
             }
             
             const editDeleteButtons = currentUserRole === 'admin' ? `
@@ -171,12 +182,14 @@ function loadGameHistory() {
             gamesHTML.push(`
                 <div class="game-card-compact" onclick="openGameDetailModal('${gameDoc.id}')">
                     <div class="game-card-header">
-                        <h3>📅 ${formattedDate}</h3>
+                        <div class="game-card-date">
+                            <span>📅</span>
+                            <strong>${formattedDate}</strong>
+                        </div>
                         ${editDeleteButtons}
                     </div>
-                    <div class="game-card-info">
-                        ${scoreHTML}
-                    </div>
+                    <div class="game-card-divider"></div>
+                    ${scoreBodyHTML}
                 </div>
             `);
         }
