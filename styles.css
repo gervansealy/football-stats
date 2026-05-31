@@ -2713,12 +2713,10 @@ body.admin .nav-links a.admin-only {
     text-shadow: 0 1px 4px rgba(0, 0, 0, 1), 0 0 8px rgba(0, 0, 0, 0.8);
     text-align: center;
     max-width: 64px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    word-break: break-word;
     margin-top: 2px;
     font-weight: 700;
-    line-height: 1;
+    line-height: 1.2;
     pointer-events: none;
 }
 
