@@ -8,6 +8,17 @@ let players    = [];
 let pregameData = null;
 let pregameId   = null;
 
+const TEAM_COLORS = {
+    red:    { name: 'Red',    emoji: '🔴', hex: '#DC3545', bg: '#FFCDD2', text: '#B71C1C' },
+    black:  { name: 'Black',  emoji: '⚫', hex: '#333333', bg: '#424242', text: '#ffffff' },
+    blue:   { name: 'Blue',   emoji: '🔵', hex: '#1976D2', bg: '#BBDEFB', text: '#0D47A1' },
+    green:  { name: 'Green',  emoji: '🟢', hex: '#2E7D32', bg: '#C8E6C9', text: '#1B5E20' },
+    white:  { name: 'White',  emoji: '⚪', hex: '#9E9E9E', bg: '#EEEEEE', text: '#424242' },
+    yellow: { name: 'Yellow', emoji: '🟡', hex: '#F9A825', bg: '#FFF9C4', text: '#F57F17' },
+    orange: { name: 'Orange', emoji: '🟠', hex: '#F57C00', bg: '#FFE0B2', text: '#E65100' },
+    purple: { name: 'Purple', emoji: '🟣', hex: '#7B1FA2', bg: '#E1BEE7', text: '#4A148C' },
+};
+
 // Tracks selected result per team: 'win' | 'draw' | 'loss' | null
 const teamResults = { red: null, black: null };
 
@@ -52,7 +63,9 @@ function showPregameBanner() {
     const bannerText = document.getElementById('pregameBannerText');
     const date       = new Date(pregameData.date + 'T12:00:00');
     const formatted  = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-    bannerText.textContent = `${formatted} — ${pregameData.redTeam.length} Red players, ${pregameData.blackTeam.length} Black players`;
+    const t1Name = TEAM_COLORS[pregameData.team1Color]?.name || 'Red';
+    const t2Name = TEAM_COLORS[pregameData.team2Color]?.name || 'Black';
+    bannerText.textContent = `${formatted} — ${pregameData.redTeam.length} ${t1Name} players, ${pregameData.blackTeam.length} ${t2Name} players`;
     banner.style.display = 'flex';
 }
 
@@ -117,14 +130,15 @@ function renderTeamControls(team, teamPlayers, captainId) {
     `;
 }
 
-function renderTeamSection(team, teamPlayers, captainId) {
-    const isRed       = team === 'red';
-    const label       = isRed ? '🔴 Red Team' : '⚫ Black Team';
-    const headerClass = isRed ? 'red-header' : 'black-header';
+function renderTeamSection(team, teamPlayers, captainId, colorKey) {
+    const isRed   = team === 'red';
+    const defKey  = isRed ? 'red' : 'black';
+    const c       = TEAM_COLORS[colorKey] || TEAM_COLORS[defKey];
+    const label   = `${c.emoji} ${c.name} Team`;
 
     return `
         <div class="team-section" data-team="${team}">
-            <div class="team-section-header ${headerClass}">${label}</div>
+            <div class="team-section-header" style="background:${c.bg};color:${c.text};">${label}</div>
             ${renderTeamControls(team, teamPlayers, captainId)}
             <div class="player-stats-grid">
                 ${teamPlayers.map(renderPlayerCard).join('')}
@@ -252,9 +266,9 @@ function displayPlayerStats() {
         const blackPlayers = (pregameData.blackTeam || []).map(id => players.find(p => p.id === id)).filter(Boolean);
 
         container.innerHTML =
-            renderTeamSection('red',   redPlayers,   pregameData.redCaptain   || '') +
+            renderTeamSection('red',   redPlayers,   pregameData.redCaptain   || '', pregameData.team1Color) +
             renderLiveScore() +
-            renderTeamSection('black', blackPlayers, pregameData.blackCaptain || '');
+            renderTeamSection('black', blackPlayers, pregameData.blackCaptain || '', pregameData.team2Color);
 
     } else {
         // No pregame — two empty sections + player assignment pool
@@ -263,9 +277,9 @@ function displayPlayerStats() {
                 ℹ️ No pre-selection loaded. Assign players to teams below, or
                 <a href="team-selection.html">create a pre-selection</a> for a faster workflow.
             </div>
-            ${renderTeamSection('red',   [], '')}
+            ${renderTeamSection('red',   [], '', 'red')}
             ${renderLiveScore()}
-            ${renderTeamSection('black', [], '')}
+            ${renderTeamSection('black', [], '', 'black')}
             <div class="unassigned-pool">
                 <div class="unassigned-pool-title">Players — assign to a team</div>
                 ${players.map(p => `
@@ -294,8 +308,11 @@ async function saveGameStats() {
     const gameDate = document.getElementById('gameDate').value;
     if (!gameDate) { alert('Please select a game date'); return; }
 
-    if (!teamResults.red)   { alert('Please select a result for Red Team');   return; }
-    if (!teamResults.black) { alert('Please select a result for Black Team'); return; }
+    const t1DisplayName = TEAM_COLORS[pregameData?.team1Color]?.name || 'Red';
+    const t2DisplayName = TEAM_COLORS[pregameData?.team2Color]?.name || 'Black';
+
+    if (!teamResults.red)   { alert(`Please select a result for ${t1DisplayName} Team`);   return; }
+    if (!teamResults.black) { alert(`Please select a result for ${t2DisplayName} Team`); return; }
 
     const playerStats = {};
     const teamArrays  = { red: [], black: [] };
