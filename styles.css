@@ -2621,53 +2621,58 @@ body.admin .nav-links a.admin-only {
     pointer-events: none;
 }
 
-.token-jersey {
-    width: 48px;
-    height: 44px;
+.token-pic-wrapper {
+    position: relative;
+    width: 40px;
+    height: 40px;
+}
+
+.token-pic {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255,255,255,0.8);
+    display: block;
+    background: #555;
+}
+
+.token-pic-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #555;
+    border: 2px solid rgba(255,255,255,0.8);
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 12px;
     font-weight: 800;
-    font-size: 13px;
     color: white;
-    clip-path: polygon(
-        20% 0%, 80% 0%,
-        100% 18%, 84% 30%, 84% 100%,
-        16% 100%, 16% 30%, 0% 18%
-    );
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.player-token:not(.view-only):hover .token-pic,
+.player-token:not(.view-only):hover .token-pic-placeholder {
+    transform: scale(1.08);
     transition: transform 0.1s;
 }
 
-.player-token:not(.view-only):hover .token-jersey {
-    transform: scale(1.08);
+.token-captain .token-pic,
+.token-captain .token-pic-placeholder {
+    border: 2.5px solid #FFD700;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.85);
 }
 
-.token-jersey.red {
-    background: #DC3545;
-}
-
-.token-jersey.black {
-    background: #333333;
-    border: 1px solid rgba(255,255,255,0.2);
-}
-
-/* Captain token highlight */
-.token-captain .token-jersey {
-    outline: 3px solid #FFD700;
-    outline-offset: 2px;
-    filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.85));
-}
-
-.token-captain-star {
+.token-captain-badge {
     position: absolute;
-    top: -6px;
-    right: -6px;
-    width: 18px;
-    height: 18px;
+    top: -5px;
+    left: -5px;
+    width: 16px;
+    height: 16px;
     background: #FFD700;
     color: #7A5900;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 900;
     border-radius: 50%;
     display: flex;
@@ -2675,7 +2680,31 @@ body.admin .nav-links a.admin-only {
     justify-content: center;
     border: 1.5px solid #fff;
     box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    z-index: 2;
     pointer-events: none;
+}
+
+.token-goal-icon {
+    position: absolute;
+    top: 50%;
+    right: -13px;
+    transform: translateY(-50%);
+    font-size: 14px;
+    line-height: 1;
+    z-index: 2;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+    pointer-events: none;
+}
+
+.token-color-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-top: -4px;
+    border: 1.5px solid rgba(255,255,255,0.8);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    position: relative;
+    z-index: 1;
 }
 
 .token-name {
@@ -3493,11 +3522,11 @@ body.admin .nav-links a.admin-only {
         font-size: 8px;
     }
 
-    .token-jersey {
-        width: 40px;
-        height: 36px;
-        font-size: 11px;
-    }
+    .token-pic-wrapper { width: 32px; height: 32px; }
+    .token-pic, .token-pic-placeholder { width: 32px; height: 32px; font-size: 10px; }
+    .token-color-dot { width: 8px; height: 8px; }
+    .token-captain-badge { width: 13px; height: 13px; font-size: 7px; top: -4px; left: -4px; }
+    .token-goal-icon { font-size: 11px; right: -10px; }
 
     /* OTP badge code size */
     .otp-badge-code {

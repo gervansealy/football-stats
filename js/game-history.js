@@ -9,6 +9,18 @@ let cachedPointValues = null; // Cache point values
 let activeYearFilter  = 'all';
 let activeMonthFilter = 'all';
 
+function convertToDirectLink(url) {
+    if (!url) return null;
+    if (url.match(/\.(jpg|jpeg|png|gif|webp|bmp)(\?.*)?$/i)) return url;
+    if (url.includes('drive.google.com')) {
+        const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)
+                   || url.match(/\/d\/([a-zA-Z0-9_-]+)/)
+                   || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (match) return `https://lh3.googleusercontent.com/d/${match[1]}`;
+    }
+    return url;
+}
+
 const TEAM_COLORS = {
     red:    { name: 'Red',    emoji: '🔴', hex: '#DC3545' },
     black:  { name: 'Black',  emoji: '⚫', hex: '#333333' },
@@ -428,19 +440,30 @@ function pitchMarkingsHTML() {
     `;
 }
 
-function playerTokenHTML(player, hex, captainId) {
-    const isCaptain = player.id === captainId;
-    const initials  = (player.name || player.id).split(' ').map(w => w[0] || '').join('').substring(0, 2).toUpperCase();
-    const first     = (player.name || player.id).split(' ')[0];
+function playerTokenHTML(player, hex, captainId, playerStats) {
+    const isCaptain  = player.id === captainId;
+    const initials   = (player.name || player.id).split(' ').map(w => w[0] || '').join('').substring(0, 2).toUpperCase();
+    const first      = (player.name || player.id).split(' ')[0];
+    const scored     = (playerStats?.[player.id]?.goals || 0) > 0;
+    const fullPlayer = allPlayers.find(p => p.id === player.id);
+    const photoUrl   = fullPlayer?.headshotLink ? convertToDirectLink(fullPlayer.headshotLink) : null;
+    const picHTML    = photoUrl
+        ? `<img class="token-pic" src="${photoUrl}" alt="${first}" onerror="this.outerHTML='<div class=\\'token-pic-placeholder\\'>${initials}</div>'">`
+        : `<div class="token-pic-placeholder">${initials}</div>`;
+
     return `<div class="player-token view-only${isCaptain ? ' token-captain' : ''}" style="left:${player.x}%;top:${player.y}%;">
-        <div class="token-jersey" style="background:${hex};">${initials}</div>
+        <div class="token-pic-wrapper">
+            ${isCaptain ? '<div class="token-captain-badge">C</div>' : ''}
+            ${picHTML}
+            ${scored ? '<div class="token-goal-icon">⚽</div>' : ''}
+        </div>
+        <div class="token-color-dot" style="background:${hex};"></div>
         <div class="token-name">${first}</div>
-        ${isCaptain ? '<div class="token-captain-star">C</div>' : ''}
     </div>`;
 }
 
-function buildPitchHTML(lineup, hex, captainId) {
-    const tokens = (lineup || []).map(p => playerTokenHTML(p, hex, captainId)).join('');
+function buildPitchHTML(lineup, hex, captainId, playerStats) {
+    const tokens = (lineup || []).map(p => playerTokenHTML(p, hex, captainId, playerStats)).join('');
     return `<div class="pitch">${pitchMarkingsHTML()}${tokens}</div>`;
 }
 
@@ -580,11 +603,11 @@ window.openGameDetailModal = async function(gameId) {
                 <div class="dual-pitch-view" style="padding:0 0 20px 0;">
                     <div class="pitch-panel">
                         <div class="pitch-panel-title" style="background:${t1.hex}4D;border:1px solid ${t1.hex}8C;">${t1.emoji} ${t1.name} Team</div>
-                        <div style="position:relative;">${buildPitchHTML(redLineup, t1.hex, gameData.redCaptain)}</div>
+                        <div style="position:relative;">${buildPitchHTML(redLineup, t1.hex, gameData.redCaptain, gameData.playerStats)}</div>
                     </div>
                     <div class="pitch-panel">
                         <div class="pitch-panel-title" style="background:${t2.hex}4D;border:1px solid ${t2.hex}8C;">${t2.emoji} ${t2.name} Team</div>
-                        <div style="position:relative;">${buildPitchHTML(blackLineup, t2.hex, gameData.blackCaptain)}</div>
+                        <div style="position:relative;">${buildPitchHTML(blackLineup, t2.hex, gameData.blackCaptain, gameData.playerStats)}</div>
                     </div>
                 </div>
             </div>

@@ -24,6 +24,26 @@ function getTeamColor(team, pregame) {
     return TEAM_COLORS[key] || TEAM_COLORS[team] || TEAM_COLORS.red;
 }
 
+// ── Player photo map ───────────────────────────────
+const playersMap = {};
+
+function convertToDirectLink(url) {
+    if (!url) return null;
+    if (url.match(/\.(jpg|jpeg|png|gif|webp|bmp)(\?.*)?$/i)) return url;
+    if (url.includes('drive.google.com')) {
+        const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)
+                   || url.match(/\/d\/([a-zA-Z0-9_-]+)/)
+                   || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (match) return `https://lh3.googleusercontent.com/d/${match[1]}`;
+    }
+    return url;
+}
+
+async function loadPlayersMap() {
+    const snap = await getDocs(collection(db, 'players'));
+    snap.forEach(d => { playersMap[d.id] = d.data(); });
+}
+
 // ── State ──────────────────────────────────────────
 let currentPregame = null;
 let currentTeam    = null;   // 'red' | 'black'
@@ -37,6 +57,8 @@ let dragOffsetY    = 0;
 
 // ── Entry ──────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
+    await loadPlayersMap();
+
     const params    = new URLSearchParams(window.location.search);
     const otp       = params.get('otp');
     const viewId    = params.get('view');
@@ -215,14 +237,21 @@ function makeToken(id, name, team, x, y, draggable, isCaptain = false, tc = TEAM
     el.style.top        = y + '%';
     if (draggable) el.style.touchAction = 'none';
 
-    const initials   = name.split(' ').map(w => w[0] || '').join('').substring(0, 2).toUpperCase();
-    const first      = name.split(' ')[0];
-    const borderStyle = tc.border ? `border:1px solid ${tc.border};` : '';
+    const initials  = name.split(' ').map(w => w[0] || '').join('').substring(0, 2).toUpperCase();
+    const first     = name.split(' ')[0];
+    const rawPhoto  = playersMap[id]?.headshotLink;
+    const photoUrl  = rawPhoto ? convertToDirectLink(rawPhoto) : null;
+    const picHTML   = photoUrl
+        ? `<img class="token-pic" src="${photoUrl}" alt="${first}" onerror="this.outerHTML='<div class=\\'token-pic-placeholder\\'>${initials}</div>'">`
+        : `<div class="token-pic-placeholder">${initials}</div>`;
 
     el.innerHTML = `
-        <div class="token-jersey" style="background:${tc.hex};color:${tc.textColor};${borderStyle}">${initials}</div>
+        <div class="token-pic-wrapper">
+            ${isCaptain ? '<div class="token-captain-badge">C</div>' : ''}
+            ${picHTML}
+        </div>
+        <div class="token-color-dot" style="background:${tc.hex};"></div>
         <div class="token-name">${first}</div>
-        ${isCaptain ? '<div class="token-captain-star">C</div>' : ''}
     `;
     return el;
 }
