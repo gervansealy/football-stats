@@ -237,8 +237,11 @@ function makeToken(id, name, team, x, y, draggable, isCaptain = false, tc = TEAM
     el.style.top        = y + '%';
     if (draggable) el.style.touchAction = 'none';
 
-    const initials  = name.split(' ').map(w => w[0] || '').join('').substring(0, 2).toUpperCase();
-    const first     = name.split(' ')[0];
+    const parts     = name.trim().split(' ');
+    const initials  = parts.map(w => w[0] || '').join('').substring(0, 2).toUpperCase();
+    const first     = parts.length > 1
+        ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}`
+        : parts[0];
     const rawPhoto  = playersMap[id]?.headshotLink;
     const photoUrl  = rawPhoto ? convertToDirectLink(rawPhoto) : null;
     const picHTML   = photoUrl

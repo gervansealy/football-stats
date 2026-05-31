@@ -442,8 +442,11 @@ function pitchMarkingsHTML() {
 
 function playerTokenHTML(player, hex, captainId, playerStats) {
     const isCaptain  = player.id === captainId;
-    const initials   = (player.name || player.id).split(' ').map(w => w[0] || '').join('').substring(0, 2).toUpperCase();
-    const first      = (player.name || player.id).split(' ')[0];
+    const parts      = (player.name || player.id).trim().split(' ');
+    const initials   = parts.map(w => w[0] || '').join('').substring(0, 2).toUpperCase();
+    const first      = parts.length > 1
+        ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}`
+        : parts[0];
     const scored     = (playerStats?.[player.id]?.goals || 0) > 0;
     const fullPlayer = allPlayers.find(p => p.id === player.id);
     const photoUrl   = fullPlayer?.headshotLink ? convertToDirectLink(fullPlayer.headshotLink) : null;
