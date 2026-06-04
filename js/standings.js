@@ -273,7 +273,8 @@ function displayHighlights(players) {
     const maxCaptainWins = Math.max(...players.map(p => p.captainWins));
 
     const tiedTop         = players.filter(p => p.points === topPlayer.points && p.wins === topPlayer.wins && p.winPercentage === topPlayer.winPercentage);
-    const tiedBottom      = players.filter(p => p.points === lastPlayer.points && p.wins === lastPlayer.wins && p.winPercentage === lastPlayer.winPercentage);
+    const minPoints       = Math.min(...players.map(p => p.points));
+    const tiedBottom      = players.filter(p => p.points === minPoints);
     const tiedGoals       = players.filter(p => p.goals       === maxGoals);
     const tiedWins        = players.filter(p => p.wins        === maxWins);
     const tiedLosses      = players.filter(p => p.losses      === maxLosses);
@@ -329,7 +330,7 @@ function displayHighlights(players) {
     ].join('');
     const bottomCards     = [
         ...tiedLosses.map(p  => buildCard(p, 'Most Losses',   `${maxLosses} losses`,      B.mostLosses,   '#FB8C00')),
-        ...tiedBottom.map(p  => buildCard(p, 'Biggest Loser', `${lastPlayer.points} pts`, B.biggestLoser, '#EF4444'))
+        ...tiedBottom.map(p  => buildCard(p, 'Biggest Loser', `${minPoints} pts`, B.biggestLoser, '#EF4444'))
     ].join('');
 
     grid.innerHTML = `
