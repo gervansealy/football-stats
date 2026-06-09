@@ -2830,6 +2830,13 @@ body.admin .nav-links a.admin-only {
 
 .btn-copy-otp:hover { opacity: 1; }
 
+.btn-reedit {
+    border-color: #7C3AED;
+    color: #7C3AED;
+    opacity: 0.8;
+}
+.btn-reedit:hover { opacity: 1; }
+
 .lineup-status-badges {
     display: flex;
     gap: 6px;

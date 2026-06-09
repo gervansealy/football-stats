@@ -6,6 +6,13 @@ import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/fi
 
 const ADMIN_EMAIL = 'gervansealy@gmail.com';
 
+function generateRevOTP() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let otp = '';
+    for (let i = 0; i < 6; i++) otp += chars[Math.floor(Math.random() * chars.length)];
+    return otp;
+}
+
 const TEAM_COLORS = {
     red:    { hex: '#DC3545', textColor: '#fff', border: '',                    emoji: '🔴', name: 'Red'    },
     black:  { hex: '#333333', textColor: '#fff', border: 'rgba(255,255,255,0.2)', emoji: '⚫', name: 'Black'  },
@@ -61,6 +68,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const params    = new URLSearchParams(window.location.search);
     const otp       = params.get('otp');
+    const revOtp    = params.get('revotp');
     const viewId    = params.get('view');
     const adminId   = params.get('admin');
     const adminTeam = params.get('team');
@@ -73,6 +81,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         await initViewMode(viewId);
     } else if (adminId && adminTeam) {
         await initAdminEdit(adminId, adminTeam);
+    } else if (revOtp) {
+        await processRevOTP(revOtp.toUpperCase());
     } else if (otp) {
         await processOTP(otp.toUpperCase());
     } else {
@@ -140,6 +150,51 @@ async function processOTP(otp) {
     } catch (err) {
         console.error(err);
         showOTPError('Error verifying password. Please try again.');
+    }
+}
+
+async function processRevOTP(otp) {
+    try {
+        const snap = await getDocs(collection(db, 'lineups'));
+        let pregameId = null, team = null, lineupData = null;
+
+        snap.forEach(d => {
+            const data = d.data();
+            if (data.redRevOTP === otp)        { pregameId = d.id; team = 'red';   lineupData = data; }
+            else if (data.blackRevOTP === otp) { pregameId = d.id; team = 'black'; lineupData = data; }
+        });
+
+        if (!pregameId) {
+            showSection('otp');
+            showOTPError('Invalid re-edit link. Please contact the admin.');
+            return;
+        }
+
+        const pgDoc = await getDoc(doc(db, 'pregames', pregameId));
+        if (!pgDoc.exists()) {
+            showSection('otp');
+            showOTPError('Game not found. Please contact the admin.');
+            return;
+        }
+
+        currentPregame = { id: pgDoc.id, ...pgDoc.data() };
+        currentTeam    = team;
+        placedPlayers  = {};
+
+        const savedLineup = team === 'red' ? lineupData.redLineup : lineupData.blackLineup;
+        if (savedLineup) {
+            savedLineup.forEach(p => { if (p.x != null) placedPlayers[p.id] = { x: p.x, y: p.y }; });
+        }
+
+        buildTeamPlayers();
+        applyDefaultPositions();
+        isEditable = true;
+        initEditor();
+
+    } catch (err) {
+        console.error(err);
+        showSection('otp');
+        showOTPError('Error loading lineup. Please try again.');
     }
 }
 
@@ -320,13 +375,15 @@ async function submitLineup() {
     btn.textContent = 'Saving…';
 
     try {
-        const key = currentTeam;
+        const key    = currentTeam;
+        const revOTP = generateRevOTP();
         await setDoc(doc(db, 'lineups', currentPregame.id), {
             pregameId:              currentPregame.id,
             date:                   currentPregame.date,
             [`${key}Lineup`]:       lineupData,
             [`${key}Submitted`]:    true,
             [`${key}SubmittedAt`]:  new Date().toISOString(),
+            [`${key}RevOTP`]:       revOTP,
         }, { merge: true });
 
         await initViewMode(currentPregame.id);

@@ -132,9 +132,11 @@ function renderPregameCards() {
         const redCaptainName   = pg.redCaptain   ? (pg.redTeamNames   || {})[pg.redCaptain]   || '' : '';
         const blackCaptainName = pg.blackCaptain ? (pg.blackTeamNames || {})[pg.blackCaptain] || '' : '';
 
-        const ld        = lineupStatusCache[pg.id] || {};
-        const redDone   = ld.redSubmitted   || false;
-        const blackDone = ld.blackSubmitted || false;
+        const ld          = lineupStatusCache[pg.id] || {};
+        const redDone     = ld.redSubmitted   || false;
+        const blackDone   = ld.blackSubmitted || false;
+        const redRevOTP   = ld.redRevOTP   || null;
+        const blackRevOTP = ld.blackRevOTP || null;
 
         const baseURL = window.location.href.replace(/[^/]*$/, '');
 
@@ -144,11 +146,13 @@ function renderPregameCards() {
                     <span class="otp-badge-label">${t1.emoji}</span>
                     <span class="otp-badge-code" style="color:${t1.darkText};">${pg.redOTP || '—'}</span>
                     <button class="btn-copy-otp" onclick="copyLineupLink('${baseURL}lineup.html?otp=${pg.redOTP}', this)">Copy Link</button>
+                    ${redDone && redRevOTP ? `<button class="btn-copy-otp btn-reedit" onclick="copyLineupLink('${baseURL}lineup.html?revotp=${redRevOTP}', this)">📝 Re-edit Link</button>` : ''}
                 </div>
                 <div class="otp-badge" style="background:${t2.lightBg};border:1px solid ${t2.border};">
                     <span class="otp-badge-label">${t2.emoji}</span>
                     <span class="otp-badge-code" style="color:${t2.darkText};">${pg.blackOTP || '—'}</span>
                     <button class="btn-copy-otp" onclick="copyLineupLink('${baseURL}lineup.html?otp=${pg.blackOTP}', this)">Copy Link</button>
+                    ${blackDone && blackRevOTP ? `<button class="btn-copy-otp btn-reedit" onclick="copyLineupLink('${baseURL}lineup.html?revotp=${blackRevOTP}', this)">📝 Re-edit Link</button>` : ''}
                 </div>
             </div>
         ` : '';
