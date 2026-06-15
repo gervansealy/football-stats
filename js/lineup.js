@@ -64,22 +64,12 @@ let dragOffsetY    = 0;
 
 // ── Entry ──────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-    document.getElementById('otpInput')?.addEventListener('keydown', e => {
-        if (e.key === 'Enter') verifyOTP();
-    });
-
     const params    = new URLSearchParams(window.location.search);
     const otp       = params.get('otp');
     const revOtp    = params.get('revotp');
     const viewId    = params.get('view');
     const adminId   = params.get('admin');
     const adminTeam = params.get('team');
-
-    const hasParam = otp || revOtp || viewId || adminId;
-    if (!hasParam) {
-        showSection('otp');
-        return;
-    }
 
     try {
         await loadPlayersMap();
@@ -91,7 +81,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else if (revOtp) {
             await processRevOTP(revOtp.toUpperCase());
         } else if (otp) {
-            await processOTP(otp.toUpperCase(), true);
+            await processOTP(otp.toUpperCase());
         }
     } catch (err) {
         console.error(err);
@@ -101,7 +91,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function showSection(which) {
     document.getElementById('linkErrorSection').style.display = which === 'linkerror' ? 'flex'  : 'none';
-    document.getElementById('otpSection').style.display       = which === 'otp'       ? 'flex'  : 'none';
     document.getElementById('editorSection').style.display    = which === 'editor'    ? 'block' : 'none';
     document.getElementById('viewSection').style.display      = which === 'view'      ? 'block' : 'none';
 }
@@ -111,19 +100,8 @@ function showLinkError(msg) {
     showSection('linkerror');
 }
 
-// ── OTP Flow ───────────────────────────────────────
-window.verifyOTP = async function () {
-    const otp = document.getElementById('otpInput').value.toUpperCase().trim();
-    if (!otp) return;
-    const btn = document.querySelector('#otpSection .btn-login');
-    btn.disabled    = true;
-    btn.textContent = 'Checking…';
-    await processOTP(otp);
-    btn.disabled  = false;
-    btn.innerHTML = 'Continue <span class="arrow">→</span>';
-};
 
-async function processOTP(otp, fromLink = false) {
+async function processOTP(otp) {
     try {
         const snap = await getDocs(collection(db, 'pregames'));
         let found = null, team = null;
@@ -135,8 +113,7 @@ async function processOTP(otp, fromLink = false) {
         });
 
         if (!found) {
-            if (fromLink) showLinkError('This link is invalid or has expired. Please contact the admin for a new link.');
-            else { showSection('otp'); showOTPError('Invalid password. Please try again.'); }
+            showLinkError('This link is invalid or has expired. Please contact the admin for a new link.');
             return;
         }
 
@@ -165,8 +142,7 @@ async function processOTP(otp, fromLink = false) {
 
     } catch (err) {
         console.error(err);
-        if (fromLink) showLinkError('Something went wrong loading your lineup. Please try the link again.');
-        else { showSection('otp'); showOTPError('Error verifying password. Please try again.'); }
+        showLinkError('Something went wrong loading your lineup. Please try the link again.');
     }
 }
 
@@ -212,11 +188,6 @@ async function processRevOTP(otp) {
     }
 }
 
-function showOTPError(msg) {
-    const el = document.getElementById('otpError');
-    el.textContent    = msg;
-    el.style.display  = 'block';
-}
 
 // ── Build team player list from pregame doc ─────────
 function buildTeamPlayers() {
