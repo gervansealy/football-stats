@@ -47,8 +47,12 @@ function convertToDirectLink(url) {
 }
 
 async function loadPlayersMap() {
-    const snap = await getDocs(collection(db, 'players'));
-    snap.forEach(d => { playersMap[d.id] = d.data(); });
+    try {
+        const snap = await getDocs(collection(db, 'players'));
+        snap.forEach(d => { playersMap[d.id] = d.data(); });
+    } catch (err) {
+        console.warn('Player photos unavailable for public lineup link.', err);
+    }
 }
 
 // ── State ──────────────────────────────────────────
