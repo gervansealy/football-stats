@@ -144,13 +144,13 @@ function renderPregameCards() {
                     <span class="otp-badge-label">${t1.emoji}</span>
                     <span class="otp-badge-code" style="color:${t1.darkText};">${pg.redOTP || '—'}</span>
                     <button class="btn-copy-otp" onclick="copyLineupLink('${baseURL}lineup.html?otp=${pg.redOTP}', this)">Copy Link</button>
-                    ${redDone ? `<button class="btn-copy-otp btn-reedit" onclick="generateReEditLink('${pg.id}','red',this)">📝 Re-edit Link</button>` : ''}
+                    ${redDone ? `<button class="btn-copy-otp btn-reedit" data-pregame-id="${pg.id}" data-team="red">📝 Re-edit Link</button>` : ''}
                 </div>
                 <div class="otp-badge" style="background:${t2.lightBg};border:1px solid ${t2.border};">
                     <span class="otp-badge-label">${t2.emoji}</span>
                     <span class="otp-badge-code" style="color:${t2.darkText};">${pg.blackOTP || '—'}</span>
                     <button class="btn-copy-otp" onclick="copyLineupLink('${baseURL}lineup.html?otp=${pg.blackOTP}', this)">Copy Link</button>
-                    ${blackDone ? `<button class="btn-copy-otp btn-reedit" onclick="generateReEditLink('${pg.id}','black',this)">📝 Re-edit Link</button>` : ''}
+                    ${blackDone ? `<button class="btn-copy-otp btn-reedit" data-pregame-id="${pg.id}" data-team="black">📝 Re-edit Link</button>` : ''}
                 </div>
             </div>
         ` : '';
@@ -202,6 +202,10 @@ function renderPregameCards() {
             </div>
         `;
     }).join('');
+
+    container.querySelectorAll('.btn-reedit').forEach(btn => {
+        btn.addEventListener('click', () => generateReEditLink(btn.dataset.pregameId, btn.dataset.team, btn));
+    });
 }
 
 // ── Team player popup ─────────────────────────────────
@@ -246,7 +250,7 @@ window.copyLineupLink = function (url, btn) {
 };
 
 // ── Generate & copy a fresh re-edit link ─────────────
-window.generateReEditLink = async function (pregameId, team, btn) {
+async function generateReEditLink(pregameId, team, btn) {
     const orig = btn.textContent;
     btn.disabled    = true;
     btn.textContent = 'Generating…';

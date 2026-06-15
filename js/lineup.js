@@ -64,29 +64,35 @@ let dragOffsetY    = 0;
 
 // ── Entry ──────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadPlayersMap();
-
-    const params    = new URLSearchParams(window.location.search);
-    const otp       = params.get('otp');
-    const revOtp    = params.get('revotp');
-    const viewId    = params.get('view');
-    const adminId   = params.get('admin');
-    const adminTeam = params.get('team');
+    showSection('otp');
 
     document.getElementById('otpInput')?.addEventListener('keydown', e => {
         if (e.key === 'Enter') verifyOTP();
     });
 
-    if (viewId) {
-        await initViewMode(viewId);
-    } else if (adminId && adminTeam) {
-        await initAdminEdit(adminId, adminTeam);
-    } else if (revOtp) {
-        await processRevOTP(revOtp.toUpperCase());
-    } else if (otp) {
-        await processOTP(otp.toUpperCase());
-    } else {
+    try {
+        await loadPlayersMap();
+
+        const params    = new URLSearchParams(window.location.search);
+        const otp       = params.get('otp');
+        const revOtp    = params.get('revotp');
+        const viewId    = params.get('view');
+        const adminId   = params.get('admin');
+        const adminTeam = params.get('team');
+
+        if (viewId) {
+            await initViewMode(viewId);
+        } else if (adminId && adminTeam) {
+            await initAdminEdit(adminId, adminTeam);
+        } else if (revOtp) {
+            await processRevOTP(revOtp.toUpperCase());
+        } else if (otp) {
+            await processOTP(otp.toUpperCase());
+        }
+    } catch (err) {
+        console.error(err);
         showSection('otp');
+        showOTPError('Something went wrong. Please refresh and try again.');
     }
 });
 
@@ -149,6 +155,7 @@ async function processOTP(otp) {
 
     } catch (err) {
         console.error(err);
+        showSection('otp');
         showOTPError('Error verifying password. Please try again.');
     }
 }
@@ -255,7 +262,7 @@ function initEditor() {
     renderTokensOnPitch('pitch', [{ team: currentTeam, players: teamPlayers }], true, captainId, tc);
     initDragDrop();
 
-    document.getElementById('submitLineupBtn').addEventListener('click', submitLineup);
+    document.getElementById('submitLineupBtn').onclick = submitLineup;
 }
 
 // ── Token rendering ────────────────────────────────
