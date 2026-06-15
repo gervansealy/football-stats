@@ -2,7 +2,7 @@ import { db } from './firebase-config.js';
 import { checkAuth } from './auth.js';
 import {
     collection, addDoc, getDocs, onSnapshot,
-    doc, updateDoc, deleteDoc, getDoc, query, orderBy
+    doc, updateDoc, deleteDoc, getDoc, setDoc, query, orderBy
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 let players = [];
@@ -252,16 +252,22 @@ window.generateReEditLink = async function (pregameId, team, btn) {
     btn.textContent = 'Generating…';
     try {
         const revOTP  = generateOTP();
-        await updateDoc(doc(db, 'lineups', pregameId), { [`${team}RevOTP`]: revOTP });
+        await setDoc(doc(db, 'lineups', pregameId), { [`${team}RevOTP`]: revOTP }, { merge: true });
         const baseURL = window.location.href.replace(/[^/]*$/, '');
-        await navigator.clipboard.writeText(`${baseURL}lineup.html?revotp=${revOTP}`);
-        btn.textContent = '✓ Copied!';
+        const url     = `${baseURL}lineup.html?revotp=${revOTP}`;
+        try {
+            await navigator.clipboard.writeText(url);
+            btn.textContent = '✓ Copied!';
+        } catch {
+            prompt('Copy this re-edit link:', url);
+            btn.textContent = orig;
+        }
         setTimeout(() => { btn.disabled = false; btn.textContent = orig; }, 2000);
     } catch (err) {
         console.error(err);
         btn.disabled    = false;
         btn.textContent = orig;
-        alert('Error generating re-edit link. Please try again.');
+        alert('Error generating re-edit link: ' + err.message);
     }
 };
 
