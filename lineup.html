@@ -8,7 +8,16 @@
 </head>
 <body class="lineup-page">
 
-    <!-- Section 1: OTP Entry -->
+    <!-- Link error state (shown when URL link is invalid/expired) -->
+    <div id="linkErrorSection" class="otp-section" style="display:none;">
+        <div class="otp-card">
+            <div class="football-icon">⚽</div>
+            <h2>Team Lineup</h2>
+            <p id="linkErrorMsg" style="color:#EF4444;text-align:center;margin-top:8px;"></p>
+        </div>
+    </div>
+
+    <!-- Section 1: OTP Entry (manual access only — no URL param) -->
     <div id="otpSection" class="otp-section" style="display:none;">
         <div class="otp-card">
             <div class="football-icon">⚽</div>

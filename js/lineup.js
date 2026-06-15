@@ -91,19 +91,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else if (revOtp) {
             await processRevOTP(revOtp.toUpperCase());
         } else if (otp) {
-            await processOTP(otp.toUpperCase());
+            await processOTP(otp.toUpperCase(), true);
         }
     } catch (err) {
         console.error(err);
-        showSection('otp');
-        showOTPError('Something went wrong. Please refresh and try again.');
+        showLinkError('Something went wrong loading your lineup. Please try the link again.');
     }
 });
 
 function showSection(which) {
-    document.getElementById('otpSection').style.display    = which === 'otp'    ? 'flex'  : 'none';
-    document.getElementById('editorSection').style.display = which === 'editor' ? 'block' : 'none';
-    document.getElementById('viewSection').style.display   = which === 'view'   ? 'block' : 'none';
+    document.getElementById('linkErrorSection').style.display = which === 'linkerror' ? 'flex'  : 'none';
+    document.getElementById('otpSection').style.display       = which === 'otp'       ? 'flex'  : 'none';
+    document.getElementById('editorSection').style.display    = which === 'editor'    ? 'block' : 'none';
+    document.getElementById('viewSection').style.display      = which === 'view'      ? 'block' : 'none';
+}
+
+function showLinkError(msg) {
+    document.getElementById('linkErrorMsg').textContent = msg;
+    showSection('linkerror');
 }
 
 // ── OTP Flow ───────────────────────────────────────
@@ -118,7 +123,7 @@ window.verifyOTP = async function () {
     btn.innerHTML = 'Continue <span class="arrow">→</span>';
 };
 
-async function processOTP(otp) {
+async function processOTP(otp, fromLink = false) {
     try {
         const snap = await getDocs(collection(db, 'pregames'));
         let found = null, team = null;
@@ -130,7 +135,8 @@ async function processOTP(otp) {
         });
 
         if (!found) {
-            showOTPError('Invalid password. Please try again.');
+            if (fromLink) showLinkError('This link is invalid or has expired. Please contact the admin for a new link.');
+            else { showSection('otp'); showOTPError('Invalid password. Please try again.'); }
             return;
         }
 
@@ -159,8 +165,8 @@ async function processOTP(otp) {
 
     } catch (err) {
         console.error(err);
-        showSection('otp');
-        showOTPError('Error verifying password. Please try again.');
+        if (fromLink) showLinkError('Something went wrong loading your lineup. Please try the link again.');
+        else { showSection('otp'); showOTPError('Error verifying password. Please try again.'); }
     }
 }
 
@@ -176,15 +182,13 @@ async function processRevOTP(otp) {
         });
 
         if (!pregameId) {
-            showSection('otp');
-            showOTPError('Invalid re-edit link. Please contact the admin.');
+            showLinkError('This re-edit link is invalid or has expired. Please ask the admin to generate a new one.');
             return;
         }
 
         const pgDoc = await getDoc(doc(db, 'pregames', pregameId));
         if (!pgDoc.exists()) {
-            showSection('otp');
-            showOTPError('Game not found. Please contact the admin.');
+            showLinkError('Game not found. Please contact the admin.');
             return;
         }
 
@@ -204,8 +208,7 @@ async function processRevOTP(otp) {
 
     } catch (err) {
         console.error(err);
-        showSection('otp');
-        showOTPError('Error loading lineup. Please try again.');
+        showLinkError('Something went wrong loading your lineup. Please try the link again.');
     }
 }
 
