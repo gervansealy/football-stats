@@ -64,21 +64,25 @@ let dragOffsetY    = 0;
 
 // ── Entry ──────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-    showSection('otp');
-
     document.getElementById('otpInput')?.addEventListener('keydown', e => {
         if (e.key === 'Enter') verifyOTP();
     });
 
+    const params    = new URLSearchParams(window.location.search);
+    const otp       = params.get('otp');
+    const revOtp    = params.get('revotp');
+    const viewId    = params.get('view');
+    const adminId   = params.get('admin');
+    const adminTeam = params.get('team');
+
+    const hasParam = otp || revOtp || viewId || adminId;
+    if (!hasParam) {
+        showSection('otp');
+        return;
+    }
+
     try {
         await loadPlayersMap();
-
-        const params    = new URLSearchParams(window.location.search);
-        const otp       = params.get('otp');
-        const revOtp    = params.get('revotp');
-        const viewId    = params.get('view');
-        const adminId   = params.get('admin');
-        const adminTeam = params.get('team');
 
         if (viewId) {
             await initViewMode(viewId);
