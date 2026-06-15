@@ -9,6 +9,7 @@ let players = [];
 let lineupStatusCache = {};
 let currentPregames   = [];
 let isAdmin = false;
+let renderFrozen = false;
 
 const teamDataCache = {};
 
@@ -102,6 +103,7 @@ function initColorPicker(swatchesId, labelId, defaultColor, onPick) {
 
 // ── Render cards ─────────────────────────────────────
 function renderPregameCards() {
+    if (renderFrozen) return;
     const container = document.getElementById('pregamesContainer');
 
     if (currentPregames.length === 0) {
@@ -251,29 +253,43 @@ window.copyLineupLink = function (url, btn) {
 
 // ── Generate & copy a fresh re-edit link ─────────────
 async function generateReEditLink(pregameId, team, btn) {
+    renderFrozen = true;
     const orig = btn.textContent;
     btn.disabled    = true;
     btn.textContent = 'Generating…';
+
     try {
         const revOTP  = generateOTP();
-        await setDoc(doc(db, 'lineups', pregameId), { [`${team}RevOTP`]: revOTP }, { merge: true });
         const baseURL = window.location.href.replace(/[^/]*$/, '');
         const url     = `${baseURL}lineup.html?revotp=${revOTP}`;
+
+        let copied = false;
         try {
             await navigator.clipboard.writeText(url);
+            copied = true;
+        } catch { /* handled below */ }
+
+        await setDoc(doc(db, 'lineups', pregameId), { [`${team}RevOTP`]: revOTP }, { merge: true });
+
+        if (copied) {
             btn.textContent = '✓ Copied!';
-        } catch {
-            prompt('Copy this re-edit link:', url);
+        } else {
             btn.textContent = orig;
+            prompt('Copy this re-edit link:', url);
         }
-        setTimeout(() => { btn.disabled = false; btn.textContent = orig; }, 2000);
     } catch (err) {
         console.error(err);
-        btn.disabled    = false;
         btn.textContent = orig;
         alert('Error generating re-edit link: ' + err.message);
+    } finally {
+        setTimeout(() => {
+            btn.disabled  = false;
+            btn.textContent = orig;
+            renderFrozen = false;
+            renderPregameCards();
+        }, 1500);
     }
-};
+}
 
 // ── Checkbox + captain builder ────────────────────────
 function buildPlayerCheckboxes(containerId, captainSelectId, selectedIds = [], captainId = '') {
