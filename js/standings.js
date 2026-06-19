@@ -540,10 +540,16 @@ async function wrRenderBody() {
         ? 'All Season'
         : new Date(wrFilterMonth + '-01T12:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-    // ── Score banner ──────────────────────────────────────────
+    // ── Team colours + captain names ─────────────────────────
     const t1c = WR_TEAM_COLORS[g.team1Color] || WR_TEAM_COLORS.red;
     const t2c = WR_TEAM_COLORS[g.team2Color] || WR_TEAM_COLORS.black;
     const s   = g.score || {};
+    const redCaptainPlayer   = players.find(p => p.id === g.redCaptain);
+    const blackCaptainPlayer = players.find(p => p.id === g.blackCaptain);
+    const redLabel   = redCaptainPlayer   ? redCaptainPlayer.name   : `${t1c.name} Team`;
+    const blackLabel = blackCaptainPlayer ? blackCaptainPlayer.name : `${t2c.name} Team`;
+
+    // ── Score banner ──────────────────────────────────────────
     const scoreBanner = `
         <div class="wr-score-banner">
             <span class="wr-score-team-name"><span class="wr-score-dot" style="background:${t1c.hex};"></span>${redLabel}</span>
@@ -571,11 +577,6 @@ async function wrRenderBody() {
     } catch (e) { /* lineups optional */ }
     if (!redLineup.length   && g.redTeam?.length)   redLineup   = wrBuildDefaultLineup(g.redTeam,   players);
     if (!blackLineup.length && g.blackTeam?.length) blackLineup = wrBuildDefaultLineup(g.blackTeam, players);
-
-    const redCaptainPlayer   = players.find(p => p.id === g.redCaptain);
-    const blackCaptainPlayer = players.find(p => p.id === g.blackCaptain);
-    const redLabel   = redCaptainPlayer   ? redCaptainPlayer.name   : `${t1c.name} Team`;
-    const blackLabel = blackCaptainPlayer ? blackCaptainPlayer.name : `${t2c.name} Team`;
 
     const pitchHTML = `
         <div class="wr-pitches-stretch">
