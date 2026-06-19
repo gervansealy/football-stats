@@ -4173,3 +4173,157 @@ body.admin .nav-links a.admin-only {
     font-weight: 700;
     line-height: 1.3;
 }
+
+/* ── Weekly Report: Tablet (≤ 768px) ──────────────────────────── */
+@media (max-width: 768px) {
+    .wr-filters {
+        gap: 8px;
+    }
+
+    .wr-filter-select {
+        min-width: 120px;
+    }
+
+    .wr-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .wr-game-date {
+        font-size: 11px;
+    }
+
+    /* Stack left + right columns */
+    .wr-body-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    /* Standings table full width */
+    .wr-left-col .wr-standings-table {
+        width: 100%;
+    }
+
+    /* Pitches side-by-side with fixed height */
+    .wr-game-col {
+        min-height: unset;
+    }
+
+    .wr-pitches-stretch {
+        min-height: 340px;
+    }
+
+    /* Highlights wrap to 2 cols on tablet */
+    .wr-performers-row {
+        flex-wrap: wrap;
+    }
+
+    .wr-performers-row .wr-hl-card,
+    .wr-bottom-row .wr-hl-card {
+        flex: 1 1 calc(50% - 8px);
+        min-width: 140px;
+    }
+
+    /* Results: 2 columns */
+    .wr-results-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ── Weekly Report: Mobile (≤ 480px) ──────────────────────────── */
+@media (max-width: 480px) {
+    .wr-report {
+        padding: 10px;
+    }
+
+    .wr-filters {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .wr-filter-group {
+        width: 100%;
+    }
+
+    .wr-filter-select {
+        width: 100%;
+        min-width: unset;
+    }
+
+    .wr-title {
+        font-size: 15px;
+    }
+
+    /* Hide less-critical table columns: D, CS, Cap W, Win% */
+    .wr-standings-table th:nth-child(5),
+    .wr-standings-table td:nth-child(5),
+    .wr-standings-table th:nth-child(8),
+    .wr-standings-table td:nth-child(8),
+    .wr-standings-table th:nth-child(9),
+    .wr-standings-table td:nth-child(9),
+    .wr-standings-table th:nth-child(10),
+    .wr-standings-table td:nth-child(10) {
+        display: none;
+    }
+
+    .wr-standings-table th,
+    .wr-standings-table td {
+        padding: 4px 5px;
+        font-size: 11px;
+    }
+
+    /* Stack pitches vertically on mobile */
+    .wr-pitches-stretch {
+        flex-direction: column;
+        min-height: unset;
+        gap: 10px;
+    }
+
+    .wr-pitch-panel-fill {
+        height: 280px;
+        flex: 0 0 280px;
+    }
+
+    /* Score banner wraps */
+    .wr-score-banner {
+        flex-wrap: wrap;
+        gap: 4px;
+        justify-content: center;
+    }
+
+    .wr-score-nums {
+        font-size: 16px;
+        order: -1;
+        width: 100%;
+        text-align: center;
+    }
+
+    /* Highlights all single column */
+    .wr-mvp-row,
+    .wr-performers-row,
+    .wr-bottom-row {
+        flex-direction: column;
+    }
+
+    .wr-hl-card {
+        min-width: unset;
+        max-width: unset;
+        width: 100%;
+    }
+
+    .wr-hl-section-header {
+        font-size: 11px;
+        padding: 5px 10px;
+    }
+
+    /* Results: 1 column */
+    .wr-results-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .wr-p-name {
+        min-width: 75px;
+        font-size: 12px;
+    }
+}
