@@ -496,43 +496,43 @@ async function wrRenderBody() {
     const players = wrPlayers;
     const games   = wrGames;
 
-    // ── Filter games by selected month ────────────────────────
-    const filteredGames = wrFilterMonth === 'all'
-        ? games
-        : games.filter(g => g.date.startsWith(wrFilterMonth));
-
-    // ── Determine selected game ───────────────────────────────
-    const sortedFiltered = [...filteredGames].sort((a, b) => b.date.localeCompare(a.date));
+    // ── Determine selected game (for lineup / results) ────────
+    const allSorted = [...games].sort((a, b) => b.date.localeCompare(a.date));
     const g = wrFilterGameId === 'all'
-        ? sortedFiltered[0]
-        : games.find(game => game.id === wrFilterGameId) || sortedFiltered[0];
+        ? (wrFilterMonth === 'all'
+            ? allSorted[0]
+            : [...games].filter(gm => gm.date.startsWith(wrFilterMonth)).sort((a, b) => b.date.localeCompare(a.date))[0] || allSorted[0])
+        : games.find(gm => gm.id === wrFilterGameId) || allSorted[0];
 
-    if (!g || !filteredGames.length) {
+    if (!g) {
         body.innerHTML = '<div class="no-data" style="padding:30px;text-align:center;">No games found for this period.</div>';
         return;
     }
 
-    // ── Recompute player stats for the filtered game set ──────
-    const filteredPlayers = players.map(p => ({
+    // ── Cumulative stats: all games up to the selected game date
+    const cutoffDate    = g.date;
+    const standingsGames = games.filter(gm => gm.date <= cutoffDate);
+
+    // Recompute cumulative stats for every player up to cutoff
+    const cumulativePlayers = players.map(p => ({
         id: p.id, name: p.name, firstName: p.firstName,
         lastName: p.lastName, headshotLink: p.headshotLink,
-        ...calculatePlayerStatsOptimized(p.id, filteredGames)
-    })).filter(p => wrFilterMonth === 'all' || p.games > 0);
+        ...calculatePlayerStatsOptimized(p.id, standingsGames)
+    })).filter(p => p.games > 0);
 
-    filteredPlayers.sort((a, b) => {
+    cumulativePlayers.sort((a, b) => {
         if (b.points !== a.points) return b.points - a.points;
         if (b.wins !== a.wins) return b.wins - a.wins;
         return b.winPercentage - a.winPercentage;
     });
 
+    const fp = cumulativePlayers;
+
     // Photo lookup
     const photoMap = {};
     players.forEach(p => { if (p.headshotLink) photoMap[p.id] = p.headshotLink; });
 
-    // ── Score banner ──────────────────────────────────────────
-    const t1c = WR_TEAM_COLORS[g.team1Color] || WR_TEAM_COLORS.red;
-    const t2c = WR_TEAM_COLORS[g.team2Color] || WR_TEAM_COLORS.black;
-    const s   = g.score || {};
+    // ── Period label ──────────────────────────────────────────
     const gameDate = new Date(g.date + 'T12:00:00').toLocaleDateString('en-US', {
         weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
     });
@@ -540,6 +540,10 @@ async function wrRenderBody() {
         ? 'All Season'
         : new Date(wrFilterMonth + '-01T12:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
+    // ── Score banner ──────────────────────────────────────────
+    const t1c = WR_TEAM_COLORS[g.team1Color] || WR_TEAM_COLORS.red;
+    const t2c = WR_TEAM_COLORS[g.team2Color] || WR_TEAM_COLORS.black;
+    const s   = g.score || {};
     const scoreBanner = `
         <div class="wr-score-banner">
             <span class="wr-score-team-name" style="color:${t1c.hex};">${t1c.emoji} ${t1c.name}</span>
@@ -603,8 +607,7 @@ async function wrRenderBody() {
             <div class="wr-p-badges">${r.badges}</div>
         </div>`).join('');
 
-    // ── Highlights based on filtered period ───────────────────
-    const fp         = filteredPlayers;
+    // ── Highlights (cumulative) ───────────────────────────────
     const topP       = fp[0];
     const minPts     = Math.min(...fp.map(p => p.points));
     const maxGoals   = Math.max(...fp.map(p => p.goals));
@@ -612,25 +615,30 @@ async function wrRenderBody() {
     const maxLosses  = Math.max(...fp.map(p => p.losses));
     const maxCapWins = Math.max(...fp.map(p => p.captainWins));
 
-    const hlDefs = [
-        { p: topP,                                              badge: '🏅 MVP',           stat: `${topP.points} pts`,    accent: '#D97706' },
-        ...(maxCapWins > 0 ? [{ p: fp.find(p => p.captainWins === maxCapWins), badge: '⭐ Best Captain', stat: `${maxCapWins} cap wins`, accent: '#7C3AED' }] : []),
-        { p: fp.find(p => p.goals  === maxGoals),              badge: '⚽ Most Goals',    stat: `${maxGoals} goals`,     accent: '#10B981' },
-        { p: fp.find(p => p.wins   === maxWins),               badge: '🏆 Most Wins',     stat: `${maxWins} wins`,       accent: '#4A90E2' },
-        { p: fp.find(p => p.losses === maxLosses),             badge: '📉 Most Losses',   stat: `${maxLosses} losses`,   accent: '#FB8C00' },
-        { p: fp.find(p => p.points === minPts),                badge: '💀 Biggest Loser', stat: `${minPts} pts`,         accent: '#EF4444' },
-    ].filter(c => c.p);
-
-    const hlHTML = hlDefs.map(c => {
-        const url = convertToDirectLink(c.p.headshotLink);
+    function buildHlCard(player, badge, stat, accent) {
+        if (!player) return '';
+        const url = convertToDirectLink(player.headshotLink);
         const av  = url
-            ? `<img src="${url}" class="wr-hl-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="wr-hl-avatar-fb" style="display:none;background:${c.accent};">${c.p.firstName[0]}${c.p.lastName[0]}</div>`
-            : `<div class="wr-hl-avatar-fb" style="background:${c.accent};">${c.p.firstName[0]}${c.p.lastName[0]}</div>`;
-        return `<div class="wr-hl-card" style="border-color:${c.accent};">
-            <div class="wr-hl-badge" style="color:${c.accent};">${c.badge}</div>
-            <div class="wr-hl-body">${av}<div><div class="wr-hl-player-name">${c.p.name}</div><div class="wr-hl-player-stat" style="color:${c.accent};">${c.stat}</div></div></div>
+            ? `<img src="${url}" class="wr-hl-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="wr-hl-avatar-fb" style="display:none;background:${accent};">${player.firstName[0]}${player.lastName[0]}</div>`
+            : `<div class="wr-hl-avatar-fb" style="background:${accent};">${player.firstName[0]}${player.lastName[0]}</div>`;
+        return `<div class="wr-hl-card" style="border-color:${accent};">
+            <div class="wr-hl-badge" style="color:${accent};">${badge}</div>
+            <div class="wr-hl-body">${av}<div><div class="wr-hl-player-name">${player.name}</div><div class="wr-hl-player-stat" style="color:${accent};">${stat}</div></div></div>
         </div>`;
-    }).join('');
+    }
+
+    const mvpHTML = buildHlCard(topP, '🏅 MVP', `${topP.points} pts`, '#D97706');
+
+    const performersHTML = [
+        maxCapWins > 0 ? buildHlCard(fp.find(p => p.captainWins === maxCapWins), '⭐ Best Captain', `${maxCapWins} cap wins`, '#7C3AED') : '',
+        buildHlCard(fp.find(p => p.goals === maxGoals), '⚽ Most Goals', `${maxGoals} goals`, '#10B981'),
+        buildHlCard(fp.find(p => p.wins  === maxWins),  '🏆 Most Wins',  `${maxWins} wins`,  '#4A90E2'),
+    ].filter(Boolean).join('');
+
+    const bottomHTML = [
+        buildHlCard(fp.find(p => p.losses === maxLosses), '📉 Most Losses',   `${maxLosses} losses`, '#FB8C00'),
+        buildHlCard(fp.find(p => p.points === minPts),    '💀 Biggest Loser', `${minPts} pts`,       '#EF4444'),
+    ].filter(Boolean).join('');
 
     // ── Top 10 table ─────────────────────────────────────────
     const top10     = fp.slice(0, 10);
@@ -647,11 +655,11 @@ async function wrRenderBody() {
     body.innerHTML = `
         <div class="wr-header">
             <span class="wr-title">📊 Weekly Report</span>
-            <span class="wr-game-date">${periodLabel} · ${gameDate}</span>
+            <span class="wr-game-date">Cumulative to ${gameDate}</span>
         </div>
 
-        <div class="wr-main-grid">
-            <div>
+        <div class="wr-top-grid">
+            <div class="wr-standings-col">
                 <div class="wr-section-label">🏟 Top 10 Standings</div>
                 <table class="wr-standings-table">
                     <thead><tr>
@@ -661,21 +669,31 @@ async function wrRenderBody() {
                     <tbody>${tableRows}</tbody>
                 </table>
             </div>
-            <div>
+            <div class="wr-game-col">
                 <div class="wr-section-label">⚽ Game — ${gameDate}</div>
                 ${scoreBanner}
                 ${pitchHTML}
             </div>
         </div>
 
-        <div class="wr-results-section">
-            <div class="wr-section-label">📋 Player Results</div>
-            <div class="wr-results-grid">${playerResultsHTML}</div>
+        <div class="wr-hl-section">
+            <div class="wr-hl-section-header wr-hl-mvp">🏅 MVP</div>
+            <div class="wr-mvp-row">${mvpHTML}</div>
         </div>
 
-        <div class="wr-highlights-section">
-            <div class="wr-section-label">🌟 Highlights — ${periodLabel}</div>
-            <div class="wr-hl-strip">${hlHTML}</div>
+        <div class="wr-hl-section">
+            <div class="wr-hl-section-header wr-hl-performers">🏆 High Performers</div>
+            <div class="wr-performers-row">${performersHTML}</div>
+        </div>
+
+        <div class="wr-hl-section">
+            <div class="wr-hl-section-header wr-hl-bottom">📉 Bottom of the Barrel</div>
+            <div class="wr-bottom-row">${bottomHTML}</div>
+        </div>
+
+        <div class="wr-results-section">
+            <div class="wr-section-label">📋 Player Results — ${gameDate}</div>
+            <div class="wr-results-grid">${playerResultsHTML}</div>
         </div>
     `;
 }
