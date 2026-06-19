@@ -27,8 +27,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             const tab = btn.dataset.tab;
-            document.getElementById('standingsSection').style.display = tab === 'standings' ? '' : 'none';
-            document.getElementById('highlightsSection').style.display = tab === 'highlights' ? '' : 'none';
+            document.getElementById('standingsSection').style.display    = tab === 'standings'    ? '' : 'none';
+            document.getElementById('highlightsSection').style.display   = tab === 'highlights'   ? '' : 'none';
+            document.getElementById('weeklyReportSection').style.display = tab === 'weeklyReport' ? '' : 'none';
         });
     });
 
@@ -89,6 +90,7 @@ function loadStandings() {
 
             displayStandings(players);
             displayHighlights(players);
+            displayWeeklyReport(players, cachedGames);
         } catch (error) {
             console.error('Error loading standings:', error);
             alert('Error loading standings. Please refresh the page.');
@@ -356,6 +358,231 @@ function displayHighlights(players) {
                 <span class="hl-header-title">Bottom of the Barrel</span>
             </div>
             <div class="hl-cards-row">${bottomCards}</div>
+        </div>
+    `;
+}
+
+// ── Weekly Report ─────────────────────────────────────────────────────────────
+
+const WR_TEAM_COLORS = {
+    red:    { name: 'Red',    emoji: '🔴', hex: '#DC3545' },
+    black:  { name: 'Black',  emoji: '⚫', hex: '#333333' },
+    blue:   { name: 'Blue',   emoji: '🔵', hex: '#1976D2' },
+    green:  { name: 'Green',  emoji: '🟢', hex: '#2E7D32' },
+    white:  { name: 'White',  emoji: '⚪', hex: '#9E9E9E' },
+    yellow: { name: 'Yellow', emoji: '🟡', hex: '#F9A825' },
+    orange: { name: 'Orange', emoji: '🟠', hex: '#F57C00' },
+    purple: { name: 'Purple', emoji: '🟣', hex: '#7B1FA2' },
+};
+
+function wrBuildDefaultLineup(teamIds, playersArr) {
+    const F = {
+        1:[[50,85]],2:[[50,85],[50,20]],3:[[50,85],[30,48],[70,48]],
+        4:[[50,85],[25,65],[50,62],[75,65]],5:[[50,85],[25,65],[75,65],[30,38],[70,38]],
+        6:[[50,85],[20,68],[50,68],[80,68],[35,36],[65,36]],
+        7:[[50,85],[20,70],[45,70],[70,70],[30,44],[60,44],[50,22]],
+        8:[[50,85],[18,70],[38,70],[62,70],[82,70],[28,44],[50,44],[72,44]],
+        9:[[50,85],[18,70],[38,70],[62,70],[82,70],[25,46],[50,46],[75,46],[50,22]],
+        10:[[50,85],[18,72],[36,72],[54,72],[72,72],[22,48],[44,48],[66,48],[88,48],[50,24]],
+        11:[[50,85],[18,72],[36,72],[54,72],[72,72],[22,48],[44,48],[66,48],[35,25],[50,18],[65,25]],
+    };
+    return teamIds.map((id, i) => {
+        const p = playersArr.find(pl => pl.id === id);
+        const n = Math.min(teamIds.length, 11);
+        const positions = F[n] || F[11];
+        const pos = positions[i] || [20 + (i % 4) * 20, 12 + Math.floor(i / 4) * 18];
+        return { id, name: p ? p.name : id, x: pos[0], y: pos[1] };
+    });
+}
+
+function wrPitchMarkings() {
+    return `<div class="pm-goal top"></div><div class="pm-penalty top"></div>
+            <div class="pm-halfway"></div><div class="pm-center-circle"></div>
+            <div class="pm-center-dot"></div><div class="pm-penalty bottom"></div>
+            <div class="pm-goal bottom"></div>`;
+}
+
+function wrPlayerToken(player, hex, captainId, gamePlayerStats, photoMap) {
+    const isCaptain = player.id === captainId;
+    const parts = (player.name || player.id).trim().split(' ');
+    const initials = parts.map(w => w[0] || '').join('').substring(0, 2).toUpperCase();
+    const shortName = parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}` : parts[0];
+    const scored = (gamePlayerStats?.[player.id]?.goals || 0) > 0;
+    const photoUrl = photoMap[player.id] ? convertToDirectLink(photoMap[player.id]) : null;
+    const picHTML = photoUrl
+        ? `<img class="token-pic" src="${photoUrl}" alt="${shortName}" onerror="this.outerHTML='<div class=\\'token-pic-placeholder\\'>${initials}</div>'">`
+        : `<div class="token-pic-placeholder">${initials}</div>`;
+    return `<div class="player-token view-only${isCaptain ? ' token-captain' : ''}" style="left:${player.x}%;top:${player.y}%;">
+        <div class="token-pic-wrapper">
+            ${isCaptain ? '<div class="token-captain-badge">C</div>' : ''}
+            ${picHTML}
+            ${scored ? '<div class="token-goal-icon">⚽</div>' : ''}
+        </div>
+        <div class="token-color-dot" style="background:${hex};"></div>
+        <div class="token-name">${shortName}</div>
+    </div>`;
+}
+
+async function displayWeeklyReport(players, games) {
+    const section = document.getElementById('weeklyReportContent');
+    if (!section) return;
+
+    if (!players.length || !games || !games.length) {
+        section.innerHTML = '<div class="no-data" style="padding:40px;text-align:center;">No data available yet.</div>';
+        return;
+    }
+
+    // Sort games by date descending; pick most recent
+    const sortedGames = [...games].sort((a, b) => b.date.localeCompare(a.date));
+    const g = sortedGames[0];
+
+    // Build photo lookup from standings players
+    const photoMap = {};
+    players.forEach(p => { if (p.headshotLink) photoMap[p.id] = p.headshotLink; });
+
+    // ── Score banner ──────────────────────────────────────────
+    const t1c = WR_TEAM_COLORS[g.team1Color] || WR_TEAM_COLORS.red;
+    const t2c = WR_TEAM_COLORS[g.team2Color] || WR_TEAM_COLORS.black;
+    const s = g.score || {};
+    const gameDate = new Date(g.date + 'T12:00:00').toLocaleDateString('en-US', {
+        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+    });
+    const scoreBanner = `
+        <div class="wr-score-banner">
+            <span class="wr-score-team-name" style="color:${t1c.hex};">${t1c.emoji} ${t1c.name}</span>
+            <span class="wr-score-nums">${s.team1 ?? '—'} – ${s.team2 ?? '—'}</span>
+            <span class="wr-score-team-name" style="color:${t2c.hex};">${t2c.emoji} ${t2c.name}</span>
+        </div>`;
+
+    // ── Fetch lineups ─────────────────────────────────────────
+    let redLineup = [], blackLineup = [];
+    try {
+        if (g.lineupId) {
+            const ld = await getDoc(doc(db, 'lineups', g.lineupId));
+            if (ld.exists()) {
+                redLineup   = ld.data().redLineup   || [];
+                blackLineup = ld.data().blackLineup || [];
+            }
+        }
+        if (!redLineup.length && !blackLineup.length) {
+            const snap = await getDocs(query(collection(db, 'lineups'), where('date', '==', g.date)));
+            if (!snap.empty) {
+                redLineup   = snap.docs[0].data().redLineup   || [];
+                blackLineup = snap.docs[0].data().blackLineup || [];
+            }
+        }
+    } catch (e) { /* lineups optional */ }
+    if (!redLineup.length   && g.redTeam?.length)   redLineup   = wrBuildDefaultLineup(g.redTeam,   players);
+    if (!blackLineup.length && g.blackTeam?.length) blackLineup = wrBuildDefaultLineup(g.blackTeam, players);
+
+    const pitchHTML = `
+        <div class="wr-pitches-row">
+            <div class="wr-pitch-panel">
+                <div class="wr-pitch-label" style="background:${t1c.hex};">${t1c.emoji} ${t1c.name} Team</div>
+                <div class="wr-pitch-wrap"><div class="pitch">${wrPitchMarkings()}${redLineup.map(p => wrPlayerToken(p, t1c.hex, g.redCaptain, g.playerStats, photoMap)).join('')}</div></div>
+            </div>
+            <div class="wr-pitch-panel">
+                <div class="wr-pitch-label" style="background:${t2c.hex};">${t2c.emoji} ${t2c.name} Team</div>
+                <div class="wr-pitch-wrap"><div class="pitch">${wrPitchMarkings()}${blackLineup.map(p => wrPlayerToken(p, t2c.hex, g.blackCaptain, g.playerStats, photoMap)).join('')}</div></div>
+            </div>
+        </div>`;
+
+    // ── Player results ────────────────────────────────────────
+    const playerResultsList = Object.keys(g.playerStats || {}).map(id => {
+        const p = players.find(pl => pl.id === id);
+        const name = p ? p.name : id;
+        const st = g.playerStats[id];
+        const badges = [];
+        if ((st.win || 0) > 0)         badges.push(`<span class="stat-badge-compact win">Win</span>`);
+        if ((st.draw || 0) > 0)        badges.push(`<span class="stat-badge-compact draw">Draw</span>`);
+        if ((st.loss || 0) > 0)        badges.push(`<span class="stat-badge-compact loss">Loss</span>`);
+        if ((st.goals || 0) > 0)       badges.push(`<span class="stat-badge-compact goal">⚽ ${st.goals}</span>`);
+        if ((st.captainWin || 0) > 0)  badges.push(`<span class="stat-badge-compact captain">⭐ Cap Win</span>`);
+        if ((st.captainLoss || 0) > 0) badges.push(`<span class="stat-badge-compact captain">⭐ Cap Loss</span>`);
+        if ((st.captainDraw || 0) > 0) badges.push(`<span class="stat-badge-compact captain">⭐ Cap Draw</span>`);
+        const sortKey = (st.win||0) > 0 ? 0 : (st.draw||0) > 0 ? 1 : 2;
+        return { name, badges: badges.join(''), sortKey, goals: st.goals || 0 };
+    });
+    playerResultsList.sort((a, b) => a.sortKey - b.sortKey || b.goals - a.goals);
+
+    const playerResultsHTML = playerResultsList.map(r => `
+        <div class="wr-player-row">
+            <span class="wr-p-name">${r.name}</span>
+            <div class="wr-p-badges">${r.badges}</div>
+        </div>`).join('');
+
+    // ── Season highlights ─────────────────────────────────────
+    const topP        = players[0];
+    const minPts      = Math.min(...players.map(p => p.points));
+    const maxGoals    = Math.max(...players.map(p => p.goals));
+    const maxWins     = Math.max(...players.map(p => p.wins));
+    const maxLosses   = Math.max(...players.map(p => p.losses));
+    const maxCapWins  = Math.max(...players.map(p => p.captainWins));
+
+    const hlDefs = [
+        { p: topP,                                              badge: '🏅 MVP',           stat: `${topP.points} pts`,    accent: '#D97706' },
+        ...(maxCapWins > 0 ? [{ p: players.find(p => p.captainWins === maxCapWins), badge: '⭐ Best Captain', stat: `${maxCapWins} cap wins`, accent: '#7C3AED' }] : []),
+        { p: players.find(p => p.goals   === maxGoals),        badge: '⚽ Most Goals',    stat: `${maxGoals} goals`,     accent: '#10B981' },
+        { p: players.find(p => p.wins    === maxWins),         badge: '🏆 Most Wins',     stat: `${maxWins} wins`,       accent: '#4A90E2' },
+        { p: players.find(p => p.losses  === maxLosses),       badge: '📉 Most Losses',   stat: `${maxLosses} losses`,   accent: '#FB8C00' },
+        { p: players.find(p => p.points  === minPts),          badge: '💀 Biggest Loser', stat: `${minPts} pts`,         accent: '#EF4444' },
+    ].filter(c => c.p);
+
+    const hlHTML = hlDefs.map(c => {
+        const url = convertToDirectLink(c.p.headshotLink);
+        const av = url
+            ? `<img src="${url}" class="wr-hl-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="wr-hl-avatar-fb" style="display:none;background:${c.accent};">${c.p.firstName[0]}${c.p.lastName[0]}</div>`
+            : `<div class="wr-hl-avatar-fb" style="background:${c.accent};">${c.p.firstName[0]}${c.p.lastName[0]}</div>`;
+        return `<div class="wr-hl-card" style="border-color:${c.accent};">
+            <div class="wr-hl-badge" style="color:${c.accent};">${c.badge}</div>
+            <div class="wr-hl-body">${av}<div><div class="wr-hl-player-name">${c.p.name}</div><div class="wr-hl-player-stat" style="color:${c.accent};">${c.stat}</div></div></div>
+        </div>`;
+    }).join('');
+
+    // ── Top 10 table ─────────────────────────────────────────
+    const top10 = players.slice(0, 10);
+    const tableRows = top10.map((p, i) => `
+        <tr>
+            <td>${i + 1}</td>
+            <td class="wr-player-name-cell">${p.name}</td>
+            <td>${p.games}</td><td>${p.wins}</td><td>${p.draws}</td><td>${p.losses}</td>
+            <td>${p.goals}</td><td>${p.cleanSheets}</td><td>${p.captainWins}</td>
+            <td>${p.winPercentage}%</td><td><strong>${p.points}</strong></td>
+        </tr>`).join('');
+
+    // ── Assemble ──────────────────────────────────────────────
+    section.innerHTML = `
+        <div class="wr-header">
+            <span class="wr-title">📊 Weekly Report</span>
+            <span class="wr-game-date">${gameDate}</span>
+        </div>
+
+        <div class="wr-main-grid">
+            <div>
+                <div class="wr-section-label">🏟 Top 10 Standings</div>
+                <table class="wr-standings-table">
+                    <thead><tr>
+                        <th>#</th><th>Player</th><th>G</th><th>W</th><th>D</th><th>L</th>
+                        <th>Goals</th><th>CS</th><th>Cap W</th><th>Win%</th><th>Pts</th>
+                    </tr></thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+            </div>
+            <div>
+                <div class="wr-section-label">⚽ Latest Game</div>
+                ${scoreBanner}
+                ${pitchHTML}
+            </div>
+        </div>
+
+        <div class="wr-results-section">
+            <div class="wr-section-label">📋 Player Results</div>
+            <div class="wr-results-grid">${playerResultsHTML}</div>
+        </div>
+
+        <div class="wr-highlights-section">
+            <div class="wr-section-label">🌟 Season Highlights</div>
+            <div class="wr-hl-strip">${hlHTML}</div>
         </div>
     `;
 }
