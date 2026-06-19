@@ -3914,21 +3914,24 @@ body.admin .nav-links a.admin-only {
     margin-bottom: 8px;
 }
 
-/* Two-column body: left (standings+highlights) | right (lineups fill height) */
+/* Two-column body: 60% left (standings+highlights) | 40% right (lineups) */
 .wr-body-grid {
-    display: flex;
+    display: grid;
+    grid-template-columns: 3fr 2fr;
     gap: 20px;
     margin-bottom: 14px;
     align-items: stretch;
 }
 
 .wr-left-col {
-    flex: 0 0 auto;
     min-width: 0;
 }
 
+.wr-left-col .wr-standings-table {
+    width: 100%;
+}
+
 .wr-game-col {
-    flex: 1;
     display: flex;
     flex-direction: column;
     min-width: 0;
