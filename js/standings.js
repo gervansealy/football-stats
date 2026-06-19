@@ -423,30 +423,123 @@ function wrPlayerToken(player, hex, captainId, gamePlayerStats, photoMap) {
     </div>`;
 }
 
+let wrFilterMonth  = 'all';
+let wrFilterGameId = 'all';
+let wrPlayers      = [];
+let wrGames        = [];
+
 async function displayWeeklyReport(players, games) {
     const section = document.getElementById('weeklyReportContent');
     if (!section) return;
+
+    wrPlayers = players;
+    wrGames   = games;
 
     if (!players.length || !games || !games.length) {
         section.innerHTML = '<div class="no-data" style="padding:40px;text-align:center;">No data available yet.</div>';
         return;
     }
 
-    // Sort games by date descending; pick most recent
-    const sortedGames = [...games].sort((a, b) => b.date.localeCompare(a.date));
-    const g = sortedGames[0];
+    // ── Build month options from available game dates ─────────
+    const months = [...new Set(games.map(g => g.date.substring(0, 7)))].sort().reverse();
+    const monthOptions = [
+        '<option value="all">All Season</option>',
+        ...months.map(m => {
+            const label = new Date(m + '-01T12:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            return `<option value="${m}"${wrFilterMonth === m ? ' selected' : ''}>${label}</option>`;
+        })
+    ].join('');
 
-    // Build photo lookup from standings players
+    // ── Build game options scoped to active month ─────────────
+    const monthScopedGames = (wrFilterMonth === 'all' ? [...games] : games.filter(g => g.date.startsWith(wrFilterMonth)))
+        .sort((a, b) => b.date.localeCompare(a.date));
+    const gameOptions = [
+        '<option value="all">Latest Game</option>',
+        ...monthScopedGames.map(g => {
+            const label = new Date(g.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            return `<option value="${g.id}"${wrFilterGameId === g.id ? ' selected' : ''}>${label}</option>`;
+        })
+    ].join('');
+
+    section.innerHTML = `
+        <div class="wr-filters">
+            <div class="wr-filter-group">
+                <label class="wr-filter-label">Month</label>
+                <select id="wrMonthSelect" class="wr-filter-select">${monthOptions}</select>
+            </div>
+            <div class="wr-filter-group">
+                <label class="wr-filter-label">Game / Week</label>
+                <select id="wrGameSelect" class="wr-filter-select">${gameOptions}</select>
+            </div>
+        </div>
+        <div id="wrBody"></div>
+    `;
+
+    document.getElementById('wrMonthSelect').addEventListener('change', e => {
+        wrFilterMonth  = e.target.value;
+        wrFilterGameId = 'all';
+        displayWeeklyReport(wrPlayers, wrGames);
+    });
+
+    document.getElementById('wrGameSelect').addEventListener('change', e => {
+        wrFilterGameId = e.target.value;
+        wrRenderBody();
+    });
+
+    await wrRenderBody();
+}
+
+async function wrRenderBody() {
+    const body = document.getElementById('wrBody');
+    if (!body) return;
+
+    const players = wrPlayers;
+    const games   = wrGames;
+
+    // ── Filter games by selected month ────────────────────────
+    const filteredGames = wrFilterMonth === 'all'
+        ? games
+        : games.filter(g => g.date.startsWith(wrFilterMonth));
+
+    // ── Determine selected game ───────────────────────────────
+    const sortedFiltered = [...filteredGames].sort((a, b) => b.date.localeCompare(a.date));
+    const g = wrFilterGameId === 'all'
+        ? sortedFiltered[0]
+        : games.find(game => game.id === wrFilterGameId) || sortedFiltered[0];
+
+    if (!g || !filteredGames.length) {
+        body.innerHTML = '<div class="no-data" style="padding:30px;text-align:center;">No games found for this period.</div>';
+        return;
+    }
+
+    // ── Recompute player stats for the filtered game set ──────
+    const filteredPlayers = players.map(p => ({
+        id: p.id, name: p.name, firstName: p.firstName,
+        lastName: p.lastName, headshotLink: p.headshotLink,
+        ...calculatePlayerStatsOptimized(p.id, filteredGames)
+    })).filter(p => wrFilterMonth === 'all' || p.games > 0);
+
+    filteredPlayers.sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        if (b.wins !== a.wins) return b.wins - a.wins;
+        return b.winPercentage - a.winPercentage;
+    });
+
+    // Photo lookup
     const photoMap = {};
     players.forEach(p => { if (p.headshotLink) photoMap[p.id] = p.headshotLink; });
 
     // ── Score banner ──────────────────────────────────────────
     const t1c = WR_TEAM_COLORS[g.team1Color] || WR_TEAM_COLORS.red;
     const t2c = WR_TEAM_COLORS[g.team2Color] || WR_TEAM_COLORS.black;
-    const s = g.score || {};
+    const s   = g.score || {};
     const gameDate = new Date(g.date + 'T12:00:00').toLocaleDateString('en-US', {
         weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
     });
+    const periodLabel = wrFilterMonth === 'all'
+        ? 'All Season'
+        : new Date(wrFilterMonth + '-01T12:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
     const scoreBanner = `
         <div class="wr-score-banner">
             <span class="wr-score-team-name" style="color:${t1c.hex};">${t1c.emoji} ${t1c.name}</span>
@@ -487,21 +580,20 @@ async function displayWeeklyReport(players, games) {
             </div>
         </div>`;
 
-    // ── Player results ────────────────────────────────────────
+    // ── Player results for the selected game ──────────────────
     const playerResultsList = Object.keys(g.playerStats || {}).map(id => {
-        const p = players.find(pl => pl.id === id);
-        const name = p ? p.name : id;
+        const p  = players.find(pl => pl.id === id);
         const st = g.playerStats[id];
         const badges = [];
-        if ((st.win || 0) > 0)         badges.push(`<span class="stat-badge-compact win">Win</span>`);
+        if ((st.win  || 0) > 0)        badges.push(`<span class="stat-badge-compact win">Win</span>`);
         if ((st.draw || 0) > 0)        badges.push(`<span class="stat-badge-compact draw">Draw</span>`);
         if ((st.loss || 0) > 0)        badges.push(`<span class="stat-badge-compact loss">Loss</span>`);
         if ((st.goals || 0) > 0)       badges.push(`<span class="stat-badge-compact goal">⚽ ${st.goals}</span>`);
-        if ((st.captainWin || 0) > 0)  badges.push(`<span class="stat-badge-compact captain">⭐ Cap Win</span>`);
+        if ((st.captainWin  || 0) > 0) badges.push(`<span class="stat-badge-compact captain">⭐ Cap Win</span>`);
         if ((st.captainLoss || 0) > 0) badges.push(`<span class="stat-badge-compact captain">⭐ Cap Loss</span>`);
         if ((st.captainDraw || 0) > 0) badges.push(`<span class="stat-badge-compact captain">⭐ Cap Draw</span>`);
         const sortKey = (st.win||0) > 0 ? 0 : (st.draw||0) > 0 ? 1 : 2;
-        return { name, badges: badges.join(''), sortKey, goals: st.goals || 0 };
+        return { name: p ? p.name : id, badges: badges.join(''), sortKey, goals: st.goals || 0 };
     });
     playerResultsList.sort((a, b) => a.sortKey - b.sortKey || b.goals - a.goals);
 
@@ -511,26 +603,27 @@ async function displayWeeklyReport(players, games) {
             <div class="wr-p-badges">${r.badges}</div>
         </div>`).join('');
 
-    // ── Season highlights ─────────────────────────────────────
-    const topP        = players[0];
-    const minPts      = Math.min(...players.map(p => p.points));
-    const maxGoals    = Math.max(...players.map(p => p.goals));
-    const maxWins     = Math.max(...players.map(p => p.wins));
-    const maxLosses   = Math.max(...players.map(p => p.losses));
-    const maxCapWins  = Math.max(...players.map(p => p.captainWins));
+    // ── Highlights based on filtered period ───────────────────
+    const fp         = filteredPlayers;
+    const topP       = fp[0];
+    const minPts     = Math.min(...fp.map(p => p.points));
+    const maxGoals   = Math.max(...fp.map(p => p.goals));
+    const maxWins    = Math.max(...fp.map(p => p.wins));
+    const maxLosses  = Math.max(...fp.map(p => p.losses));
+    const maxCapWins = Math.max(...fp.map(p => p.captainWins));
 
     const hlDefs = [
         { p: topP,                                              badge: '🏅 MVP',           stat: `${topP.points} pts`,    accent: '#D97706' },
-        ...(maxCapWins > 0 ? [{ p: players.find(p => p.captainWins === maxCapWins), badge: '⭐ Best Captain', stat: `${maxCapWins} cap wins`, accent: '#7C3AED' }] : []),
-        { p: players.find(p => p.goals   === maxGoals),        badge: '⚽ Most Goals',    stat: `${maxGoals} goals`,     accent: '#10B981' },
-        { p: players.find(p => p.wins    === maxWins),         badge: '🏆 Most Wins',     stat: `${maxWins} wins`,       accent: '#4A90E2' },
-        { p: players.find(p => p.losses  === maxLosses),       badge: '📉 Most Losses',   stat: `${maxLosses} losses`,   accent: '#FB8C00' },
-        { p: players.find(p => p.points  === minPts),          badge: '💀 Biggest Loser', stat: `${minPts} pts`,         accent: '#EF4444' },
+        ...(maxCapWins > 0 ? [{ p: fp.find(p => p.captainWins === maxCapWins), badge: '⭐ Best Captain', stat: `${maxCapWins} cap wins`, accent: '#7C3AED' }] : []),
+        { p: fp.find(p => p.goals  === maxGoals),              badge: '⚽ Most Goals',    stat: `${maxGoals} goals`,     accent: '#10B981' },
+        { p: fp.find(p => p.wins   === maxWins),               badge: '🏆 Most Wins',     stat: `${maxWins} wins`,       accent: '#4A90E2' },
+        { p: fp.find(p => p.losses === maxLosses),             badge: '📉 Most Losses',   stat: `${maxLosses} losses`,   accent: '#FB8C00' },
+        { p: fp.find(p => p.points === minPts),                badge: '💀 Biggest Loser', stat: `${minPts} pts`,         accent: '#EF4444' },
     ].filter(c => c.p);
 
     const hlHTML = hlDefs.map(c => {
         const url = convertToDirectLink(c.p.headshotLink);
-        const av = url
+        const av  = url
             ? `<img src="${url}" class="wr-hl-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="wr-hl-avatar-fb" style="display:none;background:${c.accent};">${c.p.firstName[0]}${c.p.lastName[0]}</div>`
             : `<div class="wr-hl-avatar-fb" style="background:${c.accent};">${c.p.firstName[0]}${c.p.lastName[0]}</div>`;
         return `<div class="wr-hl-card" style="border-color:${c.accent};">
@@ -540,7 +633,7 @@ async function displayWeeklyReport(players, games) {
     }).join('');
 
     // ── Top 10 table ─────────────────────────────────────────
-    const top10 = players.slice(0, 10);
+    const top10     = fp.slice(0, 10);
     const tableRows = top10.map((p, i) => `
         <tr>
             <td>${i + 1}</td>
@@ -551,10 +644,10 @@ async function displayWeeklyReport(players, games) {
         </tr>`).join('');
 
     // ── Assemble ──────────────────────────────────────────────
-    section.innerHTML = `
+    body.innerHTML = `
         <div class="wr-header">
             <span class="wr-title">📊 Weekly Report</span>
-            <span class="wr-game-date">${gameDate}</span>
+            <span class="wr-game-date">${periodLabel} · ${gameDate}</span>
         </div>
 
         <div class="wr-main-grid">
@@ -569,7 +662,7 @@ async function displayWeeklyReport(players, games) {
                 </table>
             </div>
             <div>
-                <div class="wr-section-label">⚽ Latest Game</div>
+                <div class="wr-section-label">⚽ Game — ${gameDate}</div>
                 ${scoreBanner}
                 ${pitchHTML}
             </div>
@@ -581,7 +674,7 @@ async function displayWeeklyReport(players, games) {
         </div>
 
         <div class="wr-highlights-section">
-            <div class="wr-section-label">🌟 Season Highlights</div>
+            <div class="wr-section-label">🌟 Highlights — ${periodLabel}</div>
             <div class="wr-hl-strip">${hlHTML}</div>
         </div>
     `;
