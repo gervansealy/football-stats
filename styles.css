@@ -3989,6 +3989,18 @@ body.admin .nav-links a.admin-only {
     font-weight: 700;
     color: #fff;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.wr-score-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 1.5px solid rgba(255,255,255,0.5);
 }
 
 .wr-score-nums {

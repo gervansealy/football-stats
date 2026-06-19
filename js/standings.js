@@ -546,9 +546,9 @@ async function wrRenderBody() {
     const s   = g.score || {};
     const scoreBanner = `
         <div class="wr-score-banner">
-            <span class="wr-score-team-name" style="color:${t1c.hex};">${t1c.emoji} ${t1c.name}</span>
+            <span class="wr-score-team-name"><span class="wr-score-dot" style="background:${t1c.hex};"></span>${redLabel}</span>
             <span class="wr-score-nums">${s.team1 ?? '—'} – ${s.team2 ?? '—'}</span>
-            <span class="wr-score-team-name" style="color:${t2c.hex};">${t2c.emoji} ${t2c.name}</span>
+            <span class="wr-score-team-name"><span class="wr-score-dot" style="background:${t2c.hex};"></span>${blackLabel}</span>
         </div>`;
 
     // ── Fetch lineups ─────────────────────────────────────────
@@ -572,14 +572,19 @@ async function wrRenderBody() {
     if (!redLineup.length   && g.redTeam?.length)   redLineup   = wrBuildDefaultLineup(g.redTeam,   players);
     if (!blackLineup.length && g.blackTeam?.length) blackLineup = wrBuildDefaultLineup(g.blackTeam, players);
 
+    const redCaptainPlayer   = players.find(p => p.id === g.redCaptain);
+    const blackCaptainPlayer = players.find(p => p.id === g.blackCaptain);
+    const redLabel   = redCaptainPlayer   ? redCaptainPlayer.name   : `${t1c.name} Team`;
+    const blackLabel = blackCaptainPlayer ? blackCaptainPlayer.name : `${t2c.name} Team`;
+
     const pitchHTML = `
         <div class="wr-pitches-stretch">
             <div class="wr-pitch-panel-fill">
-                <div class="wr-pitch-label" style="background:${t1c.hex};">${t1c.emoji} ${t1c.name} Team</div>
+                <div class="wr-pitch-label" style="background:${t1c.hex};">${t1c.emoji} ${redLabel}</div>
                 <div class="wr-pitch-wrap-fill"><div class="pitch">${wrPitchMarkings()}${redLineup.map(p => wrPlayerToken(p, t1c.hex, g.redCaptain, g.playerStats, photoMap)).join('')}</div></div>
             </div>
             <div class="wr-pitch-panel-fill">
-                <div class="wr-pitch-label" style="background:${t2c.hex};">${t2c.emoji} ${t2c.name} Team</div>
+                <div class="wr-pitch-label" style="background:${t2c.hex};">${t2c.emoji} ${blackLabel}</div>
                 <div class="wr-pitch-wrap-fill"><div class="pitch">${wrPitchMarkings()}${blackLineup.map(p => wrPlayerToken(p, t2c.hex, g.blackCaptain, g.playerStats, photoMap)).join('')}</div></div>
             </div>
         </div>`;
