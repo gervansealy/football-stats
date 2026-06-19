@@ -4174,55 +4174,48 @@ body.admin .nav-links a.admin-only {
     line-height: 1.3;
 }
 
-/* ── Weekly Report: Tablet (≤ 768px) ──────────────────────────── */
-@media (max-width: 768px) {
-    .wr-filters {
-        gap: 8px;
-    }
-
-    .wr-filter-select {
-        min-width: 120px;
-    }
-
-    .wr-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 2px;
-    }
-
-    .wr-game-date {
-        font-size: 11px;
-    }
-
-    /* Stack left + right columns */
+/* ── Weekly Report: Tablet (≤ 900px) ──────────────────────────── */
+@media (max-width: 900px) {
+    /* Stack left col and right col vertically */
     .wr-body-grid {
-        grid-template-columns: 1fr;
-        gap: 14px;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 16px;
     }
 
-    /* Standings table full width */
-    .wr-left-col .wr-standings-table {
-        width: 100%;
-    }
-
-    /* Pitches side-by-side with fixed height */
+    /* Game column: no longer a flex-stretch, needs explicit height for pitches */
     .wr-game-col {
-        min-height: unset;
+        display: block;
     }
 
+    /* Pitches side-by-side with explicit height */
     .wr-pitches-stretch {
-        min-height: 340px;
+        display: flex;
+        flex-direction: row;
+        height: 360px;
+        min-height: unset;
+        flex: unset;
     }
 
-    /* Highlights wrap to 2 cols on tablet */
-    .wr-performers-row {
+    .wr-pitch-panel-fill {
+        flex: 1;
+        height: 100%;
+    }
+
+    .wr-pitch-wrap-fill {
+        flex: 1;
+    }
+
+    /* Highlights wrap */
+    .wr-performers-row,
+    .wr-bottom-row {
         flex-wrap: wrap;
     }
 
     .wr-performers-row .wr-hl-card,
     .wr-bottom-row .wr-hl-card {
         flex: 1 1 calc(50% - 8px);
-        min-width: 140px;
+        min-width: 130px;
     }
 
     /* Results: 2 columns */
@@ -4231,15 +4224,16 @@ body.admin .nav-links a.admin-only {
     }
 }
 
-/* ── Weekly Report: Mobile (≤ 480px) ──────────────────────────── */
-@media (max-width: 480px) {
+/* ── Weekly Report: Mobile (≤ 560px) ──────────────────────────── */
+@media (max-width: 560px) {
     .wr-report {
-        padding: 10px;
+        padding: 10px 8px;
     }
 
+    /* Filters: full-width dropdowns stacked */
     .wr-filters {
         flex-direction: column;
-        gap: 6px;
+        gap: 8px;
     }
 
     .wr-filter-group {
@@ -4251,11 +4245,22 @@ body.admin .nav-links a.admin-only {
         min-width: unset;
     }
 
+    /* Header stacks title + date */
+    .wr-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
     .wr-title {
         font-size: 15px;
     }
 
-    /* Hide less-critical table columns: D, CS, Cap W, Win% */
+    .wr-game-date {
+        font-size: 11px;
+    }
+
+    /* Standings: hide less-critical columns (D, CS, Cap W, Win%) */
     .wr-standings-table th:nth-child(5),
     .wr-standings-table td:nth-child(5),
     .wr-standings-table th:nth-child(8),
@@ -4273,42 +4278,46 @@ body.admin .nav-links a.admin-only {
         font-size: 11px;
     }
 
-    /* Stack pitches vertically on mobile */
+    /* Each pitch stacks vertically, full width */
     .wr-pitches-stretch {
-        flex-direction: column;
-        min-height: unset;
-        gap: 10px;
+        flex-direction: column !important;
+        height: auto !important;
+        gap: 12px;
     }
 
     .wr-pitch-panel-fill {
-        height: 280px;
-        flex: 0 0 280px;
+        flex: unset !important;
+        height: 300px;
     }
 
-    /* Score banner wraps */
+    .wr-pitch-wrap-fill {
+        height: 260px;
+        flex: unset;
+    }
+
+    /* Score banner: centre with score prominent */
     .wr-score-banner {
         flex-wrap: wrap;
-        gap: 4px;
         justify-content: center;
+        gap: 4px;
     }
 
     .wr-score-nums {
-        font-size: 16px;
-        order: -1;
-        width: 100%;
-        text-align: center;
+        font-size: 18px;
+        letter-spacing: 2px;
     }
 
-    /* Highlights all single column */
+    /* Highlights: all single column */
     .wr-mvp-row,
     .wr-performers-row,
     .wr-bottom-row {
-        flex-direction: column;
+        flex-direction: column !important;
     }
 
     .wr-hl-card {
-        min-width: unset;
-        max-width: unset;
+        min-width: unset !important;
+        max-width: unset !important;
+        flex: unset !important;
         width: 100%;
     }
 
@@ -4319,11 +4328,15 @@ body.admin .nav-links a.admin-only {
 
     /* Results: 1 column */
     .wr-results-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
     }
 
     .wr-p-name {
-        min-width: 75px;
-        font-size: 12px;
+        min-width: 70px;
+        font-size: 11px;
+    }
+
+    .wr-section-label {
+        font-size: 10px;
     }
 }
