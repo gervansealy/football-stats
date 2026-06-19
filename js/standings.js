@@ -13,8 +13,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     await checkAuth();
     
     const yearSelect = document.getElementById('yearSelect');
+
+    // Dynamically populate years from games collection
+    try {
+        const allGamesSnap = await getDocs(collection(db, 'games'));
+        const years = [...new Set(allGamesSnap.docs.map(d => d.data().year).filter(Boolean))].sort((a, b) => b - a);
+        if (years.length > 0) {
+            yearSelect.innerHTML = years.map(y => `<option value="${y}"${y === currentYear ? ' selected' : ''}>${y}</option>`).join('');
+            if (!years.includes(currentYear)) {
+                currentYear = years[0];
+            }
+        }
+    } catch (e) {
+        console.warn('Could not load years:', e);
+    }
     yearSelect.value = currentYear;
-    
+
     yearSelect.addEventListener('change', (e) => {
         currentYear = parseInt(e.target.value);
         cachedGames = null;
