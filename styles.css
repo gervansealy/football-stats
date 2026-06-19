@@ -3917,7 +3917,7 @@ body.admin .nav-links a.admin-only {
 /* Two-column body: 60% left (standings+highlights) | 40% right (lineups) */
 .wr-body-grid {
     display: grid;
-    grid-template-columns: 3fr 2fr;
+    grid-template-columns: 1fr 1fr;
     gap: 20px;
     margin-bottom: 14px;
     align-items: stretch;
