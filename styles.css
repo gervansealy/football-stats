@@ -3914,21 +3914,24 @@ body.admin .nav-links a.admin-only {
     margin-bottom: 8px;
 }
 
-/* Main 2-col: standings (flex-grow) + game (fixed) */
-.wr-top-grid {
+/* Two-column body: left (standings+highlights) | right (lineups fill height) */
+.wr-body-grid {
     display: flex;
     gap: 20px;
     margin-bottom: 14px;
-    align-items: start;
+    align-items: stretch;
 }
 
-.wr-standings-col {
-    flex: 1;
+.wr-left-col {
+    flex: 0 0 auto;
     min-width: 0;
 }
 
 .wr-game-col {
-    flex-shrink: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
 }
 
 /* Top 10 compact table */
@@ -3993,15 +3996,19 @@ body.admin .nav-links a.admin-only {
     white-space: nowrap;
 }
 
-/* Enlarged pitches — scale 340×524 → 238×367 (70%) */
-.wr-pitches-row {
+/* Fill-height pitch system */
+.wr-pitches-stretch {
+    flex: 1;
     display: flex;
     gap: 10px;
+    min-height: 300px;
 }
 
-.wr-pitch-panel {
+.wr-pitch-panel-fill {
+    flex: 1;
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
 .wr-pitch-label {
@@ -4013,20 +4020,23 @@ body.admin .nav-links a.admin-only {
     text-align: center;
     color: #fff;
     white-space: nowrap;
-}
-
-.wr-pitch-wrap {
-    width: 238px;
-    height: 367px;
-    overflow: hidden;
     flex-shrink: 0;
 }
 
-.wr-pitch-wrap .pitch {
-    width: 340px !important;
-    height: 524px !important;
-    transform: scale(0.7);
-    transform-origin: top left;
+.wr-pitch-wrap-fill {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    min-height: 200px;
+}
+
+.wr-pitch-wrap-fill .pitch {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    transform: none !important;
 }
 
 /* Player results */
@@ -4066,7 +4076,8 @@ body.admin .nav-links a.admin-only {
 
 /* Highlights sections */
 .wr-hl-section {
-    margin-bottom: 12px;
+    margin-top: 10px;
+    margin-bottom: 0;
 }
 
 .wr-hl-section-header {

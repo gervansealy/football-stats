@@ -573,14 +573,14 @@ async function wrRenderBody() {
     if (!blackLineup.length && g.blackTeam?.length) blackLineup = wrBuildDefaultLineup(g.blackTeam, players);
 
     const pitchHTML = `
-        <div class="wr-pitches-row">
-            <div class="wr-pitch-panel">
+        <div class="wr-pitches-stretch">
+            <div class="wr-pitch-panel-fill">
                 <div class="wr-pitch-label" style="background:${t1c.hex};">${t1c.emoji} ${t1c.name} Team</div>
-                <div class="wr-pitch-wrap"><div class="pitch">${wrPitchMarkings()}${redLineup.map(p => wrPlayerToken(p, t1c.hex, g.redCaptain, g.playerStats, photoMap)).join('')}</div></div>
+                <div class="wr-pitch-wrap-fill"><div class="pitch">${wrPitchMarkings()}${redLineup.map(p => wrPlayerToken(p, t1c.hex, g.redCaptain, g.playerStats, photoMap)).join('')}</div></div>
             </div>
-            <div class="wr-pitch-panel">
+            <div class="wr-pitch-panel-fill">
                 <div class="wr-pitch-label" style="background:${t2c.hex};">${t2c.emoji} ${t2c.name} Team</div>
-                <div class="wr-pitch-wrap"><div class="pitch">${wrPitchMarkings()}${blackLineup.map(p => wrPlayerToken(p, t2c.hex, g.blackCaptain, g.playerStats, photoMap)).join('')}</div></div>
+                <div class="wr-pitch-wrap-fill"><div class="pitch">${wrPitchMarkings()}${blackLineup.map(p => wrPlayerToken(p, t2c.hex, g.blackCaptain, g.playerStats, photoMap)).join('')}</div></div>
             </div>
         </div>`;
 
@@ -658,8 +658,9 @@ async function wrRenderBody() {
             <span class="wr-game-date">Cumulative to ${gameDate}</span>
         </div>
 
-        <div class="wr-top-grid">
-            <div class="wr-standings-col">
+        <div class="wr-body-grid">
+            <!-- Left: standings + all highlights -->
+            <div class="wr-left-col">
                 <div class="wr-section-label">🏟 Top 10 Standings</div>
                 <table class="wr-standings-table">
                     <thead><tr>
@@ -668,27 +669,29 @@ async function wrRenderBody() {
                     </tr></thead>
                     <tbody>${tableRows}</tbody>
                 </table>
+
+                <div class="wr-hl-section">
+                    <div class="wr-hl-section-header wr-hl-mvp">🏅 MVP</div>
+                    <div class="wr-mvp-row">${mvpHTML}</div>
+                </div>
+
+                <div class="wr-hl-section">
+                    <div class="wr-hl-section-header wr-hl-performers">🏆 High Performers</div>
+                    <div class="wr-performers-row">${performersHTML}</div>
+                </div>
+
+                <div class="wr-hl-section">
+                    <div class="wr-hl-section-header wr-hl-bottom">📉 Bottom of the Barrel</div>
+                    <div class="wr-bottom-row">${bottomHTML}</div>
+                </div>
             </div>
+
+            <!-- Right: game score + full-height lineups -->
             <div class="wr-game-col">
                 <div class="wr-section-label">⚽ Game — ${gameDate}</div>
                 ${scoreBanner}
                 ${pitchHTML}
             </div>
-        </div>
-
-        <div class="wr-hl-section">
-            <div class="wr-hl-section-header wr-hl-mvp">🏅 MVP</div>
-            <div class="wr-mvp-row">${mvpHTML}</div>
-        </div>
-
-        <div class="wr-hl-section">
-            <div class="wr-hl-section-header wr-hl-performers">🏆 High Performers</div>
-            <div class="wr-performers-row">${performersHTML}</div>
-        </div>
-
-        <div class="wr-hl-section">
-            <div class="wr-hl-section-header wr-hl-bottom">📉 Bottom of the Barrel</div>
-            <div class="wr-bottom-row">${bottomHTML}</div>
         </div>
 
         <div class="wr-results-section">
