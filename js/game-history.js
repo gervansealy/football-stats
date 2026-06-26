@@ -280,7 +280,7 @@ function renderFilteredGames() {
 }
 
 // OPTIMIZED: Calculate standings from cached data
-function calculateStandingsAtDateOptimized(targetDate, gamesArray, playersArray, pointValues) {
+function calculateStandingsAtDateOptimized(targetDate, targetYear, gamesArray, playersArray, pointValues) {
     const players = [];
 
     playersArray.forEach((playerData) => {
@@ -293,7 +293,7 @@ function calculateStandingsAtDateOptimized(targetDate, gamesArray, playersArray,
         };
 
         gamesArray.forEach((game) => {
-            if (game.date <= targetDate) {
+            if (game.date <= targetDate && (!targetYear || game.year == targetYear)) {
                 const playerStats = game.playerStats?.[playerData.id];
                 
                 if (playerStats) {
@@ -324,10 +324,10 @@ function calculateStandingsAtDateOptimized(targetDate, gamesArray, playersArray,
     return players;
 }
 
-async function calculateStandingsAtDate(targetDate) {
+async function calculateStandingsAtDate(targetDate, targetYear) {
     // Use cached data if available
     if (cachedGames.length > 0 && allPlayers.length > 0 && cachedPointValues) {
-        return calculateStandingsAtDateOptimized(targetDate, cachedGames, allPlayers, cachedPointValues);
+        return calculateStandingsAtDateOptimized(targetDate, targetYear, cachedGames, allPlayers, cachedPointValues);
     }
 
     // Fallback to database calls (only if cache is empty)
@@ -368,7 +368,7 @@ async function calculateStandingsAtDate(targetDate) {
         gamesSnapshot.forEach((gameDoc) => {
             const gameData = gameDoc.data();
             
-            if (gameData.date <= targetDate) {
+            if (gameData.date <= targetDate && (!targetYear || gameData.year == targetYear)) {
                 const playerStats = gameData.playerStats?.[playerDoc.id];
                 
                 if (playerStats) {
@@ -484,7 +484,7 @@ window.openGameDetailModal = async function(gameId) {
         day: 'numeric' 
     });
     
-    const standings = await calculateStandingsAtDate(gameData.date);
+    const standings = await calculateStandingsAtDate(gameData.date, gameData.year);
     
     const modal = document.getElementById('gameDetailModal');
     const content = document.getElementById('gameDetailContent');

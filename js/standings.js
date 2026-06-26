@@ -55,8 +55,9 @@ function showLoadingIndicator() {
     tbody.innerHTML = '<tr><td colspan="15" class="loading-message">⏳ Loading standings...</td></tr>';
 }
 
-function loadStandings() {
+async function loadStandings() {
     showLoadingIndicator();
+    await getPointValues(); // ensure DB point values are loaded before any calculation
     const playersQuery = query(collection(db, 'players'));
     
     unsubscribe = onSnapshot(playersQuery, async (playersSnapshot) => {
