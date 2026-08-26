@@ -66,6 +66,14 @@ let draggingToken  = null;
 let dragOffsetX    = 0;
 let dragOffsetY    = 0;
 
+function markLineupReady() {
+    window.__LINEUP_READY__ = true;
+    const loading = document.getElementById('loadingSection');
+    if (loading) loading.style.display = 'none';
+    const loadErr = document.getElementById('loadErrorSection');
+    if (loadErr) loadErr.style.display = 'none';
+}
+
 // ── Entry ──────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
     const params    = new URLSearchParams(window.location.search);
@@ -76,7 +84,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const adminTeam = params.get('team');
 
     try {
-        await loadPlayersMap();
+        // Photos are optional and require auth — never block the public lineup editor on them.
+        const photosPromise = loadPlayersMap();
 
         if (viewId) {
             await initViewMode(viewId);
@@ -86,14 +95,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             await processRevOTP(revOtp.toUpperCase());
         } else if (otp) {
             await processOTP(otp.toUpperCase());
+        } else {
+            showLinkError('This lineup link is missing. Ask your captain or admin to send you the lineup link again.');
         }
+
+        photosPromise.then(() => refreshTokenPhotos()).catch(() => {});
     } catch (err) {
         console.error(err);
-        showLinkError('Something went wrong loading your lineup. Please try the link again.');
+        showLinkError('Something went wrong loading your lineup. Please try the link again, or open it in Safari.');
     }
 });
 
 function showSection(which) {
+    markLineupReady();
     document.getElementById('linkErrorSection').style.display = which === 'linkerror' ? 'flex'  : 'none';
     document.getElementById('editorSection').style.display    = which === 'editor'    ? 'block' : 'none';
     document.getElementById('viewSection').style.display      = which === 'view'      ? 'block' : 'none';
@@ -279,7 +293,10 @@ function makeToken(id, name, team, x, y, draggable, isCaptain = false, tc = TEAM
     el.dataset.playerId = id;
     el.style.left       = x + '%';
     el.style.top        = y + '%';
-    if (draggable) el.style.touchAction = 'none';
+    el.style.touchAction = draggable ? 'none' : 'manipulation';
+    el.style.webkitUserSelect = 'none';
+    el.style.userSelect = 'none';
+    el.style.webkitTouchCallout = 'none';
 
     const parts     = name.trim().split(' ');
     const initials  = parts.map(w => w[0] || '').join('').substring(0, 2).toUpperCase();
@@ -303,54 +320,148 @@ function makeToken(id, name, team, x, y, draggable, isCaptain = false, tc = TEAM
     return el;
 }
 
-// ── Drag & Drop ────────────────────────────────────
+// ── Drag & Drop (pointer + touch; iOS / in-app browser safe) ──
+let usingTouchDrag = false;
+
 function initDragDrop() {
     const pitch = document.getElementById('pitch');
-    pitch.addEventListener('pointerdown',   onDown);
-    pitch.addEventListener('pointermove',   onMove);
-    pitch.addEventListener('pointerup',     onUp);
-    pitch.addEventListener('pointercancel', onUp);
+    pitch.classList.add('pitch-editable');
+    if (pitch.dataset.dragReady === '1') return;
+    pitch.dataset.dragReady = '1';
+
+    const opts = { passive: false };
+    pitch.addEventListener('pointerdown', onPointerDown, opts);
+    window.addEventListener('pointermove', onPointerMove, opts);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+
+    pitch.addEventListener('touchstart', onTouchStart, opts);
+    window.addEventListener('touchmove', onTouchMove, opts);
+    window.addEventListener('touchend', onTouchEnd);
+    window.addEventListener('touchcancel', onTouchEnd);
 }
 
-function onDown(e) {
-    const token = e.target.closest('.player-token:not(.view-only)');
-    if (!token) return;
-    e.preventDefault();
+function tokenFromEvent(e) {
+    const node = e.target && e.target.nodeType === 1 ? e.target : e.target && e.target.parentElement;
+    return node && node.closest ? node.closest('.player-token:not(.view-only)') : null;
+}
 
+function startDrag(token, clientX, clientY) {
     draggingToken = token;
-    token.setPointerCapture(e.pointerId);
     token.classList.add('token-dragging');
-
     const pr = document.getElementById('pitch').getBoundingClientRect();
-    const pX = (e.clientX - pr.left) / pr.width  * 100;
-    const pY = (e.clientY - pr.top)  / pr.height * 100;
+    const pX = (clientX - pr.left) / pr.width  * 100;
+    const pY = (clientY - pr.top)  / pr.height * 100;
     dragOffsetX = pX - parseFloat(token.style.left);
     dragOffsetY = pY - parseFloat(token.style.top);
 }
 
-function onMove(e) {
+function moveDrag(clientX, clientY) {
     if (!draggingToken) return;
     const pr = document.getElementById('pitch').getBoundingClientRect();
-    const pX = (e.clientX - pr.left) / pr.width  * 100;
-    const pY = (e.clientY - pr.top)  / pr.height * 100;
-
+    const pX = (clientX - pr.left) / pr.width  * 100;
+    const pY = (clientY - pr.top)  / pr.height * 100;
     const x = Math.max(3, Math.min(97, pX - dragOffsetX));
     const y = Math.max(3, Math.min(97, pY - dragOffsetY));
-
     draggingToken.style.left = x + '%';
     draggingToken.style.top  = y + '%';
     placedPlayers[draggingToken.dataset.playerId] = { x, y };
 }
 
-function onUp() {
+function endDrag() {
     if (!draggingToken) return;
     draggingToken.classList.remove('token-dragging');
     draggingToken = null;
 }
 
+function onPointerDown(e) {
+    if (e.pointerType === 'touch' || usingTouchDrag) return;
+    const token = tokenFromEvent(e);
+    if (!token) return;
+    e.preventDefault();
+    startDrag(token, e.clientX, e.clientY);
+}
+
+function onPointerMove(e) {
+    if (e.pointerType === 'touch' || usingTouchDrag) return;
+    if (!draggingToken) return;
+    e.preventDefault();
+    moveDrag(e.clientX, e.clientY);
+}
+
+function onPointerUp(e) {
+    if (e.pointerType === 'touch' || usingTouchDrag) return;
+    endDrag();
+}
+
+function onTouchStart(e) {
+    const token = tokenFromEvent(e);
+    if (!token) return;
+    e.preventDefault();
+    usingTouchDrag = true;
+    const t = e.touches[0];
+    startDrag(token, t.clientX, t.clientY);
+}
+
+function onTouchMove(e) {
+    if (!usingTouchDrag || !draggingToken) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    if (t) moveDrag(t.clientX, t.clientY);
+}
+
+function onTouchEnd() {
+    if (!usingTouchDrag) return;
+    endDrag();
+    usingTouchDrag = false;
+}
+
+function refreshTokenPhotos() {
+    document.querySelectorAll('.player-token').forEach(el => {
+        const id = el.dataset.playerId;
+        const rawPhoto = playersMap[id]?.headshotLink;
+        const photoUrl = rawPhoto ? convertToDirectLink(rawPhoto) : null;
+        if (!photoUrl) return;
+        const wrap = el.querySelector('.token-pic-wrapper');
+        if (!wrap || wrap.querySelector('img.token-pic')) return;
+        const placeholder = wrap.querySelector('.token-pic-placeholder');
+        if (!placeholder) return;
+        const img = document.createElement('img');
+        img.className = 'token-pic';
+        img.alt = '';
+        img.src = photoUrl;
+        img.addEventListener('error', () => { img.replaceWith(placeholder); });
+        placeholder.replaceWith(img);
+    });
+}
+
+function confirmSubmitLineup() {
+    return new Promise(resolve => {
+        const modal = document.getElementById('confirmSubmitModal');
+        if (!modal) {
+            resolve(window.confirm('Submit this lineup? Changes cannot be made after submission (admin can still edit).'));
+            return;
+        }
+        modal.style.display = 'flex';
+        const yes = document.getElementById('confirmSubmitYes');
+        const no  = document.getElementById('confirmSubmitNo');
+        const finish = (value) => {
+            modal.style.display = 'none';
+            yes.removeEventListener('click', onYes);
+            no.removeEventListener('click', onNo);
+            resolve(value);
+        };
+        const onYes = () => finish(true);
+        const onNo  = () => finish(false);
+        yes.addEventListener('click', onYes);
+        no.addEventListener('click', onNo);
+    });
+}
+
 // ── Submit ─────────────────────────────────────────
 async function submitLineup() {
-    if (!confirm('Submit this lineup? Changes cannot be made after submission (admin can still edit).')) return;
+    const ok = await confirmSubmitLineup();
+    if (!ok) return;
 
     const lineupData = teamPlayers.map(p => ({
         id:   p.id,

@@ -3,14 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Squad Stats">
     <meta name="format-detection" content="telephone=no">
     <meta name="theme-color" content="#1a237e">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://firestore.googleapis.com">
     <title>Team Lineup</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body class="lineup-page">
+
+    <!-- Loading (visible until JS boots — avoids a blank iPhone screen) -->
+    <div id="loadingSection" class="otp-section">
+        <div class="otp-card">
+            <div class="football-icon">⚽</div>
+            <h2>Loading lineup…</h2>
+            <p>This can take a few seconds on mobile data.</p>
+            <div class="lineup-spinner" aria-hidden="true"></div>
+        </div>
+    </div>
+
+    <!-- Script failed to load / timed out -->
+    <div id="loadErrorSection" class="otp-section" style="display:none;">
+        <div class="otp-card">
+            <div class="football-icon">⚽</div>
+            <h2>Can't load lineup</h2>
+            <p id="loadErrorMsg" style="color:#EF4444;text-align:center;margin-top:8px;">
+                The page took too long to load. If you opened this from WhatsApp, tap ••• then <strong>Open in Safari</strong>, and try again.
+            </p>
+            <button type="button" class="btn-login" onclick="location.reload()">Reload</button>
+        </div>
+    </div>
 
     <!-- Link error state (shown when URL link is invalid/expired) -->
     <div id="linkErrorSection" class="otp-section" style="display:none;">
@@ -28,7 +58,7 @@
                 <h2 id="editorTitle"></h2>
                 <p id="editorSubtitle"></p>
             </div>
-            <button id="submitLineupBtn" class="btn-login" style="width:auto; padding:12px 24px;">
+            <button type="button" id="submitLineupBtn" class="btn-login" style="width:auto; padding:12px 24px;">
                 Submit Lineup ✓
             </button>
         </div>
@@ -94,6 +124,38 @@
         </div>
     </div>
 
+    <!-- Custom confirm (window.confirm is unreliable in iOS in-app browsers) -->
+    <div id="confirmSubmitModal" class="lineup-confirm-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="confirmSubmitTitle">
+        <div class="lineup-confirm-card">
+            <h3 id="confirmSubmitTitle">Submit this lineup?</h3>
+            <p>Changes cannot be made after submission (admin can still edit).</p>
+            <div class="lineup-confirm-actions">
+                <button type="button" id="confirmSubmitNo" class="btn-secondary">Cancel</button>
+                <button type="button" id="confirmSubmitYes" class="btn-login" style="width:auto;padding:12px 24px;">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.__LINEUP_READY__ = false;
+        setTimeout(function () {
+            if (window.__LINEUP_READY__) return;
+            var loading = document.getElementById('loadingSection');
+            var err = document.getElementById('loadErrorSection');
+            if (loading && loading.style.display !== 'none') {
+                loading.style.display = 'none';
+                if (err) err.style.display = 'flex';
+            }
+        }, 18000);
+    </script>
+    <script src="js/pwa.js" defer></script>
     <script type="module" src="js/lineup.js"></script>
+    <script nomodule>
+        window.__LINEUP_READY__ = true;
+        document.getElementById('loadingSection').style.display = 'none';
+        document.getElementById('loadErrorSection').style.display = 'flex';
+        document.getElementById('loadErrorMsg').textContent =
+            'This browser cannot run the lineup editor. Please open this link in Safari or Chrome.';
+    </script>
 </body>
 </html>

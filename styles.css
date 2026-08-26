@@ -4,6 +4,15 @@
     box-sizing: border-box;
 }
 
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+button, a, input, select, textarea, label {
+    touch-action: manipulation;
+}
+
 :root {
     --primary-color: #4A90E2;
     --secondary-color: #6C757D;
@@ -29,7 +38,8 @@ body {
 .login-page {
     margin: 0;
     padding: 0;
-    height: 100vh;
+    min-height: 100vh;
+    min-height: 100dvh;
     overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
@@ -64,7 +74,8 @@ body {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    padding: 20px;
+    min-height: 100dvh;
+    padding: max(20px, env(safe-area-inset-top, 0px)) 20px max(20px, env(safe-area-inset-bottom, 0px));
 }
 
 .login-card {
@@ -294,10 +305,11 @@ body {
     background: #4A7AB8;
     color: white;
     padding: 0 30px;
+    padding-top: env(safe-area-inset-top, 0px);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: var(--navbar-height);
+    height: calc(var(--navbar-height) + env(safe-area-inset-top, 0px));
     box-shadow: var(--shadow);
     position: sticky;
     top: 0;
@@ -2415,7 +2427,9 @@ body.admin .nav-links a.admin-only {
 .lineup-page {
     background: #1a1a2e;
     min-height: 100vh;
+    min-height: 100dvh;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* OTP entry */
@@ -2424,7 +2438,8 @@ body.admin .nav-links a.admin-only {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    padding: 20px;
+    min-height: 100dvh;
+    padding: max(20px, env(safe-area-inset-top, 0px)) 20px max(20px, env(safe-area-inset-bottom, 0px));
 }
 
 .otp-card {
@@ -2477,6 +2492,7 @@ body.admin .nav-links a.admin-only {
     background: rgba(255, 255, 255, 0.05);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     padding: 16px 24px;
+    padding-top: max(16px, env(safe-area-inset-top, 0px));
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -2522,6 +2538,13 @@ body.admin .nav-links a.admin-only {
     border-radius: 3px;
     flex-shrink: 0;
     overflow: visible;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.pitch-editable {
+    touch-action: none;
+    overscroll-behavior: none;
 }
 
 
@@ -2607,6 +2630,9 @@ body.admin .nav-links a.admin-only {
     align-items: center;
     cursor: grab;
     user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
     z-index: 10;
     transform: translate(-50%, -50%);
 }
@@ -2653,10 +2679,12 @@ body.admin .nav-links a.admin-only {
     text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
-.player-token:not(.view-only):hover .token-pic,
-.player-token:not(.view-only):hover .token-pic-placeholder {
-    transform: scale(1.08);
-    transition: transform 0.1s;
+@media (hover: hover) {
+    .player-token:not(.view-only):hover .token-pic,
+    .player-token:not(.view-only):hover .token-pic-placeholder {
+        transform: scale(1.08);
+        transition: transform 0.1s;
+    }
 }
 
 .token-captain .token-pic,
@@ -4352,4 +4380,115 @@ body.admin .nav-links a.admin-only {
     .wr-section-label {
         font-size: 10px;
     }
+}
+
+/* ═══════════════════════════════════════════════════
+   iOS / PWA / in-app browser
+   ═══════════════════════════════════════════════════ */
+
+.ios-browser-banner {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    background: #1a237e;
+    color: #fff;
+    padding: 10px 16px;
+    padding-top: max(10px, env(safe-area-inset-top, 0px));
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.ios-browser-banner p {
+    margin: 0;
+    flex: 1 1 180px;
+}
+
+.ios-browser-banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ios-browser-open {
+    background: #fff;
+    color: #1a237e;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    min-height: 40px;
+}
+
+.ios-browser-dismiss {
+    background: transparent;
+    color: #fff;
+    border: none;
+    font-size: 22px;
+    line-height: 1;
+    min-width: 40px;
+    min-height: 40px;
+}
+
+.lineup-spinner {
+    width: 28px;
+    height: 28px;
+    margin: 8px auto 0;
+    border: 3px solid #e2e8f0;
+    border-top-color: #1a237e;
+    border-radius: 50%;
+    animation: lineup-spin 0.8s linear infinite;
+}
+
+@keyframes lineup-spin {
+    to { transform: rotate(360deg); }
+}
+
+.lineup-confirm-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    padding-bottom: max(20px, env(safe-area-inset-bottom, 0px));
+}
+
+.lineup-confirm-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 360px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.lineup-confirm-card h3 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    color: #2d3748;
+}
+
+.lineup-confirm-card p {
+    margin: 0 0 20px;
+    color: #718096;
+    font-size: 14px;
+}
+
+.lineup-confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.lineup-page .ios-browser-banner {
+    position: sticky;
 }

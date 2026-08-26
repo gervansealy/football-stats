@@ -240,13 +240,40 @@ window.closeTeamPlayerPopup = function () {
     document.getElementById('teamPlayerPopup').style.display = 'none';
 };
 
+async function copyTextToClipboard(text) {
+    try {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+            return true;
+        }
+    } catch (_) { /* fall through */ }
+    try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        ta.setSelectionRange(0, text.length);
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return ok;
+    } catch (_) {
+        return false;
+    }
+}
+
 // ── Copy link helper ──────────────────────────────────
-window.copyLineupLink = function (url, btn) {
-    navigator.clipboard.writeText(url).then(() => {
-        const orig = btn.textContent;
+window.copyLineupLink = async function (url, btn) {
+    const orig = btn.textContent;
+    const ok = await copyTextToClipboard(url);
+    if (ok) {
         btn.textContent = '✓ Copied!';
         setTimeout(() => { btn.textContent = orig; }, 1800);
-    });
+    } else {
+        prompt('Copy this lineup link:', url);
+    }
 };
 
 // ── Generate & copy a fresh re-edit link ─────────────
@@ -261,11 +288,7 @@ async function generateReEditLink(pregameId, team, btn) {
         const baseURL = window.location.href.replace(/[^/]*$/, '');
         const url     = `${baseURL}lineup.html?revotp=${revOTP}`;
 
-        let copied = false;
-        try {
-            await navigator.clipboard.writeText(url);
-            copied = true;
-        } catch { /* handled below */ }
+        const copied = await copyTextToClipboard(url);
 
         await setDoc(doc(db, 'lineups', pregameId), { [`${team}RevOTP`]: revOTP }, { merge: true });
 
