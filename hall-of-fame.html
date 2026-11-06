@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Squad Stats">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="theme-color" content="#1a237e">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://firestore.googleapis.com">
+    <title>Hall of Fame - Football Database</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">Football Season Player Database</div>
+        <div class="nav-links">
+            <a href="standings.html">Standings</a>
+            <a href="game-history.html">Game History</a>
+            <a href="team-selection.html">Team Selection</a>
+            <a href="player-profiles.html">Player Profiles</a>
+            <a href="hall-of-fame.html" class="active">Hall of Fame</a>
+            <a href="settings.html" class="admin-only">Settings</a>
+            <a href="recycle-bin.html" class="admin-only">Recycle Bin</a>
+        </div>
+        <div class="nav-actions">
+            <span id="userRole" class="role-badge"></span>
+            <button id="changeRoleBtn" class="btn-secondary">Change Role</button>
+        </div>
+    </nav>
+
+    <div class="container hof-page">
+        <section class="hof-banner" aria-label="Hall of Fame">
+            <div class="hof-banner-art" aria-hidden="true">
+                <svg viewBox="0 0 88 100"><defs><linearGradient id="hofBannerCupL" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFF4C8"/><stop offset="55%" stop-color="#E2B340"/><stop offset="100%" stop-color="#8D6410"/></linearGradient></defs><path d="M20 28c-12 1-16 12-12 20 3 7 11 8 16 4" fill="none" stroke="url(#hofBannerCupL)" stroke-width="4" stroke-linecap="round"/><path d="M68 28c12 1 16 12 12 20-3 7-11 8-16 4" fill="none" stroke="url(#hofBannerCupL)" stroke-width="4" stroke-linecap="round"/><path d="M26 16h36v30c0 14-8 24-18 24S26 60 26 46V16z" fill="url(#hofBannerCupL)"/><path d="M40 70h8v10h-8z" fill="url(#hofBannerCupL)"/><path d="M30 80h28v6H30z" fill="url(#hofBannerCupL)"/><path d="M24 86h40v6H24z" fill="url(#hofBannerCupL)"/><path fill="#3b2a10" transform="translate(44 40)" d="M0-11.2l2.9 6.1 6.6.9-4.8 4.6 1.2 6.5L0 3.6l-5.9 3.3 1.2-6.5-4.8-4.6 6.6-.9z"/></svg>
+                <svg viewBox="0 0 88 100"><defs><linearGradient id="hofBannerMedalL" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="55%" stop-color="#C5CED6"/><stop offset="100%" stop-color="#66727F"/></linearGradient></defs><path d="M31 4h11l7 44H24z" fill="#b4232a"/><path d="M46 4h11l-5 44H40z" fill="#1d4e89"/><circle cx="44" cy="64" r="26" fill="url(#hofBannerMedalL)"/><circle cx="44" cy="64" r="19.5" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2"/><text x="44" y="70" text-anchor="middle" font-size="16" font-weight="700" fill="#1A2754" font-family="Georgia, serif">1</text></svg>
+                <svg class="hof-banner-extra" viewBox="0 0 88 100"><defs><linearGradient id="hofBannerBootL" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFF4C8"/><stop offset="55%" stop-color="#E2B340"/><stop offset="100%" stop-color="#8D6410"/></linearGradient></defs><path fill="url(#hofBannerBootL)" d="M33 12h16c2 0 4 2 4 4v24l14 4c9 2 13 8 13 15v7H28c-8 0-14-6-14-14v-8l8-4V16c0-2 2-4 11-4z"/><path fill="#6B4A12" d="M14 70h66v8H14z"/></svg>
+            </div>
+            <div class="hof-banner-copy">
+                <h1>Hall of Fame</h1>
+                <p>Sweat Squad 4 Life</p>
+            </div>
+            <div class="hof-banner-art hof-banner-art-right" aria-hidden="true">
+                <svg viewBox="0 0 88 100"><defs><linearGradient id="hofBannerCupR" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFF4C8"/><stop offset="55%" stop-color="#E2B340"/><stop offset="100%" stop-color="#8D6410"/></linearGradient></defs><path d="M20 28c-12 1-16 12-12 20 3 7 11 8 16 4" fill="none" stroke="url(#hofBannerCupR)" stroke-width="4" stroke-linecap="round"/><path d="M68 28c12 1 16 12 12 20-3 7-11 8-16 4" fill="none" stroke="url(#hofBannerCupR)" stroke-width="4" stroke-linecap="round"/><path d="M26 16h36v30c0 14-8 24-18 24S26 60 26 46V16z" fill="url(#hofBannerCupR)"/><path d="M40 70h8v10h-8z" fill="url(#hofBannerCupR)"/><path d="M30 80h28v6H30z" fill="url(#hofBannerCupR)"/><path d="M24 86h40v6H24z" fill="url(#hofBannerCupR)"/><circle cx="44" cy="42" r="8" fill="#1A2754"/><circle cx="44" cy="42" r="2.4" fill="#F8F1DC"/></svg>
+                <svg viewBox="0 0 88 100"><defs><linearGradient id="hofBannerMedalR" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#E5F8EC"/><stop offset="55%" stop-color="#3CAA6E"/><stop offset="100%" stop-color="#14643A"/></linearGradient></defs><path d="M31 4h11l7 44H24z" fill="#b4232a"/><path d="M46 4h11l-5 44H40z" fill="#1d4e89"/><circle cx="44" cy="64" r="26" fill="url(#hofBannerMedalR)"/><circle cx="44" cy="64" r="19.5" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2"/><path d="M36 64.5 41.5 70.5 53 57" fill="none" stroke="#145C38" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <svg class="hof-banner-extra" viewBox="0 0 88 100"><defs><linearGradient id="hofBannerSpoonR" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F3D7B0"/><stop offset="55%" stop-color="#B47A45"/><stop offset="100%" stop-color="#6B4423"/></linearGradient></defs><ellipse cx="44" cy="28" rx="18" ry="22" fill="url(#hofBannerSpoonR)"/><ellipse cx="44" cy="29" rx="10" ry="13" fill="rgba(255,255,255,.28)"/><rect x="40" y="46" width="8" height="40" rx="4" fill="url(#hofBannerSpoonR)"/></svg>
+            </div>
+        </section>
+
+        <div id="hofRoot">
+            <p class="no-data">Loading Hall of Fame…</p>
+        </div>
+    </div>
+
+    <noscript><p class="no-data">Turn on JavaScript to view the Hall of Fame.</p></noscript>
+
+    <script src="js/pwa.js" defer></script>
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/hall-of-fame.js"></script>
+</body>
+</html>

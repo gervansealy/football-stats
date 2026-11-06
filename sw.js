@@ -1,4 +1,4 @@
-const CACHE = 'sweat-squad-v2';
+const CACHE = 'sweat-squad-v3';
 
 const SHELL = [
     './',
@@ -8,6 +8,8 @@ const SHELL = [
     './standings.html',
     './game-history.html',
     './player-profiles.html',
+    './hall-of-fame.html',
+    './vote.html',
     './input-stats.html',
     './settings.html',
     './recycle-bin.html',
@@ -21,6 +23,9 @@ const SHELL = [
     './js/standings.js',
     './js/game-history.js',
     './js/player-profiles.js',
+    './js/hall-of-fame.js',
+    './js/hof-shared.js',
+    './js/vote.js',
     './js/input-stats.js',
     './js/settings.js',
     './js/recycle-bin.js',

@@ -53,6 +53,65 @@ service cloud.firestore {
       allow read, write, delete: if isAdmin();
     }
 
+    // Hall of Fame publish flags and approved vote winners.
+    // Viewers can read this. The shortlist and live ballots are not stored here.
+    match /hofSeasons/{seasonId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Admin-only voting setup: shortlist, poll status, and link generation.
+    match /hofAdmin/{seasonId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    // One secret ballot per player. Anyone with the link can read that ballot
+    // and submit it once. Listing every ballot is admin-only.
+    match /hofTokens/{tokenId} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create, delete: if isAdmin();
+      allow update: if hofBallotSubmit();
+    }
+
+    function hofBallotSubmit() {
+      return resource.data.used == false
+        && request.resource.data.used == true
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used', 'votes'])
+        && request.resource.data.votes.keys().hasOnly(hofVoteCategories())
+        && request.resource.data.votes.keys().hasAll(hofVoteCategories())
+        && hofVoteOk('bestKeeper')
+        && hofVoteOk('bestCenterBack')
+        && hofVoteOk('bestRightBack')
+        && hofVoteOk('bestLeftBack')
+        && hofVoteOk('bestMidfielder')
+        && hofVoteOk('bestLeftWinger')
+        && hofVoteOk('bestRightWinger')
+        && hofVoteOk('bestStriker')
+        && hofVoteOk('mostImproved')
+        && hofVoteOk('youngPlayer');
+    }
+
+    function hofVoteCategories() {
+      return [
+        'bestKeeper',
+        'bestCenterBack',
+        'bestRightBack',
+        'bestLeftBack',
+        'bestMidfielder',
+        'bestLeftWinger',
+        'bestRightWinger',
+        'bestStriker',
+        'mostImproved',
+        'youngPlayer'
+      ];
+    }
+
+    function hofVoteOk(category) {
+      return request.resource.data.votes[category] is string
+        && request.resource.data.votes[category] in resource.data.nomineeIds[category];
+    }
+
     // Deny all other access
     match /{document=**} {
       allow read, write: if false;
