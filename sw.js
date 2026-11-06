@@ -1,4 +1,4 @@
-const CACHE = 'sweat-squad-v12';
+const CACHE = 'sweat-squad-v13';
 
 const SHELL = [
     './',
@@ -34,6 +34,7 @@ const SHELL = [
     './images/mvp-ballon-dor.png',
     './images/most-goals-boot.png',
     './images/most-wins-world-cup.png',
+    './images/best-captain-armband.png',
     './icons/icon.svg',
     './icons/icon-192.png',
     './icons/apple-touch-icon.png',

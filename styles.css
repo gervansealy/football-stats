@@ -4931,6 +4931,13 @@ body.admin .hof-bar-status.admin-only {
     object-fit: contain;
 }
 
+.hof-laurels .hof-captain-trophy {
+    width: min(56px, 62%);
+    max-height: 90px;
+    aspect-ratio: auto;
+    object-fit: contain;
+}
+
 .hof-art {
     width: 86px;
     height: 108px;
@@ -5226,7 +5233,8 @@ body.admin .hof-bar-status.admin-only {
 }
 
 .hof-pick-title .hof-goals-boot,
-.hof-pick-title .hof-wins-trophy {
+.hof-pick-title .hof-wins-trophy,
+.hof-pick-title .hof-captain-trophy {
     object-fit: contain;
 }
 

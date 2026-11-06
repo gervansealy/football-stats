@@ -255,6 +255,10 @@ function winsTrophy() {
     return '<img class="hof-art hof-wins-trophy" src="images/most-wins-world-cup.png" alt="" decoding="async">';
 }
 
+function captainTrophy() {
+    return '<img class="hof-art hof-captain-trophy" src="images/best-captain-armband.png" alt="" decoding="async">';
+}
+
 function worldCup(uid) {
     return artSvg(`<defs>${gold(uid)}
         <linearGradient id="${uid}m" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2F8A62"/><stop offset="100%" stop-color="#0C3A28"/></linearGradient>
@@ -483,7 +487,7 @@ export function awardArt(awardId, uid) {
         case 'mvp': return mvpTrophy();
         case 'mostGoals': return goalsBoot();
         case 'mostWins': return winsTrophy();
-        case 'bestCaptain': return captainBand(id);
+        case 'bestCaptain': return captainTrophy();
         case 'mostConsistent': return realMedal(id);
         case 'mostLosses': return bronzeCup(id);
         case 'lvp': return silverMedal(id);
