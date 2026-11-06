@@ -5,8 +5,10 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import {
     STAT_AWARDS, VOTE_AWARDS, VOTE_AWARD_IDS, normalizePoints, calculateSeasonStats,
-    pickStatWinners, esc, awardArt, photoHtml
+    pickStatWinners, esc, awardArt, photoHtml, mountHofBanner
 } from './hof-shared.js';
+
+mountHofBanner();
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -273,25 +275,37 @@ function renderYear(year) {
             <span class="hof-chevron" aria-hidden="true"></span>
         </button>
         <div class="hof-year-body">
-            <h2 class="hof-section-title">Stat awards</h2>
-            ${isAdmin ? statVisibilityNote(season.statsPublished) : ''}
-            <div class="hof-grid">
-                ${STAT_AWARDS.map((award) => renderStatCard(year, award, roster, season.statsPublished, isAdmin)).join('')}
-            </div>
-            <h2 class="hof-section-title hof-section-spaced">Voted awards</h2>
-            ${isAdmin ? voteVisibilityNote(season.votesPublished) : ''}
-            <div class="hof-grid">
-                ${VOTE_AWARDS.map((award) => renderVoteCard(year, award, season, leaders, isAdmin)).join('')}
+            <div class="hof-columns">
+                <section class="hof-column">
+                    <h2 class="hof-section-title">Stat awards</h2>
+                    ${isAdmin ? statApproval(year, season.statsPublished) : ''}
+                    <div class="hof-grid">
+                        ${STAT_AWARDS.map((award) => renderStatCard(year, award, roster, season.statsPublished, isAdmin)).join('')}
+                    </div>
+                </section>
+                <section class="hof-column">
+                    <h2 class="hof-section-title">Voted awards</h2>
+                    ${isAdmin ? voteVisibilityNote(season.votesPublished) : ''}
+                    <div class="hof-grid">
+                        ${VOTE_AWARDS.map((award) => renderVoteCard(year, award, season, leaders, isAdmin)).join('')}
+                    </div>
+                </section>
             </div>
             ${isAdmin ? renderAdmin(year, roster, season, admin, agg, leaders) : ''}
         </div>
     </section>`;
 }
 
-function statVisibilityNote(published) {
-    return `<div class="admin-only"><p class="hof-visibility${published ? ' is-live' : ''}">${published
-        ? 'Players can see the stat awards. Totals keep updating as games are added.'
-        : 'Players still see “To be Announced” for the stat awards.'}</p></div>`;
+function statApproval(year, published) {
+    const button = published
+        ? `<button type="button" class="hof-btn hof-btn-quiet" data-action="hide-stats" data-year="${year}">Hide stat awards</button>`
+        : `<button type="button" class="hof-btn hof-btn-gold" data-action="show-stats" data-year="${year}">Show stat awards to players</button>`;
+    return `<div class="admin-only hof-stat-approval">
+        <p class="hof-visibility${published ? ' is-live' : ''}">${published
+            ? 'Players can see the stat awards. Totals keep updating as games are added.'
+            : 'Players still see “To be Announced” for the stat awards.'}</p>
+        ${button}
+    </div>`;
 }
 
 function voteVisibilityNote(published) {
@@ -352,15 +366,6 @@ function renderAdmin(year, roster, season, admin, agg, leaders) {
     const opened = formatOpened(admin.openedAt);
 
     return `<div class="admin-only"><div class="hof-admin">
-        <div>
-            <h3>Stat awards</h3>
-            <p class="hof-help">Approve these when you want the squad to see MVP, goals, wins, captain, consistency, losses, and LVP. Losses leave out games that player lost as captain.</p>
-            <div class="hof-actions">
-                ${season.statsPublished
-                    ? `<button type="button" class="hof-btn hof-btn-quiet" data-action="hide-stats" data-year="${year}">Hide stat awards</button>`
-                    : `<button type="button" class="hof-btn hof-btn-gold" data-action="show-stats" data-year="${year}">Show stat awards to players</button>`}
-            </div>
-        </div>
         <div>
             <h3>Player vote</h3>
             ${votingOpen ? renderOpenPoll(year, agg, published, stale, opened) : renderSetup(year, roster)}

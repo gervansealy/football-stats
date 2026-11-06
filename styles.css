@@ -4503,8 +4503,8 @@ body.admin .nav-links a.admin-only {
     align-items: center;
     justify-content: center;
     gap: 18px;
-    padding: 28px 18px;
-    margin-bottom: 22px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
     border-radius: 18px;
     border: 1px solid rgba(226, 179, 64, 0.45);
     background:
@@ -4631,23 +4631,43 @@ body.admin .nav-links a.admin-only {
     display: block;
 }
 
+.hof-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.15fr);
+    gap: 16px;
+    align-items: start;
+}
+
 .hof-section-title {
-    margin: 4px 0 12px;
+    margin: 0 0 8px;
     color: #8a5a00;
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
 
-.hof-section-spaced {
-    margin-top: 26px;
+.hof-stat-approval {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+body.admin .hof-stat-approval.admin-only {
+    display: flex;
+}
+
+.hof-stat-approval .hof-visibility {
+    margin: 0;
+    flex: 1 1 180px;
 }
 
 .hof-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+    gap: 8px;
 }
 
 .hof-card {
@@ -4655,36 +4675,38 @@ body.admin .nav-links a.admin-only {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    background: linear-gradient(#fff, #fff) padding-box, linear-gradient(180deg, #f3d78a, #e7edf5) border-box;
-    border: 1px solid transparent;
-    border-top: 4px solid #e2b340;
-    border-radius: 16px;
-    padding: 16px 14px 14px;
-    box-shadow: 0 8px 20px rgba(20, 32, 58, 0.05);
+    background: #fff;
+    border: 1px solid rgba(212, 168, 67, 0.45);
+    border-top: 3px solid #c9a24a;
+    border-radius: 12px;
+    padding: 8px 6px 8px;
+    box-shadow: none;
 }
 
 .hof-art {
-    width: 76px;
-    height: 86px;
+    width: 58px;
+    height: 68px;
     display: block;
 }
 
 .hof-card h3 {
-    margin: 8px 0 0;
-    font-size: 1.08rem;
+    margin: 4px 0 0;
+    font-size: 0.82rem;
+    line-height: 1.2;
     color: #1a2f6b;
 }
 
 .hof-sub {
-    margin: 2px 0 0;
+    margin: 1px 0 0;
     color: var(--text-secondary);
-    font-size: 12px;
-    line-height: 1.35;
+    font-size: 10px;
+    line-height: 1.25;
 }
 
 .hof-tba,
 .hof-empty {
-    margin: 12px 0 4px;
+    margin: 6px 0 2px;
+    font-size: 12px;
     font-weight: 700;
 }
 
@@ -4701,10 +4723,10 @@ body.admin .nav-links a.admin-only {
 
 .hof-winners {
     width: 100%;
-    margin-top: 12px;
+    margin-top: 6px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
 }
 
 .hof-winner {
@@ -4734,8 +4756,8 @@ body.admin .nav-links a.admin-only {
 }
 
 .hof-photo-wrap {
-    width: 52px;
-    height: 52px;
+    width: 36px;
+    height: 36px;
     flex: none;
 }
 
@@ -5083,6 +5105,12 @@ body.admin .nav-links a.admin-only {
 .vote-message h2 {
     margin: 0 0 8px;
     color: #1a2f6b;
+}
+
+@media (max-width: 900px) {
+    .hof-columns {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 720px) {

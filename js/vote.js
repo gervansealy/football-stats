@@ -1,6 +1,8 @@
 import { db } from './firebase-config.js';
 import { doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-import { VOTE_AWARDS, esc, awardArt, photoHtml, personName } from './hof-shared.js';
+import { VOTE_AWARDS, esc, awardArt, photoHtml, personName, mountHofBanner } from './hof-shared.js';
+
+mountHofBanner();
 
 const ballot = document.getElementById('ballot');
 const bar = document.getElementById('voteBar');
