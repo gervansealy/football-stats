@@ -5,7 +5,7 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import {
     STAT_AWARDS, VOTE_AWARDS, VOTE_AWARD_IDS, normalizePoints, calculateSeasonStats,
-    pickStatWinners, esc, awardArt, photoHtml, mountHofBanner
+    pickStatWinners, esc, awardArt, photoHtml, mountHofBanner, sectionMark
 } from './hof-shared.js';
 
 mountHofBanner();
@@ -26,6 +26,8 @@ const seededDrafts = new Set();
 const ready = { players: false, games: false, seasons: false, admins: true, points: false, tokens: true };
 let lastHtml = '';
 let busy = false;
+let savedNoteYear = null;
+let savedTimer = 0;
 
 const root = () => document.getElementById('hofRoot');
 
@@ -148,15 +150,45 @@ function readSession(year) {
     }
 }
 
+function normalizeDraft(raw) {
+    const draft = {};
+    VOTE_AWARD_IDS.forEach((awardId) => {
+        const value = raw && Array.isArray(raw[awardId]) ? raw[awardId] : [];
+        draft[awardId] = [0, 1, 2].map((slot) => (typeof value[slot] === 'string' ? value[slot] : ''));
+    });
+    return draft;
+}
+
+function draftScore(raw) {
+    if (!raw || typeof raw !== 'object') return 0;
+    return VOTE_AWARD_IDS.reduce((sum, awardId) => {
+        const list = raw[awardId];
+        if (!Array.isArray(list)) return sum;
+        return sum + list.filter((value) => typeof value === 'string' && value).length;
+    }, 0);
+}
+
 function picksFor(year) {
     const key = String(year);
     if (!seededDrafts.has(key)) {
         seededDrafts.add(key);
         const session = readSession(year);
         const server = adminOf(year).nomineeDraft;
-        localDrafts[key] = session || (server ? JSON.parse(JSON.stringify(server)) : {});
+        const chosen = session && draftScore(session) >= draftScore(server) ? session : (server || session);
+        localDrafts[key] = normalizeDraft(chosen);
     }
     return localDrafts[key];
+}
+
+function rememberDraft(year, picks) {
+    const draft = normalizeDraft(picks);
+    localDrafts[String(year)] = draft;
+    try {
+        sessionStorage.setItem(`hof-draft-${year}`, JSON.stringify(draft));
+    } catch {
+        /* session storage can be unavailable; Firestore is the saved copy */
+    }
+    return draft;
 }
 
 function playersForYear(year) {
@@ -270,27 +302,31 @@ function renderYear(year) {
 
     return `<section class="hof-year${open ? ' is-open' : ''}">
         <button type="button" class="hof-year-toggle" data-action="toggle-year" data-year="${year}" aria-expanded="${open ? 'true' : 'false'}">
-            <span>${year}</span>
+            <span class="hof-year-num">${year}</span>
             ${year === CURRENT_YEAR ? '<span class="hof-current-pill">Current season</span>' : ''}
             <span class="hof-chevron" aria-hidden="true"></span>
         </button>
         <div class="hof-year-body">
-            <div class="hof-columns">
-                <section class="hof-column">
-                    <h2 class="hof-section-title">Stat awards</h2>
-                    ${isAdmin ? statApproval(year, season.statsPublished) : ''}
-                    <div class="hof-grid">
-                        ${STAT_AWARDS.map((award) => renderStatCard(year, award, roster, season.statsPublished, isAdmin)).join('')}
-                    </div>
-                </section>
-                <section class="hof-column">
-                    <h2 class="hof-section-title">Voted awards</h2>
-                    ${isAdmin ? voteVisibilityNote(season.votesPublished) : ''}
-                    <div class="hof-grid">
-                        ${VOTE_AWARDS.map((award) => renderVoteCard(year, award, season, leaders, isAdmin)).join('')}
-                    </div>
-                </section>
-            </div>
+            <section class="hof-block">
+                <div class="hof-section-bar">
+                    <span class="hof-section-mark">${sectionMark('stat', `stat${year}`)}</span>
+                    <h2>Stat awards</h2>
+                    ${isAdmin ? `<div class="admin-only hof-bar-status">${statApproval(year, season.statsPublished)}</div>` : ''}
+                </div>
+                <div class="hof-grid hof-grid-stats">
+                    ${STAT_AWARDS.map((award) => renderStatCard(year, award, roster, season.statsPublished, isAdmin)).join('')}
+                </div>
+            </section>
+            <section class="hof-block">
+                <div class="hof-section-bar">
+                    <span class="hof-section-mark">${sectionMark('voted', `voted${year}`)}</span>
+                    <h2>Voted awards</h2>
+                    ${isAdmin ? `<div class="admin-only hof-bar-status">${voteVisibilityNote(season.votesPublished)}</div>` : ''}
+                </div>
+                <div class="hof-grid hof-grid-votes">
+                    ${VOTE_AWARDS.map((award) => renderVoteCard(year, award, season, leaders, isAdmin)).join('')}
+                </div>
+            </section>
             ${isAdmin ? renderAdmin(year, roster, season, admin, agg, leaders) : ''}
         </div>
     </section>`;
@@ -299,19 +335,17 @@ function renderYear(year) {
 function statApproval(year, published) {
     const button = published
         ? `<button type="button" class="hof-btn hof-btn-quiet" data-action="hide-stats" data-year="${year}">Hide stat awards</button>`
-        : `<button type="button" class="hof-btn hof-btn-gold" data-action="show-stats" data-year="${year}">Show stat awards to players</button>`;
-    return `<div class="admin-only hof-stat-approval">
-        <p class="hof-visibility${published ? ' is-live' : ''}">${published
-            ? 'Players can see the stat awards. Totals keep updating as games are added.'
-            : 'Players still see “To be Announced” for the stat awards.'}</p>
-        ${button}
-    </div>`;
+        : `<button type="button" class="hof-btn hof-btn-gold" data-action="show-stats" data-year="${year}">Show stat awards</button>`;
+    return `<p class="hof-visibility${published ? ' is-live' : ''}">${published
+        ? 'Players can see the stat awards. Totals keep updating as games are added.'
+        : 'Players still see “To be Announced” for the stat awards.'}</p>
+        ${button}`;
 }
 
 function voteVisibilityNote(published) {
-    return `<div class="admin-only"><p class="hof-visibility${published ? ' is-live' : ''}">${published
+    return `<p class="hof-visibility${published ? ' is-live' : ''}">${published
         ? 'Players can see the published vote winners.'
-        : 'Players still see “To be Announced” for the voted awards.'}</p></div>`;
+        : 'Players still see “To be Announced” for the voted awards.'}</p>`;
 }
 
 function renderStatCard(year, award, roster, published, isAdmin) {
@@ -337,11 +371,12 @@ function renderVoteCard(year, award, season, leaders, isAdmin) {
 }
 
 function cardShell(year, award, body, solo) {
-    return `<article class="hof-card${solo ? ' is-solo' : ''}">
-        ${awardArt(award.id, `y${year}${award.id}`)}
+    const tba = body.includes('hof-tba');
+    return `<article class="hof-card${solo ? ' is-solo' : ''}${tba ? ' is-tba' : ''}">
         <h3>${esc(award.title)}</h3>
-        ${award.blurb ? `<p class="hof-sub">${esc(award.blurb)}</p>` : ''}
-        ${body}
+        <div class="hof-card-art">${awardArt(award.id, `y${year}${award.id}`)}</div>
+        <p class="hof-sub">${award.blurb ? esc(award.blurb) : ''}</p>
+        <div class="hof-card-foot">${body}</div>
     </article>`;
 }
 
@@ -376,12 +411,14 @@ function renderAdmin(year, roster, season, admin, agg, leaders) {
 function renderSetup(year, roster) {
     const picks = picksFor(year);
     const needsPlayers = roster.length < 3;
-    return `<p class="hof-help">Choose the 3 players on the ballot for each award, then open voting. Each player gets a private link that expires after they submit.</p>
+    const saved = savedNoteYear === year;
+    return `<p class="hof-help">Choose the 3 players on the ballot for each award, then open voting. Save keeps the shortlist if you leave this page. Each player gets a private link that expires after they submit.</p>
         ${needsPlayers ? '<p class="hof-help">Add at least 3 players before opening a vote.</p>' : ''}
         <div class="hof-picks">
             ${VOTE_AWARDS.map((award) => pickRow(year, award, roster, picks[award.id] || ['', '', ''])).join('')}
         </div>
         <div class="hof-actions">
+            <button type="button" class="hof-btn hof-btn-primary${saved ? ' is-saved' : ''}" data-action="save-draft" data-year="${year}">${saved ? 'Saved' : 'Save'}</button>
             <button type="button" class="hof-btn hof-btn-gold" data-action="open-voting" data-year="${year}" ${needsPlayers ? 'disabled' : ''}>Open Voting</button>
         </div>`;
 }
@@ -464,7 +501,15 @@ function onDraftChange(event) {
     const draft = picksFor(year);
     if (!Array.isArray(draft[select.dataset.award])) draft[select.dataset.award] = ['', '', ''];
     draft[select.dataset.award][Number(select.dataset.slot)] = select.value;
-    sessionStorage.setItem(`hof-draft-${year}`, JSON.stringify(draft));
+    rememberDraft(year, draft);
+    if (savedNoteYear === Number(year)) {
+        savedNoteYear = null;
+        const button = root().querySelector(`button[data-action="save-draft"][data-year="${year}"]`);
+        if (button) {
+            button.textContent = 'Save';
+            button.classList.remove('is-saved');
+        }
+    }
 }
 
 async function onClick(event) {
@@ -491,7 +536,9 @@ async function onClick(event) {
     }
     if (busy) return;
 
-    if (action === 'show-stats') {
+    if (action === 'save-draft') {
+        await saveDraft(year);
+    } else if (action === 'show-stats') {
         if (!confirm(`Show the ${year} stat awards on the Hall of Fame? Players will see the current leaders, and those names stay up to date as more games are added.`)) return;
         await run(() => writeSeason(year, { year, statsPublished: true }));
     } else if (action === 'hide-stats') {
@@ -520,6 +567,31 @@ async function run(task) {
     } finally {
         busy = false;
     }
+}
+
+async function saveDraft(year) {
+    const picks = rememberDraft(year, readPicks(year));
+    await run(async () => {
+        const batch = writeBatch(db);
+        batch.set(doc(db, 'hofAdmin', String(year)), {
+            nomineeDraft: {
+                ...picks,
+                bestMidfielder: deleteField(),
+                bestDefendingMidfielder: deleteField()
+            }
+        }, { merge: true });
+        await batch.commit();
+        savedNoteYear = year;
+        lastHtml = '';
+        render();
+        window.clearTimeout(savedTimer);
+        savedTimer = window.setTimeout(() => {
+            if (savedNoteYear !== year) return;
+            savedNoteYear = null;
+            lastHtml = '';
+            render();
+        }, 1800);
+    });
 }
 
 async function writeSeason(year, data) {
@@ -594,12 +666,15 @@ async function openVoting(year) {
         const adminPayload = {
             voteStatus: 'open',
             generation,
-            nomineeDraft: picks,
+            nomineeDraft: {
+                ...picks,
+                bestMidfielder: deleteField(),
+                bestDefendingMidfielder: deleteField()
+            },
             openedAt: serverTimestamp()
         };
         await commitInChunks(tokenDocs, doc(db, 'hofSeasons', String(year)), seasonPayload, doc(db, 'hofAdmin', String(year)), adminPayload);
-        localDrafts[String(year)] = picks;
-        sessionStorage.setItem(`hof-draft-${year}`, JSON.stringify(picks));
+        rememberDraft(year, picks);
     });
 }
 

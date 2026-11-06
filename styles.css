@@ -4494,7 +4494,8 @@ body.admin .nav-links a.admin-only {
 }
 
 /* ── Hall of Fame ───────────────────────────────────────────── */
-.hof-page {
+.container.hof-page {
+    max-width: 1680px;
     padding-bottom: 48px;
 }
 
@@ -4571,10 +4572,11 @@ body.admin .nav-links a.admin-only {
 }
 
 .hof-year {
-    background: #fff;
-    border-radius: 16px;
+    background: #071426;
+    border-radius: 14px;
     margin-bottom: 14px;
-    box-shadow: 0 8px 24px rgba(20, 32, 58, 0.06);
+    border: 1px solid rgba(212, 175, 90, 0.45);
+    box-shadow: 0 10px 28px rgba(7, 16, 32, 0.18);
     overflow: hidden;
 }
 
@@ -4583,37 +4585,40 @@ body.admin .nav-links a.admin-only {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 16px 18px;
-    background: #fff;
+    padding: 8px 14px;
+    background: linear-gradient(90deg, #07111f 0%, #14315f 48%, #07111f 100%);
     border: 0;
     cursor: pointer;
-    color: #1a2f6b;
-    font-size: 1.35rem;
-    font-weight: 800;
+    color: #f3d78a;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
     text-align: left;
 }
 
 .hof-year.is-open .hof-year-toggle {
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid rgba(243, 215, 138, 0.28);
 }
 
 .hof-current-pill {
-    font-size: 11px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 10px;
     font-weight: 800;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    background: #fff4d4;
-    color: #8a5a00;
-    border-radius: 999px;
-    padding: 4px 8px;
+    background: linear-gradient(180deg, #f8e7b0, #d4af37);
+    color: #1a1408;
+    border-radius: 3px;
+    padding: 3px 8px;
 }
 
 .hof-chevron {
     width: 10px;
     height: 10px;
     margin-left: auto;
-    border-right: 2px solid #5c6b7a;
-    border-bottom: 2px solid #5c6b7a;
+    border-right: 2px solid #f3d78a;
+    border-bottom: 2px solid #f3d78a;
     transform: rotate(45deg);
 }
 
@@ -4624,141 +4629,271 @@ body.admin .nav-links a.admin-only {
 
 .hof-year-body {
     display: none;
-    padding: 16px;
+    padding: 12px;
+    overflow-x: clip;
 }
 
 .hof-year.is-open .hof-year-body {
     display: block;
+    background:
+        radial-gradient(ellipse at 18% 0%, rgba(130, 170, 255, 0.16), transparent 42%),
+        radial-gradient(ellipse at 84% 8%, rgba(130, 170, 255, 0.1), transparent 40%),
+        linear-gradient(180deg, #08152c 0%, #0b1b38 100%);
 }
 
-.hof-columns {
-    display: grid;
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.15fr);
-    gap: 16px;
-    align-items: start;
+.hof-block + .hof-block {
+    margin-top: 14px;
 }
 
-.hof-section-title {
-    margin: 0 0 8px;
-    color: #8a5a00;
+.hof-section-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 42px;
+    padding: 7px 12px;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #071426 0%, #10284f 52%, #071426 100%);
+    border: 1px solid rgba(212, 175, 90, 0.55);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.hof-section-mark {
+    width: 26px;
+    height: 26px;
+    flex: none;
+    display: block;
+}
+
+.hof-section-mark svg {
+    width: 26px;
+    height: 26px;
+    display: block;
+}
+
+.hof-section-bar h2 {
+    margin: 0;
+    flex: none;
+    color: #f6e7b8;
     font-size: 0.78rem;
     font-weight: 800;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
+    white-space: nowrap;
 }
 
-.hof-stat-approval {
+body.admin .hof-bar-status.admin-only {
     display: flex;
-    flex-wrap: wrap;
+}
+
+.hof-bar-status {
     align-items: center;
     gap: 8px;
-    margin-bottom: 8px;
+    flex: 1 1 240px;
+    min-width: 0;
 }
 
-body.admin .hof-stat-approval.admin-only {
-    display: flex;
+.hof-bar-status::before {
+    content: "";
+    width: 1px;
+    height: 16px;
+    background: rgba(243, 215, 138, 0.45);
+    flex: none;
 }
 
-.hof-stat-approval .hof-visibility {
+.hof-bar-status .hof-visibility {
     margin: 0;
-    flex: 1 1 180px;
+    padding: 0;
+    flex: 1 1 auto;
+    min-width: 0;
+    background: none;
+    color: #e6dcc4;
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-style: italic;
+    line-height: 1.3;
+}
+
+.hof-bar-status .hof-visibility.is-live {
+    background: none;
+    color: #b7ebc9;
+}
+
+.hof-section-bar .hof-btn {
+    flex: none;
+    margin-left: auto;
+    padding: 6px 10px;
+    font-size: 12px;
+    white-space: nowrap;
 }
 
 .hof-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
     gap: 8px;
+    margin-top: 8px;
+}
+
+.hof-grid-stats .hof-card {
+    flex: 0 0 calc((100% - 48px) / 7);
+}
+
+.hof-grid-votes .hof-card {
+    flex: 0 0 calc((100% - 80px) / 11);
 }
 
 .hof-card {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    text-align: center;
-    background: #fff;
-    border: 1px solid rgba(212, 168, 67, 0.45);
-    border-top: 3px solid #c9a24a;
+    min-width: 0;
+    max-width: 100%;
+    background: linear-gradient(180deg, #fffaf0 0%, #f3e2b8 100%);
+    border: 1.5px solid #c6a15a;
     border-radius: 12px;
-    padding: 8px 6px 8px;
-    box-shadow: none;
-}
-
-.hof-art {
-    width: 58px;
-    height: 68px;
-    display: block;
+    overflow: hidden;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.22);
 }
 
 .hof-card h3 {
-    margin: 4px 0 0;
-    font-size: 0.82rem;
-    line-height: 1.2;
-    color: #1a2f6b;
+    margin: 0;
+    min-height: 2.6em;
+    padding: 5px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: linear-gradient(180deg, #16325f, #071426);
+    color: #f6e7b8;
+    font-size: 11px;
+    line-height: 1.15;
+    font-weight: 800;
+    overflow-wrap: break-word;
+}
+
+.hof-card-art {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 108px;
+    padding: 4px 2px 0;
+}
+
+.hof-art {
+    width: 86px;
+    height: 108px;
+    display: block;
+}
+
+.hof-grid-votes .hof-card h3 {
+    font-size: 10px;
+}
+
+.hof-grid-votes .hof-art {
+    width: 68px;
+    height: 86px;
+}
+
+.hof-grid-votes .hof-card-art {
+    min-height: 90px;
 }
 
 .hof-sub {
-    margin: 1px 0 0;
-    color: var(--text-secondary);
-    font-size: 10px;
-    line-height: 1.25;
+    margin: 2px 4px 0;
+    min-height: 2.4em;
+    text-align: center;
+    color: #6d5b3a;
+    font-size: 9px;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.hof-card-foot {
+    margin-top: auto;
+    min-height: 52px;
+    padding: 4px 5px 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: stretch;
+    gap: 4px;
 }
 
 .hof-tba,
 .hof-empty {
-    margin: 6px 0 2px;
-    font-size: 12px;
+    margin: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 11px;
     font-weight: 700;
+    overflow-wrap: anywhere;
 }
 
 .hof-tba {
-    color: #9a7b2f;
+    color: #9a7430;
     font-style: italic;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.01em;
 }
 
 .hof-empty {
-    color: var(--text-secondary);
-    font-size: 14px;
+    color: #6d5b3a;
+    font-size: 11px;
 }
 
 .hof-winners {
     width: 100%;
-    margin-top: 6px;
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 5px;
 }
 
 .hof-winner {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 5px;
+    width: 100%;
+    min-width: 0;
     text-align: left;
-    background: #f8f5ee;
-    border-radius: 12px;
-    padding: 8px;
+    background: transparent;
+    border-radius: 0;
+    padding: 0;
 }
 
-.hof-card.is-solo .hof-winner {
-    justify-content: center;
+.hof-winner-text {
+    min-width: 0;
+    flex: 1;
 }
 
 .hof-winner-name {
     font-weight: 800;
-    color: #1a2f6b;
-    line-height: 1.2;
+    color: #14284b;
+    font-size: 11px;
+    line-height: 1.15;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .hof-winner-stat {
     color: #8a5a00;
-    font-size: 13px;
+    font-size: 10px;
     font-weight: 700;
+    line-height: 1.15;
+    overflow-wrap: break-word;
 }
 
 .hof-photo-wrap {
     width: 36px;
     height: 36px;
     flex: none;
+}
+
+.hof-card .hof-photo-wrap {
+    width: 26px;
+    height: 26px;
+}
+
+.hof-card .hof-photo-fallback {
+    font-size: 9px;
 }
 
 .hof-photo,
@@ -4851,6 +4986,11 @@ body.admin .hof-stat-approval.admin-only {
 
 .hof-btn-primary {
     background: #1a2f6b;
+    color: #fff;
+}
+
+.hof-btn.is-saved {
+    background: #14643a;
     color: #fff;
 }
 
@@ -5107,9 +5247,15 @@ body.admin .hof-stat-approval.admin-only {
     color: #1a2f6b;
 }
 
-@media (max-width: 900px) {
-    .hof-columns {
-        grid-template-columns: 1fr;
+@media (max-width: 1320px) {
+    .hof-grid-votes .hof-card {
+        flex-basis: calc((100% - 24px) / 4);
+    }
+}
+
+@media (max-width: 1100px) {
+    .hof-grid-stats .hof-card {
+        flex-basis: calc((100% - 24px) / 4);
     }
 }
 
@@ -5142,6 +5288,28 @@ body.admin .hof-stat-approval.admin-only {
     .hof-banner-copy p::after {
         width: 14px;
         margin: 0 6px 3px;
+    }
+
+    .hof-grid-stats .hof-card,
+    .hof-grid-votes .hof-card {
+        flex-basis: calc((100% - 8px) / 2);
+    }
+
+    .hof-section-bar {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .hof-bar-status {
+        flex-basis: 100%;
+    }
+
+    .hof-bar-status::before {
+        display: none;
+    }
+
+    .hof-section-bar .hof-btn {
+        margin-left: 0;
     }
 
     .hof-pick,

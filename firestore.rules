@@ -84,7 +84,8 @@ service cloud.firestore {
         && hofVoteOk('bestCenterBack')
         && hofVoteOk('bestRightBack')
         && hofVoteOk('bestLeftBack')
-        && hofVoteOk('bestMidfielder')
+        && hofVoteOk('bestAttackingMidfielder')
+        && hofVoteOk('bestDefensiveMidfielder')
         && hofVoteOk('bestLeftWinger')
         && hofVoteOk('bestRightWinger')
         && hofVoteOk('bestStriker')
@@ -98,7 +99,8 @@ service cloud.firestore {
         'bestCenterBack',
         'bestRightBack',
         'bestLeftBack',
-        'bestMidfielder',
+        'bestAttackingMidfielder',
+        'bestDefensiveMidfielder',
         'bestLeftWinger',
         'bestRightWinger',
         'bestStriker',
