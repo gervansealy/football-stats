@@ -259,6 +259,22 @@ function captainTrophy() {
     return '<img class="hof-art hof-captain-trophy" src="images/best-captain-armband.png" alt="" decoding="async">';
 }
 
+function consistentTrophy() {
+    return '<img class="hof-art hof-consistent-trophy" src="images/most-consistent-trophy.png" alt="" decoding="async">';
+}
+
+function lossesSpoon() {
+    return '<img class="hof-art hof-losses-spoon" src="images/most-losses-spoon.png" alt="" decoding="async">';
+}
+
+function lvpBoot() {
+    return '<img class="hof-art hof-lvp-boot" src="images/lvp-baby-boot.png" alt="" decoding="async">';
+}
+
+function keeperGlove() {
+    return '<img class="hof-art hof-keeper-glove" src="images/best-keeper-glove.png" alt="" decoding="async">';
+}
+
 function worldCup(uid) {
     return artSvg(`<defs>${gold(uid)}
         <linearGradient id="${uid}m" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2F8A62"/><stop offset="100%" stop-color="#0C3A28"/></linearGradient>
@@ -488,10 +504,10 @@ export function awardArt(awardId, uid) {
         case 'mostGoals': return goalsBoot();
         case 'mostWins': return winsTrophy();
         case 'bestCaptain': return captainTrophy();
-        case 'mostConsistent': return realMedal(id);
-        case 'mostLosses': return bronzeCup(id);
-        case 'lvp': return silverMedal(id);
-        case 'bestKeeper': return goldenGlove(id);
+        case 'mostConsistent': return consistentTrophy();
+        case 'mostLosses': return lossesSpoon();
+        case 'lvp': return lvpBoot();
+        case 'bestKeeper': return keeperGlove();
         case 'bestCenterBack': return shieldPlaque(id);
         case 'bestRightBack': return goldenBoot(id + 'r', 'gold', true);
         case 'bestLeftBack': return goldenBoot(id + 'l', 'silver', false);

@@ -4931,9 +4931,19 @@ body.admin .hof-bar-status.admin-only {
     object-fit: contain;
 }
 
-.hof-laurels .hof-captain-trophy {
+.hof-laurels .hof-captain-trophy,
+.hof-laurels .hof-consistent-trophy,
+.hof-laurels .hof-losses-spoon,
+.hof-laurels .hof-keeper-glove {
     width: min(56px, 62%);
     max-height: 90px;
+    aspect-ratio: auto;
+    object-fit: contain;
+}
+
+.hof-laurels .hof-lvp-boot {
+    width: min(78px, 84%);
+    max-height: 88px;
     aspect-ratio: auto;
     object-fit: contain;
 }
@@ -5234,7 +5244,11 @@ body.admin .hof-bar-status.admin-only {
 
 .hof-pick-title .hof-goals-boot,
 .hof-pick-title .hof-wins-trophy,
-.hof-pick-title .hof-captain-trophy {
+.hof-pick-title .hof-captain-trophy,
+.hof-pick-title .hof-consistent-trophy,
+.hof-pick-title .hof-losses-spoon,
+.hof-pick-title .hof-lvp-boot,
+.hof-pick-title .hof-keeper-glove {
     object-fit: contain;
 }
 
