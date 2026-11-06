@@ -1,4 +1,4 @@
-const CACHE = 'sweat-squad-v11';
+const CACHE = 'sweat-squad-v12';
 
 const SHELL = [
     './',
@@ -33,6 +33,7 @@ const SHELL = [
     './js/highlight-video-player.js',
     './images/mvp-ballon-dor.png',
     './images/most-goals-boot.png',
+    './images/most-wins-world-cup.png',
     './icons/icon.svg',
     './icons/icon-192.png',
     './icons/apple-touch-icon.png',
