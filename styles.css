@@ -4936,6 +4936,7 @@ body.admin .hof-bar-status.admin-only {
 .hof-laurels .hof-losses-spoon,
 .hof-laurels .hof-keeper-glove,
 .hof-laurels .hof-midfielder-trophy,
+.hof-laurels .hof-defender-trophy,
 .hof-laurels .hof-left-winger,
 .hof-laurels .hof-right-winger {
     width: min(56px, 62%);
@@ -5253,6 +5254,7 @@ body.admin .hof-bar-status.admin-only {
 .hof-pick-title .hof-lvp-boot,
 .hof-pick-title .hof-keeper-glove,
 .hof-pick-title .hof-midfielder-trophy,
+.hof-pick-title .hof-defender-trophy,
 .hof-pick-title .hof-left-winger,
 .hof-pick-title .hof-right-winger {
     object-fit: contain;
@@ -5382,6 +5384,7 @@ body.admin .hof-bar-status.admin-only {
 .vote-award-head .hof-lvp-boot,
 .vote-award-head .hof-keeper-glove,
 .vote-award-head .hof-midfielder-trophy,
+.vote-award-head .hof-defender-trophy,
 .vote-award-head .hof-left-winger,
 .vote-award-head .hof-right-winger {
     object-fit: contain;

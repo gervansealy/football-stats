@@ -279,6 +279,10 @@ function midfielderTrophy() {
     return '<img class="hof-art hof-midfielder-trophy" src="images/best-midfielder-trophy.png" alt="" decoding="async">';
 }
 
+function defenderTrophy() {
+    return '<img class="hof-art hof-defender-trophy" src="images/best-defender-trophy.png" alt="" decoding="async">';
+}
+
 function leftWinger() {
     return '<img class="hof-art hof-left-winger" src="images/best-left-winger.png" alt="" decoding="async">';
 }
@@ -520,9 +524,9 @@ export function awardArt(awardId, uid) {
         case 'mostLosses': return lossesSpoon();
         case 'lvp': return lvpBoot();
         case 'bestKeeper': return keeperGlove();
-        case 'bestCenterBack': return shieldPlaque(id);
-        case 'bestRightBack': return goldenBoot(id + 'r', 'gold', true);
-        case 'bestLeftBack': return goldenBoot(id + 'l', 'silver', false);
+        case 'bestCenterBack': return defenderTrophy();
+        case 'bestRightBack': return defenderTrophy();
+        case 'bestLeftBack': return defenderTrophy();
         case 'bestAttackingMidfielder': return midfielderTrophy();
         case 'bestDefensiveMidfielder': return midfielderTrophy();
         case 'bestLeftWinger': return leftWinger();
