@@ -5,7 +5,7 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import {
     STAT_AWARDS, VOTE_AWARDS, VOTE_AWARD_IDS, normalizePoints, calculateSeasonStats,
-    pickStatWinners, esc, awardArt, photoHtml, mountHofBanner, sectionMark
+    pickStatWinners, esc, awardArt, photoHtml, mountHofBanner, sectionMark, laurelMark
 } from './hof-shared.js';
 
 mountHofBanner();
@@ -19,8 +19,8 @@ let seasons = {};
 let admins = {};
 let tokens = [];
 let pointValues = normalizePoints(null);
-let openYears = new Set();
-let seededYears = false;
+let selectedYear = CURRENT_YEAR;
+let yearOpen = true;
 const localDrafts = {};
 const seededDrafts = new Set();
 const ready = { players: false, games: false, seasons: false, admins: true, points: false, tokens: true };
@@ -279,11 +279,9 @@ function signature(results) {
 
 function render() {
     if (!canRender()) return;
-    if (!seededYears) {
-        openYears.add(CURRENT_YEAR);
-        seededYears = true;
-    }
-    const html = yearsToShow().map(renderYear).join('') || '<p class="no-data">No seasons yet</p>';
+    const years = yearsToShow();
+    if (!years.includes(selectedYear)) selectedYear = years[0] || CURRENT_YEAR;
+    const html = years.length ? renderYear(selectedYear, years) : '<p class="no-data">No seasons yet</p>';
     if (html === lastHtml) return;
     const scrollY = window.scrollY;
     root().innerHTML = html;
@@ -291,21 +289,29 @@ function render() {
     window.scrollTo(0, scrollY);
 }
 
-function renderYear(year) {
-    const open = openYears.has(year);
+function renderYear(year, years) {
+    const open = yearOpen;
     const roster = playersForYear(year);
     const season = seasonOf(year);
     const admin = adminOf(year);
     const isAdmin = role === 'admin';
     const agg = isAdmin ? aggregate(year) : null;
     const leaders = agg ? liveLeaders(agg) : {};
+    const options = years.map((value) => {
+        const label = value === CURRENT_YEAR ? 'Current season' : String(value);
+        return `<option value="${value}"${value === year ? ' selected' : ''}>${label}</option>`;
+    }).join('');
 
     return `<section class="hof-year${open ? ' is-open' : ''}">
-        <button type="button" class="hof-year-toggle" data-action="toggle-year" data-year="${year}" aria-expanded="${open ? 'true' : 'false'}">
+        <div class="hof-year-bar">
             <span class="hof-year-num">${year}</span>
-            ${year === CURRENT_YEAR ? '<span class="hof-current-pill">Current season</span>' : ''}
-            <span class="hof-chevron" aria-hidden="true"></span>
-        </button>
+            <label class="hof-season-label">
+                <select class="hof-season-select" aria-label="Choose season">${options}</select>
+            </label>
+            <button type="button" class="hof-collapse" data-action="toggle-year" data-year="${year}" aria-expanded="${open ? 'true' : 'false'}" aria-label="${open ? 'Collapse season' : 'Expand season'}">
+                <span class="hof-chevron" aria-hidden="true"></span>
+            </button>
+        </div>
         <div class="hof-year-body">
             <section class="hof-block">
                 <div class="hof-section-bar">
@@ -374,8 +380,8 @@ function cardShell(year, award, body, solo) {
     const tba = body.includes('hof-tba');
     return `<article class="hof-card${solo ? ' is-solo' : ''}${tba ? ' is-tba' : ''}">
         <h3>${esc(award.title)}</h3>
-        <div class="hof-card-art">${awardArt(award.id, `y${year}${award.id}`)}</div>
-        <p class="hof-sub">${award.blurb ? esc(award.blurb) : ''}</p>
+        <div class="hof-card-art"><div class="hof-laurels">${laurelMark(`y${year}${award.id}`)}${awardArt(award.id, `y${year}${award.id}`)}</div></div>
+        ${award.blurb ? `<p class="hof-sub">${esc(award.blurb)}</p>` : ''}
         <div class="hof-card-foot">${body}</div>
     </article>`;
 }
@@ -495,6 +501,14 @@ function ballotUrl(token) {
 }
 
 function onDraftChange(event) {
+    const seasonSelect = event.target.closest('select.hof-season-select');
+    if (seasonSelect) {
+        selectedYear = Number(seasonSelect.value) || CURRENT_YEAR;
+        yearOpen = true;
+        lastHtml = '';
+        render();
+        return;
+    }
     const select = event.target.closest('select[data-award]');
     if (!select) return;
     const year = select.dataset.year;
@@ -519,8 +533,7 @@ async function onClick(event) {
     const year = Number(button.dataset.year);
 
     if (action === 'toggle-year') {
-        if (openYears.has(year)) openYears.delete(year);
-        else openYears.add(year);
+        yearOpen = !yearOpen;
         lastHtml = '';
         render();
         return;

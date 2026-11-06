@@ -4494,6 +4494,53 @@ body.admin .nav-links a.admin-only {
 }
 
 /* ── Hall of Fame ───────────────────────────────────────────── */
+body.hof-body,
+body.vote-page {
+    background:
+        radial-gradient(ellipse at 0% 0%, rgba(214, 176, 84, 0.16), transparent 36%),
+        radial-gradient(ellipse at 100% 8%, rgba(214, 176, 84, 0.2), transparent 32%),
+        linear-gradient(180deg, #fbf6ea 0%, #f3ead6 100%);
+    overflow-x: clip;
+}
+
+body.hof-body::before,
+body.hof-body::after,
+body.vote-page::before,
+body.vote-page::after {
+    content: "";
+    position: fixed;
+    width: 210px;
+    height: 72px;
+    pointer-events: none;
+    z-index: 0;
+    background: repeating-linear-gradient(
+        -28deg,
+        transparent 0 7px,
+        rgba(196, 154, 60, 0.55) 7px 10px,
+        transparent 10px 16px
+    );
+}
+
+body.hof-body::before,
+body.vote-page::before {
+    top: 72px;
+    right: 0;
+}
+
+body.hof-body::after,
+body.vote-page::after {
+    bottom: 0;
+    left: 0;
+    transform: scaleY(-1);
+}
+
+.navbar,
+.container.hof-page,
+.vote-shell {
+    position: relative;
+    z-index: 1;
+}
+
 .container.hof-page {
     max-width: 1680px;
     padding-bottom: 48px;
@@ -4504,15 +4551,15 @@ body.admin .nav-links a.admin-only {
     align-items: center;
     justify-content: center;
     gap: 18px;
-    padding: 16px 18px;
+    padding: 10px 18px;
     margin-bottom: 14px;
     border-radius: 18px;
-    border: 1px solid rgba(226, 179, 64, 0.45);
+    border: 1px solid rgba(212, 175, 90, 0.45);
     background:
-        radial-gradient(circle at 12% 50%, rgba(232, 197, 107, 0.18), transparent 42%),
-        radial-gradient(circle at 88% 50%, rgba(232, 197, 107, 0.18), transparent 42%),
-        linear-gradient(135deg, #0c1836 0%, #1a2f6b 55%, #0c1836 100%);
-    box-shadow: 0 12px 30px rgba(12, 24, 54, 0.22);
+        radial-gradient(circle at 12% 50%, rgba(232, 197, 107, 0.16), transparent 42%),
+        radial-gradient(circle at 88% 50%, rgba(232, 197, 107, 0.16), transparent 42%),
+        linear-gradient(180deg, #fffdf8 0%, #f8f1e0 100%);
+    box-shadow: 0 8px 22px rgba(120, 90, 30, 0.08);
     overflow: hidden;
 }
 
@@ -4522,20 +4569,19 @@ body.admin .nav-links a.admin-only {
 }
 
 .hof-banner-copy h1 {
-    color: #f3d78a;
+    color: #c6a03a;
     font-family: Georgia, "Times New Roman", serif;
-    font-size: clamp(2rem, 5vw, 3.3rem);
+    font-size: clamp(1.7rem, 4vw, 2.6rem);
     font-weight: 700;
     letter-spacing: 0.04em;
     line-height: 1.05;
-    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
 }
 
 .hof-banner-copy p {
-    margin-top: 6px;
-    color: #f7f3e8;
-    font-size: 0.82rem;
-    font-weight: 700;
+    margin-top: 4px;
+    color: #102a56;
+    font-size: 0.78rem;
+    font-weight: 800;
     letter-spacing: 0.18em;
     text-transform: uppercase;
 }
@@ -4547,7 +4593,7 @@ body.admin .nav-links a.admin-only {
     width: 28px;
     height: 1px;
     margin: 0 10px 4px;
-    background: rgba(243, 215, 138, 0.7);
+    background: rgba(198, 160, 58, 0.7);
     vertical-align: middle;
 }
 
@@ -4563,8 +4609,8 @@ body.admin .nav-links a.admin-only {
 }
 
 .hof-banner-art svg {
-    width: 62px;
-    height: 70px;
+    width: 54px;
+    height: 62px;
 }
 
 .hof-banner-art svg:nth-child(2) {
@@ -4572,111 +4618,143 @@ body.admin .nav-links a.admin-only {
 }
 
 .hof-year {
-    background: #071426;
-    border-radius: 14px;
     margin-bottom: 14px;
-    border: 1px solid rgba(212, 175, 90, 0.45);
-    box-shadow: 0 10px 28px rgba(7, 16, 32, 0.18);
-    overflow: hidden;
 }
 
-.hof-year-toggle {
-    width: 100%;
+.hof-year-bar {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 14px;
-    background: linear-gradient(90deg, #07111f 0%, #14315f 48%, #07111f 100%);
-    border: 0;
-    cursor: pointer;
-    color: #f3d78a;
+    gap: 16px;
+    min-height: 64px;
+    padding: 8px 12px 8px 22px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #fffdf8 0%, #f7f0de 100%);
+    border: 1px solid rgba(212, 175, 90, 0.65);
+    box-shadow: 0 8px 20px rgba(120, 90, 30, 0.08), inset 0 1px 0 #fff;
+}
+
+.hof-year-num {
+    color: #c6a03a;
     font-family: Georgia, "Times New Roman", serif;
-    font-size: 1.15rem;
+    font-size: 1.85rem;
     font-weight: 700;
-    letter-spacing: 0.04em;
-    text-align: left;
+    letter-spacing: 0.02em;
+    line-height: 1;
 }
 
-.hof-year.is-open .hof-year-toggle {
-    border-bottom: 1px solid rgba(243, 215, 138, 0.28);
+.hof-season-label {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
 }
 
-.hof-current-pill {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 10px;
+.hof-season-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    border: 0;
+    color: #102a56;
+    font: inherit;
+    font-size: 11px;
     font-weight: 800;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    background: linear-gradient(180deg, #f8e7b0, #d4af37);
-    color: #1a1408;
-    border-radius: 3px;
-    padding: 3px 8px;
+    padding: 6px 18px 6px 0;
+    cursor: pointer;
+}
+
+.hof-season-label::after {
+    content: "";
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    border-right: 2px solid #102a56;
+    border-bottom: 2px solid #102a56;
+    transform: translateY(-70%) rotate(45deg);
+    pointer-events: none;
+}
+
+.hof-collapse {
+    width: 36px;
+    height: 36px;
+    margin-left: auto;
+    border-radius: 50%;
+    border: 1.5px solid #e0c36a;
+    background: linear-gradient(180deg, #fff, #f7f0dc);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(140, 110, 40, 0.16);
+    flex: none;
+}
+
+.hof-collapse:focus-visible,
+.hof-season-select:focus-visible {
+    outline: 2px solid #1a3d78;
+    outline-offset: 2px;
 }
 
 .hof-chevron {
-    width: 10px;
-    height: 10px;
-    margin-left: auto;
-    border-right: 2px solid #f3d78a;
-    border-bottom: 2px solid #f3d78a;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid #102a56;
+    border-bottom: 2px solid #102a56;
     transform: rotate(45deg);
+    margin-top: -3px;
 }
 
 .hof-year.is-open .hof-chevron {
     transform: rotate(225deg);
-    margin-top: 4px;
+    margin-top: 3px;
 }
 
 .hof-year-body {
     display: none;
-    padding: 12px;
+    padding: 14px 0 0;
     overflow-x: clip;
 }
 
 .hof-year.is-open .hof-year-body {
     display: block;
-    background:
-        radial-gradient(ellipse at 18% 0%, rgba(130, 170, 255, 0.16), transparent 42%),
-        radial-gradient(ellipse at 84% 8%, rgba(130, 170, 255, 0.1), transparent 40%),
-        linear-gradient(180deg, #08152c 0%, #0b1b38 100%);
 }
 
 .hof-block + .hof-block {
-    margin-top: 14px;
+    margin-top: 16px;
 }
 
 .hof-section-bar {
     display: flex;
     align-items: center;
     gap: 10px;
-    min-height: 42px;
-    padding: 7px 12px;
-    border-radius: 10px;
-    background: linear-gradient(90deg, #071426 0%, #10284f 52%, #071426 100%);
-    border: 1px solid rgba(212, 175, 90, 0.55);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+    min-height: 48px;
+    padding: 8px 16px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #1b427c 0%, #0c2348 100%);
+    box-shadow: 0 8px 16px rgba(12, 35, 72, 0.16);
 }
 
 .hof-section-mark {
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
     flex: none;
     display: block;
 }
 
 .hof-section-mark svg {
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
     display: block;
 }
 
 .hof-section-bar h2 {
     margin: 0;
     flex: none;
-    color: #f6e7b8;
-    font-size: 0.78rem;
+    color: #fff;
+    font-size: 0.95rem;
     font-weight: 800;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
     white-space: nowrap;
 }
@@ -4706,7 +4784,7 @@ body.admin .hof-bar-status.admin-only {
     flex: 1 1 auto;
     min-width: 0;
     background: none;
-    color: #e6dcc4;
+    color: #f6edd4;
     font-size: 0.82rem;
     font-weight: 600;
     font-style: italic;
@@ -4727,19 +4805,20 @@ body.admin .hof-bar-status.admin-only {
 }
 
 .hof-grid {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
     align-items: stretch;
-    gap: 8px;
-    margin-top: 8px;
+    gap: 10px;
+    margin-top: 10px;
+    width: 100%;
+    min-width: 0;
 }
 
-.hof-grid-stats .hof-card {
-    flex: 0 0 calc((100% - 48px) / 7);
+.hof-grid-stats {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
-.hof-grid-votes .hof-card {
-    flex: 0 0 calc((100% - 80px) / 11);
+.hof-grid-votes {
+    grid-template-columns: repeat(11, minmax(0, 1fr));
 }
 
 .hof-card {
@@ -4747,35 +4826,64 @@ body.admin .hof-bar-status.admin-only {
     flex-direction: column;
     min-width: 0;
     max-width: 100%;
-    background: linear-gradient(180deg, #fffaf0 0%, #f3e2b8 100%);
-    border: 1.5px solid #c6a15a;
-    border-radius: 12px;
+    background: linear-gradient(180deg, #fffdf8 0%, #fbf6ea 100%);
+    border: 1.5px solid #e4c56e;
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.22);
+    box-shadow: 0 8px 16px rgba(90, 70, 20, 0.08);
 }
 
 .hof-card h3 {
     margin: 0;
-    min-height: 2.6em;
-    padding: 5px 4px;
+    min-height: 2.5em;
+    padding: 7px 6px;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
-    background: linear-gradient(180deg, #16325f, #071426);
-    color: #f6e7b8;
-    font-size: 11px;
+    background: linear-gradient(180deg, #1c447f, #0d274f);
+    color: #fff;
+    font-size: 13px;
     line-height: 1.15;
     font-weight: 800;
+    letter-spacing: 0.01em;
     overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .hof-card-art {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 108px;
+    min-height: 0;
     padding: 4px 2px 0;
+    flex: 1 1 auto;
+}
+
+.hof-laurels {
+    position: relative;
+    width: min(158px, 100%);
+    height: 124px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hof-laurel {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.hof-laurels .hof-art {
+    position: relative;
+    z-index: 1;
+    width: min(78px, 70%);
+    height: auto;
+    aspect-ratio: 80 / 104;
+    display: block;
 }
 
 .hof-art {
@@ -4785,58 +4893,80 @@ body.admin .hof-bar-status.admin-only {
 }
 
 .hof-grid-votes .hof-card h3 {
-    font-size: 10px;
+    font-size: clamp(8px, 0.72vw, 11px);
+    min-height: 3.3em;
+    padding: 6px 3px;
+    letter-spacing: 0;
 }
 
-.hof-grid-votes .hof-art {
-    width: 68px;
-    height: 86px;
+.hof-grid-votes .hof-laurels {
+    width: min(112px, 100%);
+    height: 92px;
 }
 
-.hof-grid-votes .hof-card-art {
-    min-height: 90px;
+.hof-grid-votes .hof-laurels .hof-art {
+    width: min(54px, 72%);
 }
 
 .hof-sub {
-    margin: 2px 4px 0;
-    min-height: 2.4em;
+    margin: 0 6px;
     text-align: center;
-    color: #6d5b3a;
+    color: #8a8278;
+    font-size: 11px;
+    line-height: 1.25;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.hof-grid-votes .hof-sub {
     font-size: 9px;
-    line-height: 1.2;
-    overflow-wrap: anywhere;
+    margin: 0 3px;
 }
 
 .hof-card-foot {
     margin-top: auto;
-    min-height: 52px;
-    padding: 4px 5px 8px;
+    min-height: 42px;
+    padding: 6px 6px 10px;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    align-items: stretch;
+    align-items: center;
     gap: 4px;
 }
 
 .hof-tba,
 .hof-empty {
     margin: 0;
-    width: 100%;
+    max-width: 100%;
     text-align: center;
-    font-size: 11px;
-    font-weight: 700;
     overflow-wrap: anywhere;
 }
 
 .hof-tba {
-    color: #9a7430;
-    font-style: italic;
-    letter-spacing: 0.01em;
+    display: inline-block;
+    width: auto;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #fbe7a4 0%, #e7c15a 48%, #d0a63a 100%);
+    color: #6a4e12;
+    font-size: 11px;
+    font-weight: 800;
+    font-style: normal;
+    line-height: 1.2;
+    border: 1px solid #c4963a;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 2px rgba(120, 80, 20, 0.18);
+}
+
+.hof-grid-votes .hof-tba {
+    font-size: 8.5px;
+    padding: 3px 6px;
 }
 
 .hof-empty {
-    color: #6d5b3a;
+    color: #8a8172;
     font-size: 11px;
+    font-weight: 700;
+    font-style: italic;
 }
 
 .hof-winners {
@@ -4854,9 +4984,6 @@ body.admin .hof-bar-status.admin-only {
     width: 100%;
     min-width: 0;
     text-align: left;
-    background: transparent;
-    border-radius: 0;
-    padding: 0;
 }
 
 .hof-winner-text {
@@ -4869,7 +4996,7 @@ body.admin .hof-bar-status.admin-only {
     color: #14284b;
     font-size: 11px;
     line-height: 1.15;
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
     word-break: break-word;
 }
 
@@ -4878,7 +5005,17 @@ body.admin .hof-bar-status.admin-only {
     font-size: 10px;
     font-weight: 700;
     line-height: 1.15;
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.hof-grid-votes .hof-winner-name {
+    font-size: 10px;
+}
+
+.hof-grid-votes .hof-winner-stat,
+.hof-grid-votes .hof-empty {
+    font-size: 9px;
 }
 
 .hof-photo-wrap {
@@ -4938,8 +5075,8 @@ body.admin .hof-bar-status.admin-only {
     margin-top: 22px;
     padding: 16px;
     border-radius: 16px;
-    background: #f8fafc;
-    border: 1px dashed #c5ced6;
+    background: #fffdf8;
+    border: 1.5px solid #e4c56e;
     display: flex;
     flex-direction: column;
     gap: 22px;
@@ -4949,7 +5086,7 @@ body.admin .hof-bar-status.admin-only {
 .hof-links-title,
 .hof-tally-card h4 {
     margin: 0 0 6px;
-    color: #1a2f6b;
+    color: #102a56;
 }
 
 .hof-links-title {
@@ -4958,7 +5095,7 @@ body.admin .hof-bar-status.admin-only {
 
 .hof-help {
     margin: 0 0 12px;
-    color: var(--text-secondary);
+    color: #5c5348;
     font-size: 13px;
 }
 
@@ -4985,7 +5122,7 @@ body.admin .hof-bar-status.admin-only {
 }
 
 .hof-btn-primary {
-    background: #1a2f6b;
+    background: #102a56;
     color: #fff;
 }
 
@@ -4995,13 +5132,13 @@ body.admin .hof-bar-status.admin-only {
 }
 
 .hof-btn-gold {
-    background: #e2b340;
+    background: linear-gradient(180deg, #f3d78a, #e2b340);
     color: #2a2118;
 }
 
 .hof-btn-quiet {
-    background: #e7edf5;
-    color: #1a2f6b;
+    background: #f3ead4;
+    color: #102a56;
 }
 
 .hof-btn-danger {
@@ -5028,8 +5165,13 @@ body.admin .hof-bar-status.admin-only {
     align-items: center;
     gap: 8px;
     font-weight: 800;
-    color: #1a2f6b;
+    color: #102a56;
     font-size: 14px;
+    min-width: 0;
+}
+
+.hof-pick-title span {
+    overflow-wrap: anywhere;
 }
 
 .hof-pick-title .hof-art {
@@ -5043,14 +5185,15 @@ body.admin .hof-bar-status.admin-only {
     min-height: 42px;
     padding: 8px 10px;
     border-radius: 8px;
-    border: 1px solid #d5dee7;
+    border: 1px solid #e4c56e;
     background: #fff;
     font: inherit;
+    color: #102a56;
 }
 
 .hof-tally-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 12px;
     margin-top: 14px;
 }
@@ -5059,11 +5202,12 @@ body.admin .hof-bar-status.admin-only {
     background: #fff;
     border-radius: 12px;
     padding: 12px;
+    border: 1px solid rgba(212, 175, 90, 0.35);
 }
 
 .hof-bar {
     display: grid;
-    grid-template-columns: 1fr 28px;
+    grid-template-columns: minmax(0, 1fr) 28px;
     gap: 8px;
     align-items: center;
     margin-top: 8px;
@@ -5079,7 +5223,7 @@ body.admin .hof-bar-status.admin-only {
     height: 8px;
     margin-top: 4px;
     border-radius: 99px;
-    background: #e1e8ed;
+    background: #efe4cc;
     overflow: hidden;
 }
 
@@ -5091,11 +5235,11 @@ body.admin .hof-bar-status.admin-only {
 
 .hof-bar.is-leader {
     font-weight: 800;
-    color: #1a2f6b;
+    color: #102a56;
 }
 
 .hof-bar.is-leader .hof-bar-fill {
-    background: #1a2f6b;
+    background: #102a56;
 }
 
 .hof-link-row {
@@ -5104,7 +5248,7 @@ body.admin .hof-bar-status.admin-only {
     gap: 8px;
     align-items: center;
     padding: 8px 0;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid rgba(212, 175, 90, 0.35);
 }
 
 .hof-link-row code {
@@ -5114,7 +5258,6 @@ body.admin .hof-bar-status.admin-only {
 }
 
 .vote-page {
-    background: #eef2f7;
     min-height: 100vh;
 }
 
@@ -5130,16 +5273,17 @@ body.admin .hof-bar-status.admin-only {
 
 .vote-hello,
 .vote-message p {
-    color: var(--text-secondary);
+    color: #5c5348;
     margin: 0 0 14px;
 }
 
 .vote-award {
-    background: #fff;
+    background: linear-gradient(180deg, #fffdf8, #fbf6ea);
+    border: 1.5px solid #e4c56e;
     border-radius: 16px;
     padding: 14px;
     margin-bottom: 12px;
-    box-shadow: 0 8px 20px rgba(20, 32, 58, 0.05);
+    box-shadow: 0 8px 18px rgba(90, 70, 20, 0.08);
 }
 
 .vote-award-head {
@@ -5152,17 +5296,18 @@ body.admin .hof-bar-status.admin-only {
 .vote-award-head .hof-art {
     width: 54px;
     height: 62px;
+    flex: none;
 }
 
 .vote-award-head h2 {
     margin: 0;
     font-size: 1.15rem;
-    color: #1a2f6b;
+    color: #102a56;
 }
 
 .vote-award-head p {
     margin: 0;
-    color: var(--text-secondary);
+    color: #8a8278;
     font-size: 13px;
 }
 
@@ -5180,11 +5325,11 @@ body.admin .hof-bar-status.admin-only {
     min-height: 132px;
     padding: 10px 6px;
     border-radius: 14px;
-    border: 2px solid #e1e8ed;
-    background: #fff;
+    border: 1.5px solid #ead9a8;
+    background: #fffdf8;
     font: inherit;
     font-weight: 800;
-    color: #1a2f6b;
+    color: #102a56;
     cursor: pointer;
 }
 
@@ -5195,8 +5340,8 @@ body.admin .hof-bar-status.admin-only {
 }
 
 .vote-choice.is-selected {
-    border-color: #e2b340;
-    background: #fffaf0;
+    border-color: #c9a24a;
+    background: #fff6dc;
     box-shadow: 0 0 0 3px rgba(226, 179, 64, 0.35);
 }
 
@@ -5215,7 +5360,7 @@ body.admin .hof-bar-status.admin-only {
     justify-content: space-between;
     gap: 12px;
     padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
-    background: #0c1836;
+    background: #0e2347;
     color: #f7f3e8;
 }
 
@@ -5223,7 +5368,7 @@ body.admin .hof-bar-status.admin-only {
     border: 0;
     border-radius: 999px;
     padding: 12px 18px;
-    background: #e2b340;
+    background: linear-gradient(180deg, #f3d78a, #e2b340);
     color: #2a2118;
     font: inherit;
     font-weight: 800;
@@ -5236,7 +5381,8 @@ body.admin .hof-bar-status.admin-only {
 }
 
 .vote-message {
-    background: #fff;
+    background: #fffdf8;
+    border: 1.5px solid #e4c56e;
     border-radius: 16px;
     padding: 28px 18px;
     text-align: center;
@@ -5244,25 +5390,33 @@ body.admin .hof-bar-status.admin-only {
 
 .vote-message h2 {
     margin: 0 0 8px;
-    color: #1a2f6b;
+    color: #102a56;
 }
 
-@media (max-width: 1320px) {
-    .hof-grid-votes .hof-card {
-        flex-basis: calc((100% - 24px) / 4);
+@media (max-width: 1040px) {
+    .hof-grid-stats {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
     }
-}
 
-@media (max-width: 1100px) {
-    .hof-grid-stats .hof-card {
-        flex-basis: calc((100% - 24px) / 4);
+    .hof-grid-votes {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .hof-grid-votes .hof-card h3 {
+        font-size: 12px;
+        min-height: 2.6em;
+    }
+
+    .hof-grid-votes .hof-tba {
+        font-size: 11px;
+        padding: 4px 10px;
     }
 }
 
 @media (max-width: 720px) {
     .hof-banner {
         gap: 6px;
-        padding: 16px 8px;
+        padding: 12px 8px;
     }
 
     .hof-banner-copy h1 {
@@ -5273,10 +5427,6 @@ body.admin .hof-bar-status.admin-only {
     .hof-banner-art svg {
         width: 32px;
         height: 38px;
-    }
-
-    .hof-banner-extra {
-        display: none;
     }
 
     .hof-banner-copy p {
@@ -5290,9 +5440,29 @@ body.admin .hof-bar-status.admin-only {
         margin: 0 6px 3px;
     }
 
-    .hof-grid-stats .hof-card,
-    .hof-grid-votes .hof-card {
-        flex-basis: calc((100% - 8px) / 2);
+    .hof-year-bar {
+        gap: 8px;
+        padding: 8px 8px 8px 14px;
+    }
+
+    .hof-year-num {
+        font-size: 1.4rem;
+    }
+
+    .hof-season-select {
+        letter-spacing: 0.08em;
+        font-size: 10px;
+    }
+
+    .hof-grid-stats,
+    .hof-grid-votes {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .hof-grid-votes .hof-card h3,
+    .hof-grid-stats .hof-card h3 {
+        font-size: 13px;
+        min-height: 2.4em;
     }
 
     .hof-section-bar {
