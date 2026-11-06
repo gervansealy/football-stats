@@ -4657,8 +4657,8 @@ body.vote-page::after {
     display: flex;
     align-items: center;
     gap: 16px;
-    min-height: 64px;
-    padding: 8px 12px 8px 22px;
+    min-height: 48px;
+    padding: 5px 12px 5px 22px;
     border-radius: 18px;
     background: linear-gradient(180deg, #fffdf8 0%, #f7f0de 100%);
     border: 1px solid rgba(212, 175, 90, 0.65);
@@ -4760,8 +4760,8 @@ body.vote-page::after {
     display: flex;
     align-items: center;
     gap: 10px;
-    min-height: 48px;
-    padding: 8px 16px;
+    min-height: 36px;
+    padding: 4px 16px;
     border-radius: 14px;
     background: linear-gradient(180deg, #1b427c 0%, #0c2348 100%);
     box-shadow: 0 8px 16px rgba(12, 35, 72, 0.16);
@@ -5527,7 +5527,7 @@ body.admin .hof-bar-status.admin-only {
 
     .hof-year-bar {
         gap: 8px;
-        padding: 8px 8px 8px 14px;
+        padding: 5px 8px 5px 14px;
     }
 
     .hof-year-num {
