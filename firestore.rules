@@ -89,8 +89,7 @@ service cloud.firestore {
         && hofVoteOk('bestLeftWinger')
         && hofVoteOk('bestRightWinger')
         && hofVoteOk('bestStriker')
-        && hofVoteOk('mostImproved')
-        && hofVoteOk('youngPlayer');
+        && hofVoteOk('mostImproved');
     }
 
     function hofVoteCategories() {
@@ -104,8 +103,7 @@ service cloud.firestore {
         'bestLeftWinger',
         'bestRightWinger',
         'bestStriker',
-        'mostImproved',
-        'youngPlayer'
+        'mostImproved'
       ];
     }
 

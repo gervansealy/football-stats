@@ -85,11 +85,11 @@ export const VOTE_AWARDS = [
     { id: 'bestLeftWinger', title: 'Best Left Winger', blurb: 'Voted by the squad' },
     { id: 'bestRightWinger', title: 'Best Right Winger', blurb: 'Voted by the squad' },
     { id: 'bestStriker', title: 'Best Striker', blurb: 'Voted by the squad' },
-    { id: 'mostImproved', title: 'Most Improved', blurb: 'Voted by the squad' },
-    { id: 'youngPlayer', title: 'Young Player', blurb: 'Voted by the squad' }
+    { id: 'mostImproved', title: 'Most Improved', blurb: 'Voted by the squad' }
 ];
 
 export const VOTE_AWARD_IDS = VOTE_AWARDS.map((award) => award.id);
+export const NOMINEE_COUNT = 4;
 
 
 export function formatNumber(n) {
@@ -323,20 +323,6 @@ function goldRimCup(uid) {
         <ellipse cx="40" cy="27" rx="11" ry="1.6" fill="#FFF6D4"/>`);
 }
 
-function youngGlobe(uid) {
-    return artSvg(`<defs>${gold(uid)}
-        <radialGradient id="${uid}b" cx="35%" cy="32%" r="70%"><stop offset="0%" stop-color="#FFF6D0"/><stop offset="50%" stop-color="#E2B84A"/><stop offset="100%" stop-color="#8A5E12"/></radialGradient>
-        <linearGradient id="${uid}n" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1E4F86"/><stop offset="100%" stop-color="#0C2344"/></linearGradient></defs>
-        ${shadow()}
-        <path d="M20 94h40v6H20z" fill="#0C2344"/>
-        <path d="M26 84h28v10H26z" fill="url(#${uid}n)"/>
-        <path d="M36 70h8v14h-8z" fill="url(#${uid})"/>
-        <circle cx="40" cy="44" r="18" fill="url(#${uid}b)" stroke="#6E5010" stroke-width="0.6"/>
-        <ellipse cx="40" cy="44" rx="8" ry="18" fill="none" stroke="#6E5010" stroke-width="0.8"/>
-        <path d="M23 44h34M26 36c8 3 18 3 28 0M26 52c8-3 18-3 28 0" fill="none" stroke="#6E5010" stroke-width="0.75"/>
-        <ellipse cx="33" cy="37" rx="5" ry="2.6" fill="#fff" opacity="0.4"/>`);
-}
-
 function goldenBoot(uid, metal = 'gold', flip = false) {
     const fill = metal === 'silver' ? silver(uid) : gold(uid);
     const edge = metal === 'silver' ? '#44505A' : '#5C430C';
@@ -513,7 +499,6 @@ export function awardArt(awardId, uid) {
         case 'bestRightWinger': return jersey(id, 'right');
         case 'bestStriker': return ballTrophy(id);
         case 'mostImproved': return risingTrophy(id);
-        case 'youngPlayer': return youngGlobe(id);
         default: return majorCup(id);
     }
 }

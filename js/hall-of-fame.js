@@ -4,13 +4,14 @@ import {
     collection, doc, onSnapshot, getDocs, query, where, writeBatch, serverTimestamp, deleteField
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import {
-    STAT_AWARDS, VOTE_AWARDS, VOTE_AWARD_IDS, normalizePoints, calculateSeasonStats,
+    STAT_AWARDS, VOTE_AWARDS, VOTE_AWARD_IDS, NOMINEE_COUNT, normalizePoints, calculateSeasonStats,
     pickStatWinners, esc, awardArt, photoHtml, mountHofBanner, sectionMark, laurelMark
 } from './hof-shared.js';
 
 mountHofBanner();
 
 const CURRENT_YEAR = new Date().getFullYear();
+const NOMINEE_SLOTS = Array.from({ length: NOMINEE_COUNT }, (_, slot) => slot);
 
 let role = 'viewer';
 let players = [];
@@ -154,7 +155,7 @@ function normalizeDraft(raw) {
     const draft = {};
     VOTE_AWARD_IDS.forEach((awardId) => {
         const value = raw && Array.isArray(raw[awardId]) ? raw[awardId] : [];
-        draft[awardId] = [0, 1, 2].map((slot) => (typeof value[slot] === 'string' ? value[slot] : ''));
+        draft[awardId] = NOMINEE_SLOTS.map((slot) => (typeof value[slot] === 'string' ? value[slot] : ''));
     });
     return draft;
 }
@@ -416,12 +417,12 @@ function renderAdmin(year, roster, season, admin, agg, leaders) {
 
 function renderSetup(year, roster) {
     const picks = picksFor(year);
-    const needsPlayers = roster.length < 3;
+    const needsPlayers = roster.length < NOMINEE_COUNT;
     const saved = savedNoteYear === year;
-    return `<p class="hof-help">Choose the 3 players on the ballot for each award, then open voting. Save keeps the shortlist if you leave this page. Each player gets a private link that expires after they submit.</p>
-        ${needsPlayers ? '<p class="hof-help">Add at least 3 players before opening a vote.</p>' : ''}
+    return `<p class="hof-help">Choose the 4 players on the ballot for each award, then open voting. Save keeps the shortlist if you leave this page. Each player gets a private link that expires after they submit.</p>
+        ${needsPlayers ? '<p class="hof-help">Add at least 4 players before opening a vote.</p>' : ''}
         <div class="hof-picks">
-            ${VOTE_AWARDS.map((award) => pickRow(year, award, roster, picks[award.id] || ['', '', ''])).join('')}
+            ${VOTE_AWARDS.map((award) => pickRow(year, award, roster, picks[award.id] || NOMINEE_SLOTS.map(() => ''))).join('')}
         </div>
         <div class="hof-actions">
             <button type="button" class="hof-btn hof-btn-primary${saved ? ' is-saved' : ''}" data-action="save-draft" data-year="${year}">${saved ? 'Saved' : 'Save'}</button>
@@ -432,7 +433,7 @@ function renderSetup(year, roster) {
 function pickRow(year, award, roster, selected) {
     return `<div class="hof-pick">
         <div class="hof-pick-title">${awardArt(award.id, `pick${year}${award.id}`)}<span>${esc(award.title)}</span></div>
-        ${[0, 1, 2].map((slot) => `<select data-year="${year}" data-award="${award.id}" data-slot="${slot}" aria-label="${esc(award.title)} nominee ${slot + 1}">
+        ${NOMINEE_SLOTS.map((slot) => `<select data-year="${year}" data-award="${award.id}" data-slot="${slot}" aria-label="${esc(award.title)} nominee ${slot + 1}">
             <option value="">Select player</option>
             ${roster.map((player) => `<option value="${esc(player.id)}"${selected[slot] === player.id ? ' selected' : ''}>${esc(player.name)}</option>`).join('')}
             ${selected[slot] && !roster.some((player) => player.id === selected[slot]) ? `<option value="${esc(selected[slot])}" selected>Removed player</option>` : ''}
@@ -513,7 +514,7 @@ function onDraftChange(event) {
     if (!select) return;
     const year = select.dataset.year;
     const draft = picksFor(year);
-    if (!Array.isArray(draft[select.dataset.award])) draft[select.dataset.award] = ['', '', ''];
+    if (!Array.isArray(draft[select.dataset.award])) draft[select.dataset.award] = NOMINEE_SLOTS.map(() => '');
     draft[select.dataset.award][Number(select.dataset.slot)] = select.value;
     rememberDraft(year, draft);
     if (savedNoteYear === Number(year)) {
@@ -590,7 +591,8 @@ async function saveDraft(year) {
             nomineeDraft: {
                 ...picks,
                 bestMidfielder: deleteField(),
-                bestDefendingMidfielder: deleteField()
+                bestDefendingMidfielder: deleteField(),
+                youngPlayer: deleteField()
             }
         }, { merge: true });
         await batch.commit();
@@ -616,7 +618,7 @@ async function writeSeason(year, data) {
 function readPicks(year) {
     const picks = {};
     VOTE_AWARD_IDS.forEach((awardId) => {
-        picks[awardId] = [0, 1, 2].map((slot) => {
+        picks[awardId] = NOMINEE_SLOTS.map((slot) => {
             const select = root().querySelector(`select[data-year="${year}"][data-award="${awardId}"][data-slot="${slot}"]`);
             return select ? select.value : '';
         });
@@ -637,8 +639,8 @@ async function openVoting(year) {
 
     for (const award of VOTE_AWARDS) {
         const chosen = picks[award.id] || [];
-        if (chosen.some((id) => !id) || new Set(chosen).size !== 3 || chosen.some((id) => !byId[id])) {
-            alert(`Pick 3 different players for ${award.title}.`);
+        if (chosen.length !== NOMINEE_COUNT || chosen.some((id) => !id) || new Set(chosen).size !== NOMINEE_COUNT || chosen.some((id) => !byId[id])) {
+            alert(`Pick 4 different players for ${award.title}.`);
             return;
         }
     }
@@ -682,7 +684,8 @@ async function openVoting(year) {
             nomineeDraft: {
                 ...picks,
                 bestMidfielder: deleteField(),
-                bestDefendingMidfielder: deleteField()
+                bestDefendingMidfielder: deleteField(),
+                youngPlayer: deleteField()
             },
             openedAt: serverTimestamp()
         };

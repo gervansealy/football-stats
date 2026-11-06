@@ -1,6 +1,6 @@
 import { db } from './firebase-config.js';
 import { doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-import { VOTE_AWARDS, esc, awardArt, photoHtml, personName, mountHofBanner } from './hof-shared.js';
+import { VOTE_AWARDS, NOMINEE_COUNT, esc, awardArt, photoHtml, personName, mountHofBanner } from './hof-shared.js';
 
 mountHofBanner();
 
@@ -51,7 +51,7 @@ async function boot() {
 }
 
 function ballotReady(data) {
-    return VOTE_AWARDS.every((award) => Array.isArray(data.nominees?.[award.id]) && data.nominees[award.id].length === 3);
+    return VOTE_AWARDS.every((award) => Array.isArray(data.nominees?.[award.id]) && data.nominees[award.id].length === NOMINEE_COUNT);
 }
 
 function renderBallot() {

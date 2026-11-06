@@ -4818,7 +4818,7 @@ body.admin .hof-bar-status.admin-only {
 }
 
 .hof-grid-votes {
-    grid-template-columns: repeat(11, minmax(0, 1fr));
+    grid-template-columns: repeat(10, minmax(0, 1fr));
 }
 
 .hof-card {
@@ -5155,7 +5155,7 @@ body.admin .hof-bar-status.admin-only {
 
 .hof-pick {
     display: grid;
-    grid-template-columns: minmax(160px, 220px) repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(160px, 240px) repeat(4, minmax(0, 1fr));
     gap: 8px;
     align-items: center;
 }
@@ -5313,7 +5313,7 @@ body.admin .hof-bar-status.admin-only {
 
 .vote-choices {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 8px;
 }
 
