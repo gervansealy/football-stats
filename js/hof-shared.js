@@ -581,12 +581,12 @@ function mountHofCelebration() {
         const count = 12 + Math.floor(Math.random() * 8);
         for (let i = 0; i < count; i += 1) {
             const angle = (Math.PI * 2 * i) / count + Math.random() * 0.25;
-            const speed = 0.55 + Math.random() * 1.35;
+            const speed = (0.55 + Math.random() * 1.35) * 1.3;
             sparks.push({
                 x: origin.x,
                 y: origin.y,
                 vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed - 0.35,
+                vy: Math.sin(angle) * speed - 0.455,
                 life: 1,
                 decay: 0.01 + Math.random() * 0.012,
                 size: 1.3 + Math.random() * 1.6,
@@ -603,19 +603,19 @@ function mountHofCelebration() {
         return {
             x: left ? Math.random() * band : w - Math.random() * band,
             y: anywhere ? Math.random() * h : -12,
-            vy: 0.28 + Math.random() * 0.45,
-            vx: (Math.random() - 0.5) * 0.28,
+            vy: (0.28 + Math.random() * 0.45) * 1.3,
+            vx: (Math.random() - 0.5) * 0.364,
             w: 4 + Math.random() * 3.5,
             h: 6 + Math.random() * 4,
             rot: Math.random() * Math.PI,
-            spin: (Math.random() - 0.5) * 0.03,
+            spin: (Math.random() - 0.5) * 0.039,
             color: colors[Math.floor(Math.random() * colors.length)]
         };
     }
 
     function seedFlakes() {
         flakes.length = 0;
-        const count = 16;
+        const count = 48;
         for (let i = 0; i < count; i += 1) flakes.push(makeFlake(true));
     }
 
@@ -627,7 +627,7 @@ function mountHofCelebration() {
     });
 
     let lastBurst = 0;
-    let wait = 700;
+    let wait = 538;
     function frame(time) {
         const width = window.innerWidth;
         const height = window.innerHeight;
@@ -636,14 +636,16 @@ function mountHofCelebration() {
 
         if (time - lastBurst > wait) {
             burst();
+            burst();
+            burst();
             lastBurst = time;
-            wait = 1100 + Math.random() * 1300;
+            wait = 846 + Math.random() * 1000;
         }
 
         sparks.forEach((spark) => {
             spark.x += spark.vx;
             spark.y += spark.vy;
-            spark.vy += 0.014;
+            spark.vy += 0.018;
             spark.life -= spark.decay;
         });
         for (let i = sparks.length - 1; i >= 0; i -= 1) {
@@ -660,7 +662,7 @@ function mountHofCelebration() {
         const band = Math.max(36, Math.min(180, width * 0.16));
         flakes.forEach((flake) => {
             flake.y += flake.vy;
-            flake.x += flake.vx + Math.sin(flake.y / 28) * 0.12;
+            flake.x += flake.vx + Math.sin(flake.y / 28) * 0.156;
             flake.rot += flake.spin;
             if (flake.y > height + 14) {
                 const next = makeFlake(false);
