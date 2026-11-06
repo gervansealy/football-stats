@@ -4534,6 +4534,21 @@ body.vote-page::after {
     transform: scaleY(-1);
 }
 
+.hof-sparkle {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hof-sparkle {
+        display: none;
+    }
+}
+
 .navbar,
 .container.hof-page,
 .vote-shell {
@@ -4862,8 +4877,8 @@ body.admin .hof-bar-status.admin-only {
 
 .hof-laurels {
     position: relative;
-    width: min(158px, 100%);
-    height: 124px;
+    width: min(124px, 100%);
+    height: 98px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -4880,7 +4895,7 @@ body.admin .hof-bar-status.admin-only {
 .hof-laurels .hof-art {
     position: relative;
     z-index: 1;
-    width: min(78px, 70%);
+    width: min(60px, 64%);
     height: auto;
     aspect-ratio: 80 / 104;
     display: block;
@@ -4900,12 +4915,12 @@ body.admin .hof-bar-status.admin-only {
 }
 
 .hof-grid-votes .hof-laurels {
-    width: min(112px, 100%);
-    height: 92px;
+    width: min(88px, 100%);
+    height: 72px;
 }
 
 .hof-grid-votes .hof-laurels .hof-art {
-    width: min(54px, 72%);
+    width: min(42px, 66%);
 }
 
 .hof-sub {
@@ -4994,28 +5009,28 @@ body.admin .hof-bar-status.admin-only {
 .hof-winner-name {
     font-weight: 800;
     color: #14284b;
-    font-size: 11px;
-    line-height: 1.15;
+    font-size: 15px;
+    line-height: 1.2;
     overflow-wrap: anywhere;
     word-break: break-word;
 }
 
 .hof-winner-stat {
     color: #8a5a00;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 700;
-    line-height: 1.15;
+    line-height: 1.2;
     overflow-wrap: anywhere;
     word-break: break-word;
 }
 
 .hof-grid-votes .hof-winner-name {
-    font-size: 10px;
+    font-size: 13px;
 }
 
 .hof-grid-votes .hof-winner-stat,
 .hof-grid-votes .hof-empty {
-    font-size: 9px;
+    font-size: 11px;
 }
 
 .hof-photo-wrap {

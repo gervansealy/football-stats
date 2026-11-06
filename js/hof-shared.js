@@ -535,4 +535,164 @@ export function mountHofBanner() {
     const right = document.getElementById('hofBannerRight');
     if (left) left.innerHTML = `${worldCup('banWcL')}${ballonDor('banBdL')}`;
     if (right) right.innerHTML = `${championsLeague('banUclR')}${worldCup('banWcR')}`;
+    mountHofCelebration();
+}
+
+function mountHofCelebration() {
+    if (document.getElementById('hofSparkle')) return;
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (motion.matches) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.id = 'hofSparkle';
+    canvas.className = 'hof-sparkle';
+    canvas.setAttribute('aria-hidden', 'true');
+    document.body.prepend(canvas);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const sparks = [];
+    const flakes = [];
+    const colors = ['#e2b340', '#f6e3a4', '#fff8e4', '#1a3d78', '#c6a03a', '#f3d78a'];
+
+    function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(window.innerWidth * dpr);
+        canvas.height = Math.floor(window.innerHeight * dpr);
+        canvas.style.width = `${window.innerWidth}px`;
+        canvas.style.height = `${window.innerHeight}px`;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function edgePoint() {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const band = Math.max(48, Math.min(160, w * 0.14));
+        const roll = Math.random();
+        if (roll < 0.4) return { x: 16 + Math.random() * band, y: 90 + Math.random() * Math.max(80, h - 180) };
+        if (roll < 0.8) return { x: w - 16 - Math.random() * band, y: 90 + Math.random() * Math.max(80, h - 180) };
+        if (roll < 0.9) return { x: band + Math.random() * Math.max(40, w - band * 2), y: 64 + Math.random() * 36 };
+        return { x: band + Math.random() * Math.max(40, w - band * 2), y: h - 28 - Math.random() * 48 };
+    }
+
+    function burst() {
+        const origin = edgePoint();
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const count = 12 + Math.floor(Math.random() * 8);
+        for (let i = 0; i < count; i += 1) {
+            const angle = (Math.PI * 2 * i) / count + Math.random() * 0.25;
+            const speed = 0.55 + Math.random() * 1.35;
+            sparks.push({
+                x: origin.x,
+                y: origin.y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 0.35,
+                life: 1,
+                decay: 0.01 + Math.random() * 0.012,
+                size: 1.3 + Math.random() * 1.6,
+                color
+            });
+        }
+    }
+
+    function makeFlake(anywhere) {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const band = Math.max(36, Math.min(180, w * 0.16));
+        const left = Math.random() < 0.5;
+        return {
+            x: left ? Math.random() * band : w - Math.random() * band,
+            y: anywhere ? Math.random() * h : -12,
+            vy: 0.28 + Math.random() * 0.45,
+            vx: (Math.random() - 0.5) * 0.28,
+            w: 4 + Math.random() * 3.5,
+            h: 6 + Math.random() * 4,
+            rot: Math.random() * Math.PI,
+            spin: (Math.random() - 0.5) * 0.03,
+            color: colors[Math.floor(Math.random() * colors.length)]
+        };
+    }
+
+    function seedFlakes() {
+        flakes.length = 0;
+        const count = 16;
+        for (let i = 0; i < count; i += 1) flakes.push(makeFlake(true));
+    }
+
+    resize();
+    seedFlakes();
+    window.addEventListener('resize', () => {
+        resize();
+        seedFlakes();
+    });
+
+    let lastBurst = 0;
+    let wait = 700;
+    function frame(time) {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        ctx.clearRect(0, 0, width, height);
+        if (motion.matches) return;
+
+        if (time - lastBurst > wait) {
+            burst();
+            lastBurst = time;
+            wait = 1100 + Math.random() * 1300;
+        }
+
+        sparks.forEach((spark) => {
+            spark.x += spark.vx;
+            spark.y += spark.vy;
+            spark.vy += 0.014;
+            spark.life -= spark.decay;
+        });
+        for (let i = sparks.length - 1; i >= 0; i -= 1) {
+            if (sparks[i].life <= 0) sparks.splice(i, 1);
+        }
+        sparks.forEach((spark) => {
+            ctx.globalAlpha = Math.max(0, spark.life) * 0.85;
+            ctx.fillStyle = spark.color;
+            ctx.beginPath();
+            ctx.arc(spark.x, spark.y, spark.size, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        const band = Math.max(36, Math.min(180, width * 0.16));
+        flakes.forEach((flake) => {
+            flake.y += flake.vy;
+            flake.x += flake.vx + Math.sin(flake.y / 28) * 0.12;
+            flake.rot += flake.spin;
+            if (flake.y > height + 14) {
+                const next = makeFlake(false);
+                flake.x = next.x;
+                flake.y = next.y;
+                flake.vy = next.vy;
+                flake.color = next.color;
+            }
+            if (flake.x < -12) flake.x = band;
+            if (flake.x > width + 12) flake.x = width - band;
+            ctx.save();
+            ctx.globalAlpha = 0.72;
+            ctx.translate(flake.x, flake.y);
+            ctx.rotate(flake.rot);
+            ctx.fillStyle = flake.color;
+            ctx.fillRect(-flake.w / 2, -flake.h / 2, flake.w, flake.h);
+            ctx.restore();
+        });
+        ctx.globalAlpha = 1;
+        requestAnimationFrame(frame);
+    }
+
+    requestAnimationFrame(frame);
+    if (motion.addEventListener) {
+        motion.addEventListener('change', () => {
+            if (motion.matches) {
+                sparks.length = 0;
+                flakes.length = 0;
+                ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+            } else if (!flakes.length) {
+                seedFlakes();
+            }
+        });
+    }
 }
