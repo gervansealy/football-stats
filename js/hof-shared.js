@@ -276,7 +276,7 @@ function keeperGlove() {
 }
 
 function midfielderTrophy() {
-    return '<img class="hof-art hof-midfielder-trophy" src="images/midfielder-defender-trophy.png" alt="" decoding="async">';
+    return '<img class="hof-art hof-midfielder-trophy" src="images/best-midfielder-trophy.png" alt="" decoding="async">';
 }
 
 function leftWinger() {
