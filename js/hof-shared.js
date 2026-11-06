@@ -287,6 +287,10 @@ function strikerTrophy() {
     return '<img class="hof-art hof-striker-trophy" src="images/best-striker-trophy.png" alt="" decoding="async">';
 }
 
+function improvedTrophy() {
+    return '<img class="hof-art hof-improved-trophy" src="images/most-improved-trophy.png" alt="" decoding="async">';
+}
+
 function leftWinger() {
     return '<img class="hof-art hof-left-winger" src="images/best-left-winger.png" alt="" decoding="async">';
 }
@@ -536,7 +540,7 @@ export function awardArt(awardId, uid) {
         case 'bestLeftWinger': return leftWinger();
         case 'bestRightWinger': return rightWinger();
         case 'bestStriker': return strikerTrophy();
-        case 'mostImproved': return risingTrophy(id);
+        case 'mostImproved': return improvedTrophy();
         default: return majorCup(id);
     }
 }
