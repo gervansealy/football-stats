@@ -243,18 +243,8 @@ function plinth(metal = 'dark') {
         <path d="M24 86h8l-1 5h-6z" fill="#fff" opacity="0.28"/>`;
 }
 
-function ballonDor(uid) {
-    return artSvg(`<defs>${gold(uid)}
-        <radialGradient id="${uid}b" cx="34%" cy="32%" r="68%"><stop offset="0%" stop-color="#FFF8DC"/><stop offset="42%" stop-color="#E0B44C"/><stop offset="100%" stop-color="#7A5410"/></radialGradient></defs>
-        ${shadow()}
-        <rect x="24" y="78" width="32" height="14" rx="1.2" fill="#141414"/>
-        <rect x="27" y="74" width="26" height="5" fill="#2A2A2A"/>
-        <rect x="30" y="70" width="20" height="5" fill="url(#${uid})"/>
-        <path d="M32 71.2h6" stroke="#fff" stroke-width="0.6" opacity="0.45"/>
-        <circle cx="40" cy="40" r="22" fill="url(#${uid}b)" stroke="#6E5010" stroke-width="0.6"/>
-        <path d="M40 19l5.2 3.6 1.6 6.4-4 5.2h-5.6l-4-5.2 1.6-6.4z" fill="none" stroke="#5C430C" stroke-width="1.15"/>
-        <path d="M28 34c4 3 8 3 12 0M40 34c4 3 8 3 12 0M24 46c6 2 10 1 16-2M40 44c6 3 10 4 16 2M30 58c4-3 8-4 14-2M44 56c3 2 7 2 12-1" fill="none" stroke="#5C430C" stroke-width="0.9" opacity="0.8"/>
-        <ellipse cx="32" cy="32" rx="6" ry="3.4" fill="#fff" opacity="0.38"/>`);
+function mvpTrophy() {
+    return '<img class="hof-art hof-mvp-trophy" src="images/mvp-ballon-dor.png" alt="" decoding="async">';
 }
 
 function worldCup(uid) {
@@ -482,7 +472,7 @@ function shieldPlaque(uid) {
 export function awardArt(awardId, uid) {
     const id = safeId(uid);
     switch (awardId) {
-        case 'mvp': return ballonDor(id);
+        case 'mvp': return mvpTrophy();
         case 'mostGoals': return goldenBoot(id, 'gold');
         case 'mostWins': return majorCup(id);
         case 'bestCaptain': return captainBand(id);
@@ -533,7 +523,7 @@ export function sectionMark(kind, uid) {
 export function mountHofBanner() {
     const left = document.getElementById('hofBannerLeft');
     const right = document.getElementById('hofBannerRight');
-    if (left) left.innerHTML = `${worldCup('banWcL')}${ballonDor('banBdL')}`;
+    if (left) left.innerHTML = `${worldCup('banWcL')}${mvpTrophy()}`;
     if (right) right.innerHTML = `${championsLeague('banUclR')}${worldCup('banWcR')}`;
     mountHofCelebration();
 }

@@ -4632,6 +4632,15 @@ body.vote-page::after {
     transform: translateY(6px);
 }
 
+.hof-banner-art .hof-mvp-trophy {
+    width: 42px;
+    height: auto;
+    max-height: 60px;
+    aspect-ratio: auto;
+    object-fit: contain;
+    transform: translateY(4px);
+}
+
 .hof-year {
     margin-bottom: 14px;
 }
@@ -4899,6 +4908,13 @@ body.admin .hof-bar-status.admin-only {
     height: auto;
     aspect-ratio: 80 / 104;
     display: block;
+}
+
+.hof-laurels .hof-mvp-trophy {
+    width: min(56px, 62%);
+    max-height: 90px;
+    aspect-ratio: auto;
+    object-fit: contain;
 }
 
 .hof-art {
@@ -5442,6 +5458,11 @@ body.admin .hof-bar-status.admin-only {
     .hof-banner-art svg {
         width: 32px;
         height: 38px;
+    }
+
+    .hof-banner-art .hof-mvp-trophy {
+        width: 28px;
+        max-height: 38px;
     }
 
     .hof-banner-copy p {
