@@ -1,4 +1,4 @@
-const CACHE = 'sweat-squad-v19';
+const CACHE = 'sweat-squad-v20';
 
 const SHELL = [
     './',
@@ -31,6 +31,7 @@ const SHELL = [
     './js/recycle-bin.js',
     './js/career-overview.js',
     './js/highlight-video-player.js',
+    './images/hof-banner.jpg',
     './images/mvp-ballon-dor.png',
     './images/most-goals-boot.png',
     './images/most-wins-world-cup.png',

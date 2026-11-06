@@ -573,10 +573,6 @@ export function sectionMark(kind, uid) {
 }
 
 export function mountHofBanner() {
-    const left = document.getElementById('hofBannerLeft');
-    const right = document.getElementById('hofBannerRight');
-    if (left) left.innerHTML = `${worldCup('banWcL')}${mvpTrophy()}`;
-    if (right) right.innerHTML = `${championsLeague('banUclR')}${worldCup('banWcR')}`;
     mountHofCelebration();
 }
 
