@@ -4917,6 +4917,13 @@ body.admin .hof-bar-status.admin-only {
     object-fit: contain;
 }
 
+.hof-laurels .hof-goals-boot {
+    width: min(78px, 84%);
+    max-height: 88px;
+    aspect-ratio: auto;
+    object-fit: contain;
+}
+
 .hof-art {
     width: 86px;
     height: 108px;
@@ -5209,6 +5216,10 @@ body.admin .hof-bar-status.admin-only {
     width: 36px;
     height: 42px;
     flex: none;
+}
+
+.hof-pick-title .hof-goals-boot {
+    object-fit: contain;
 }
 
 .hof-pick select {
