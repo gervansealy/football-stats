@@ -275,6 +275,18 @@ function keeperGlove() {
     return '<img class="hof-art hof-keeper-glove" src="images/best-keeper-glove.png" alt="" decoding="async">';
 }
 
+function midfielderTrophy() {
+    return '<img class="hof-art hof-midfielder-trophy" src="images/midfielder-defender-trophy.png" alt="" decoding="async">';
+}
+
+function leftWinger() {
+    return '<img class="hof-art hof-left-winger" src="images/best-left-winger.png" alt="" decoding="async">';
+}
+
+function rightWinger() {
+    return '<img class="hof-art hof-right-winger" src="images/best-right-winger.png" alt="" decoding="async">';
+}
+
 function worldCup(uid) {
     return artSvg(`<defs>${gold(uid)}
         <linearGradient id="${uid}m" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2F8A62"/><stop offset="100%" stop-color="#0C3A28"/></linearGradient>
@@ -511,10 +523,10 @@ export function awardArt(awardId, uid) {
         case 'bestCenterBack': return shieldPlaque(id);
         case 'bestRightBack': return goldenBoot(id + 'r', 'gold', true);
         case 'bestLeftBack': return goldenBoot(id + 'l', 'silver', false);
-        case 'bestAttackingMidfielder': return goldenBall(id);
-        case 'bestDefensiveMidfielder': return goldRimCup(id);
-        case 'bestLeftWinger': return jersey(id, 'left');
-        case 'bestRightWinger': return jersey(id, 'right');
+        case 'bestAttackingMidfielder': return midfielderTrophy();
+        case 'bestDefensiveMidfielder': return midfielderTrophy();
+        case 'bestLeftWinger': return leftWinger();
+        case 'bestRightWinger': return rightWinger();
         case 'bestStriker': return ballTrophy(id);
         case 'mostImproved': return risingTrophy(id);
         default: return majorCup(id);
