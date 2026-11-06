@@ -283,6 +283,10 @@ function defenderTrophy() {
     return '<img class="hof-art hof-defender-trophy" src="images/best-defender-trophy.png" alt="" decoding="async">';
 }
 
+function strikerTrophy() {
+    return '<img class="hof-art hof-striker-trophy" src="images/best-striker-trophy.png" alt="" decoding="async">';
+}
+
 function leftWinger() {
     return '<img class="hof-art hof-left-winger" src="images/best-left-winger.png" alt="" decoding="async">';
 }
@@ -531,7 +535,7 @@ export function awardArt(awardId, uid) {
         case 'bestDefensiveMidfielder': return midfielderTrophy();
         case 'bestLeftWinger': return leftWinger();
         case 'bestRightWinger': return rightWinger();
-        case 'bestStriker': return ballTrophy(id);
+        case 'bestStriker': return strikerTrophy();
         case 'mostImproved': return risingTrophy(id);
         default: return majorCup(id);
     }
