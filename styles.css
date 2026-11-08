@@ -4780,6 +4780,37 @@ body.vote-page::after {
     display: block;
 }
 
+.hof-section-bar-voted {
+    min-height: 30.6px;
+    padding-top: 3.4px;
+    padding-bottom: 3.4px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.hof-section-bar-voted .hof-section-mark,
+.hof-section-bar-voted .hof-section-mark svg {
+    width: 23.8px;
+    height: 23.8px;
+}
+
+.hof-section-bar.hof-section-bar-voted h2 {
+    line-height: 1;
+    color: #2C3E50;
+}
+
+.hof-section-bar-voted .hof-bar-status::before {
+    background: rgba(44, 62, 80, 0.28);
+}
+
+.hof-section-bar-voted .hof-bar-status .hof-visibility {
+    color: #6C757D;
+}
+
+.hof-section-bar-voted .hof-bar-status .hof-visibility.is-live {
+    color: #1e7e34;
+}
+
 .hof-section-bar h2 {
     margin: 0;
     flex: none;

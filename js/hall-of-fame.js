@@ -325,7 +325,7 @@ function renderYear(year, years) {
                 </div>
             </section>
             <section class="hof-block">
-                <div class="hof-section-bar">
+                <div class="hof-section-bar hof-section-bar-voted">
                     <span class="hof-section-mark">${sectionMark('voted', `voted${year}`)}</span>
                     <h2>Voted awards</h2>
                     ${isAdmin ? `<div class="admin-only hof-bar-status">${voteVisibilityNote(season.votesPublished)}</div>` : ''}
