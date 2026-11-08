@@ -4496,42 +4496,8 @@ body.admin .nav-links a.admin-only {
 /* ── Hall of Fame ───────────────────────────────────────────── */
 body.hof-body,
 body.vote-page {
-    background:
-        radial-gradient(ellipse at 0% 0%, rgba(214, 176, 84, 0.16), transparent 36%),
-        radial-gradient(ellipse at 100% 8%, rgba(214, 176, 84, 0.2), transparent 32%),
-        linear-gradient(180deg, #fbf6ea 0%, #f3ead6 100%);
+    background: var(--background);
     overflow-x: clip;
-}
-
-body.hof-body::before,
-body.hof-body::after,
-body.vote-page::before,
-body.vote-page::after {
-    content: "";
-    position: fixed;
-    width: 210px;
-    height: 72px;
-    pointer-events: none;
-    z-index: 0;
-    background: repeating-linear-gradient(
-        -28deg,
-        transparent 0 7px,
-        rgba(196, 154, 60, 0.55) 7px 10px,
-        transparent 10px 16px
-    );
-}
-
-body.hof-body::before,
-body.vote-page::before {
-    top: 72px;
-    right: 0;
-}
-
-body.hof-body::after,
-body.vote-page::after {
-    bottom: 0;
-    left: 0;
-    transform: scaleY(-1);
 }
 
 .hof-sparkle {
