@@ -4722,6 +4722,72 @@ body.vote-page {
     margin-top: 16px;
 }
 
+.hof-close-player {
+    margin-top: 12px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1.5px solid #e4c56e;
+    background: #0c2348;
+    aspect-ratio: 16 / 9;
+}
+
+.hof-close-player iframe,
+.hof-close-player video {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+    background: #000;
+}
+
+.hof-close-link {
+    margin: 12px 0 0;
+}
+
+.hof-close-link a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #f3d78a, #e2b340);
+    color: #2a2118;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.hof-close-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.hof-close-label {
+    flex: 1 1 100%;
+    color: #5c5348;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.hof-close-input {
+    flex: 1 1 280px;
+    min-width: 0;
+    border: 1.5px solid #e4c56e;
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: #fffdf8;
+    color: #102a56;
+    font: inherit;
+    font-size: 14px;
+}
+
+.hof-close-input:focus-visible {
+    outline: 2px solid #1a3d78;
+    outline-offset: 2px;
+}
+
 .hof-section-bar {
     display: flex;
     align-items: center;

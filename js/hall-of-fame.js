@@ -29,6 +29,9 @@ let lastHtml = '';
 let busy = false;
 let savedNoteYear = null;
 let savedTimer = 0;
+let savedVideoYear = null;
+let savedVideoTimer = 0;
+const videoDrafts = {};
 
 const root = () => document.getElementById('hofRoot');
 
@@ -111,6 +114,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const hofRoot = root();
     hofRoot.addEventListener('click', onClick);
     hofRoot.addEventListener('change', onDraftChange);
+    hofRoot.addEventListener('input', onVideoInput);
 });
 
 function canRender() {
@@ -334,6 +338,7 @@ function renderYear(year, years) {
                     ${VOTE_AWARDS.map((award) => renderVoteCard(year, award, season, leaders, isAdmin)).join('')}
                 </div>
             </section>
+            ${renderClosingVideo(year, season, isAdmin)}
             ${isAdmin ? renderAdmin(year, roster, season, admin, agg, leaders) : ''}
         </div>
     </section>`;
@@ -347,6 +352,86 @@ function statApproval(year, published) {
         ? 'Players can see the stat awards. Totals keep updating as games are added.'
         : 'Players still see “To be Announced” for the stat awards.'}</p>
         ${button}`;
+}
+
+function savedClosingVideo(season) {
+    return typeof season.closingVideo === 'string' ? season.closingVideo.trim() : '';
+}
+
+function renderClosingVideo(year, season, isAdmin) {
+    const saved = savedClosingVideo(season);
+    if (!isAdmin && !saved) return '';
+    const draft = Object.prototype.hasOwnProperty.call(videoDrafts, String(year)) ? videoDrafts[String(year)] : saved;
+    const savedNote = savedVideoYear === year;
+    const player = saved ? closingPlayer(saved) : '';
+    const form = isAdmin ? `<div class="admin-only"><div class="hof-close-form">
+        <label class="hof-close-label" for="hofVideo${year}">Video link</label>
+        <input id="hofVideo${year}" class="hof-close-input" type="url" inputmode="url" placeholder="https://..." data-action="video-link" data-year="${year}" value="${esc(draft)}">
+        <button type="button" class="hof-btn hof-btn-primary${savedNote ? ' is-saved' : ''}" data-action="save-video" data-year="${year}">${savedNote ? 'Saved' : 'Save video'}</button>
+        ${saved ? `<button type="button" class="hof-btn hof-btn-quiet" data-action="remove-video" data-year="${year}">Remove</button>` : ''}
+    </div></div>` : '';
+    return `<section class="hof-block hof-close">
+        <div class="hof-section-bar">
+            <span class="hof-section-mark" aria-hidden="true">${closeMark()}</span>
+            <h2>End of year video</h2>
+        </div>
+        ${player}
+        ${form}
+    </section>`;
+}
+
+function closeMark() {
+    return `<svg viewBox="0 0 24 24" class="hof-mark" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" fill="#F3D78A"/>
+        <path d="M10 8.2v7.6l6.2-3.8z" fill="#102a56"/>
+    </svg>`;
+}
+
+function closingPlayer(raw) {
+    const media = videoEmbed(raw);
+    if (!media) return '';
+    if (media.kind === 'iframe') {
+        return `<div class="hof-close-player"><iframe src="${esc(media.src)}" title="End of year video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
+    }
+    if (media.kind === 'video') {
+        return `<div class="hof-close-player"><video src="${esc(media.src)}" controls playsinline preload="metadata"></video></div>`;
+    }
+    return `<p class="hof-close-link"><a href="${esc(media.href)}" target="_blank" rel="noopener noreferrer">Watch the end of year video</a></p>`;
+}
+
+function videoEmbed(raw) {
+    let url;
+    try {
+        url = new URL(raw);
+    } catch {
+        return null;
+    }
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
+    const host = url.hostname.replace(/^www\./, '').toLowerCase();
+    const youtubeId = youtubeVideoId(host, url);
+    if (youtubeId) return { kind: 'iframe', src: `https://www.youtube-nocookie.com/embed/${youtubeId}` };
+    if (host === 'vimeo.com' || host === 'player.vimeo.com') {
+        const match = url.pathname.match(/(\d{6,})/);
+        if (match) return { kind: 'iframe', src: `https://player.vimeo.com/video/${match[1]}` };
+    }
+    if (host === 'drive.google.com') {
+        const file = url.pathname.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.search.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (file) return { kind: 'iframe', src: `https://drive.google.com/file/d/${file[1]}/preview` };
+    }
+    if (/\.(mp4|webm|ogg)$/i.test(url.pathname)) return { kind: 'video', src: url.href };
+    return { kind: 'link', href: url.href };
+}
+
+function youtubeVideoId(host, url) {
+    if (!['youtu.be', 'youtube.com', 'm.youtube.com', 'music.youtube.com', 'youtube-nocookie.com'].includes(host)) return '';
+    let id = '';
+    if (host === 'youtu.be') id = url.pathname.split('/').filter(Boolean)[0] || '';
+    else if (url.pathname === '/watch') id = url.searchParams.get('v') || '';
+    else {
+        const parts = url.pathname.split('/').filter(Boolean);
+        if (['embed', 'shorts', 'live', 'v'].includes(parts[0])) id = parts[1] || '';
+    }
+    return /^[\w-]{6,}$/.test(id) ? id : '';
 }
 
 function voteVisibilityNote(published) {
@@ -527,6 +612,20 @@ function onDraftChange(event) {
     }
 }
 
+function onVideoInput(event) {
+    const input = event.target.closest('input[data-action="video-link"]');
+    if (!input) return;
+    const year = Number(input.dataset.year);
+    videoDrafts[String(year)] = input.value;
+    if (savedVideoYear !== year) return;
+    savedVideoYear = null;
+    const button = root().querySelector(`button[data-action="save-video"][data-year="${year}"]`);
+    if (button) {
+        button.textContent = 'Save video';
+        button.classList.remove('is-saved');
+    }
+}
+
 async function onClick(event) {
     const button = event.target.closest('[data-action]');
     if (!button) return;
@@ -568,6 +667,12 @@ async function onClick(event) {
     } else if (action === 'delete-poll') {
         if (!confirm(`Delete the entire ${year} voting poll? Every link will stop working and all votes will be erased. You can fix the shortlist and open voting again.`)) return;
         await run(() => deletePoll(year));
+    } else if (action === 'save-video') {
+        await saveClosingVideo(year);
+    } else if (action === 'remove-video') {
+        if (!confirm(`Remove the ${year} end of year video?`)) return;
+        delete videoDrafts[String(year)];
+        await run(() => writeSeason(year, { closingVideo: deleteField() }));
     }
 }
 
@@ -603,6 +708,40 @@ async function saveDraft(year) {
         savedTimer = window.setTimeout(() => {
             if (savedNoteYear !== year) return;
             savedNoteYear = null;
+            lastHtml = '';
+            render();
+        }, 1800);
+    });
+}
+
+async function saveClosingVideo(year) {
+    const input = root().querySelector(`input[data-action="video-link"][data-year="${year}"]`);
+    const raw = (input ? input.value : videoDrafts[String(year)] || '').trim();
+    if (!raw) {
+        alert('Paste the video link first.');
+        return;
+    }
+    let parsed;
+    try {
+        parsed = new URL(raw);
+    } catch {
+        alert('That link is not a valid web address.');
+        return;
+    }
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+        alert('Use a link that starts with https://');
+        return;
+    }
+    await run(async () => {
+        await writeSeason(year, { year, closingVideo: parsed.href });
+        delete videoDrafts[String(year)];
+        savedVideoYear = year;
+        lastHtml = '';
+        render();
+        window.clearTimeout(savedVideoTimer);
+        savedVideoTimer = window.setTimeout(() => {
+            if (savedVideoYear !== year) return;
+            savedVideoYear = null;
             lastHtml = '';
             render();
         }, 1800);
