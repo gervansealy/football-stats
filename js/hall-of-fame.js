@@ -4,7 +4,7 @@ import {
     collection, doc, onSnapshot, getDocs, query, where, writeBatch, serverTimestamp, deleteField
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import {
-    STAT_AWARDS, VOTE_AWARDS, VOTE_AWARD_IDS, NOMINEE_COUNT, normalizePoints, calculateSeasonStats,
+    STAT_AWARDS, VOTE_AWARDS, VOTE_AWARD_IDS, NOMINEE_COUNT, CREATIVE_LIMIT, normalizePoints, calculateSeasonStats,
     pickStatWinners, esc, awardArt, photoHtml, mountHofBanner, sectionMark, laurelMark
 } from './hof-shared.js';
 
@@ -32,6 +32,7 @@ let savedTimer = 0;
 let savedVideoYear = null;
 let savedVideoTimer = 0;
 const videoDrafts = {};
+let revealOpen = null;
 
 const root = () => document.getElementById('hofRoot');
 
@@ -115,6 +116,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     hofRoot.addEventListener('click', onClick);
     hofRoot.addEventListener('change', onDraftChange);
     hofRoot.addEventListener('input', onVideoInput);
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape' || !revealOpen) return;
+        revealOpen = null;
+        lastHtml = '';
+        render();
+    });
 });
 
 function canRender() {
@@ -161,15 +168,43 @@ function normalizeDraft(raw) {
         const value = raw && Array.isArray(raw[awardId]) ? raw[awardId] : [];
         draft[awardId] = NOMINEE_SLOTS.map((slot) => (typeof value[slot] === 'string' ? value[slot] : ''));
     });
+    draft.creativeAwards = normalizeCreative(raw && raw.creativeAwards);
     return draft;
+}
+
+function blankCreativeNominee() {
+    return { description: '', playerId: '' };
+}
+
+function normalizeCreative(raw) {
+    const list = Array.isArray(raw) ? raw : [];
+    return list.slice(0, CREATIVE_LIMIT).map((item, index) => {
+        const nominees = Array.isArray(item?.nominees) ? item.nominees : [];
+        return {
+            id: `creative${index + 1}`,
+            title: String(item?.title || '').slice(0, 80),
+            kind: 'creative',
+            nominees: NOMINEE_SLOTS.map((slot) => ({
+                description: String(nominees[slot]?.description || '').slice(0, 160),
+                playerId: typeof nominees[slot]?.playerId === 'string' && nominees[slot].playerId
+                    ? nominees[slot].playerId
+                    : (typeof nominees[slot]?.id === 'string' ? nominees[slot].id : '')
+            }))
+        };
+    });
 }
 
 function draftScore(raw) {
     if (!raw || typeof raw !== 'object') return 0;
-    return VOTE_AWARD_IDS.reduce((sum, awardId) => {
+    const field = VOTE_AWARD_IDS.reduce((sum, awardId) => {
         const list = raw[awardId];
         if (!Array.isArray(list)) return sum;
         return sum + list.filter((value) => typeof value === 'string' && value).length;
+    }, 0);
+    return field + normalizeCreative(raw.creativeAwards).reduce((sum, award) => {
+        const title = award.title.trim() ? 1 : 0;
+        const rows = award.nominees.filter((row) => row.description.trim() || row.playerId).length;
+        return sum + title + rows;
     }, 0);
 }
 
@@ -210,24 +245,61 @@ function playerMap() {
     return map;
 }
 
+function creativeCatalog(year) {
+    const admin = adminOf(year);
+    if (admin.voteStatus === 'open') {
+        const token = tokens.find((item) => item.year === year && item.generation === admin.generation && Array.isArray(item.creativeAwards));
+        if (token) return normalizeCreative(token.creativeAwards);
+    }
+    if (role !== 'admin') return creativeFromPublic(seasonOf(year).publicResults);
+    return normalizeCreative(picksFor(year).creativeAwards);
+}
+
+function creativeFromPublic(results) {
+    if (!results || typeof results !== 'object') return [];
+    return Object.keys(results)
+        .filter((id) => /^creative(?:[1-9]|1[0-2])$/.test(id))
+        .sort((a, b) => Number(a.slice(8)) - Number(b.slice(8)))
+        .map((id) => {
+            const raw = results[id];
+            return {
+                id,
+                title: raw && !Array.isArray(raw) && raw.title ? String(raw.title) : 'Creative award',
+                kind: 'creative',
+                nominees: []
+            };
+        });
+}
+
+function fieldAwards() {
+    return VOTE_AWARDS.map((award) => ({ ...award, kind: 'field' }));
+}
+
 function aggregate(year) {
     const admin = adminOf(year);
     const relevant = tokens.filter((token) => token.year === year && token.generation === admin.generation);
+    const awards = [...fieldAwards(), ...creativeCatalog(year)];
     const tally = {};
     const names = {};
-    VOTE_AWARDS.forEach((award) => { tally[award.id] = {}; });
+    const detail = {};
+    awards.forEach((award) => {
+        tally[award.id] = {};
+        detail[award.id] = {};
+    });
 
     relevant.forEach((token) => {
-        VOTE_AWARDS.forEach((award) => {
+        awards.forEach((award) => {
             (token.nominees?.[award.id] || []).forEach((nominee) => {
+                if (!nominee?.id) return;
                 if (!Object.prototype.hasOwnProperty.call(tally[award.id], nominee.id)) {
                     tally[award.id][nominee.id] = 0;
                 }
                 names[nominee.id] = nominee;
+                detail[award.id][nominee.id] = nominee;
             });
         });
         if (!token.used || !token.votes) return;
-        VOTE_AWARDS.forEach((award) => {
+        awards.forEach((award) => {
             const choice = token.votes[award.id];
             if (choice && Object.prototype.hasOwnProperty.call(tally[award.id], choice)) {
                 tally[award.id][choice] += 1;
@@ -238,6 +310,8 @@ function aggregate(year) {
     return {
         tally,
         names,
+        detail,
+        awards,
         ballots: relevant.filter((token) => token.used).length,
         links: relevant.slice().sort((a, b) => (a.voterName || '').localeCompare(b.voterName || ''))
     };
@@ -258,28 +332,103 @@ function decoratePerson(id, names, votes) {
     };
 }
 
+function nomineeRows(awardId, agg) {
+    const counts = agg.tally[awardId] || {};
+    return Object.entries(counts)
+        .map(([id, count]) => {
+            const person = decoratePerson(id, agg.names, count);
+            const snap = agg.detail?.[awardId]?.[id] || {};
+            person.description = snap.description || '';
+            person.votes = count;
+            return person;
+        })
+        .sort((a, b) => b.votes - a.votes || a.name.localeCompare(b.name));
+}
+
 function liveLeaders(agg) {
     const leaders = {};
-    VOTE_AWARDS.forEach((award) => {
-        const counts = agg.tally[award.id] || {};
-        const max = Object.values(counts).reduce((best, value) => Math.max(best, value), 0);
-        leaders[award.id] = max > 0
-            ? Object.entries(counts)
-                .filter(([, count]) => count === max)
-                .map(([id, count]) => decoratePerson(id, agg.names, count))
-                .sort((a, b) => a.name.localeCompare(b.name))
-            : [];
+    (agg.awards || fieldAwards()).forEach((award) => {
+        const rows = nomineeRows(award.id, agg);
+        const max = rows.reduce((best, row) => Math.max(best, row.votes), 0);
+        leaders[award.id] = max > 0 ? rows.filter((row) => row.votes === max) : [];
     });
     return leaders;
 }
 
+function publicShape(agg) {
+    const results = {};
+    (agg.awards || []).forEach((award) => {
+        const rows = nomineeRows(award.id, agg);
+        if (!rows.length && award.kind !== 'creative') return;
+        if (award.kind !== 'creative' && !rows.some((row) => row.votes > 0)) return;
+        results[award.id] = {
+            title: award.title,
+            kind: award.kind || 'field',
+            nominees: rows.map((person) => ({
+                id: person.id,
+                name: person.name,
+                firstName: person.firstName || '',
+                lastName: person.lastName || '',
+                headshot: person.headshotLink || '',
+                votes: person.votes,
+                description: person.description || ''
+            }))
+        };
+    });
+    return results;
+}
+
+function unpackReport(raw) {
+    if (Array.isArray(raw)) {
+        const nominees = raw.map((person) => decoratePerson(person.id, { [person.id]: person }, null));
+        return { nominees, winners: nominees };
+    }
+    if (!raw || !Array.isArray(raw.nominees)) return null;
+    const nominees = raw.nominees.map((person) => {
+        const packed = decoratePerson(person.id, { [person.id]: person }, person.votes);
+        packed.description = person.description || '';
+        packed.votes = Number.isFinite(Number(person.votes)) ? Number(person.votes) : null;
+        return packed;
+    });
+    const counted = nominees.filter((person) => person.votes !== null);
+    const max = counted.reduce((best, person) => Math.max(best, person.votes), 0);
+    const winners = max > 0 ? nominees.filter((person) => person.votes === max) : (counted.length ? [] : nominees);
+    return { nominees, winners };
+}
+
 function signature(results) {
     const normalized = {};
-    VOTE_AWARDS.forEach((award) => {
-        const list = (results && results[award.id]) || [];
-        normalized[award.id] = list.map((person) => person.id).sort();
+    const source = results && typeof results === 'object' ? results : {};
+    Object.keys(source).sort().forEach((awardId) => {
+        const raw = source[awardId];
+        if (Array.isArray(raw)) {
+            normalized[awardId] = raw.map((person) => person.id).sort();
+            return;
+        }
+        const rows = raw && Array.isArray(raw.nominees) ? raw.nominees : [];
+        normalized[awardId] = rows.map((person) => `${person.id}:${person.votes}`).sort();
     });
     return JSON.stringify(normalized);
+}
+
+function revealKey(year, awardId) {
+    return `hof-reveal-${year}-${awardId}`;
+}
+
+function isRevealed(year, awardId) {
+    try {
+        return localStorage.getItem(revealKey(year, awardId)) === '1';
+    } catch {
+        return false;
+    }
+}
+
+function markRevealed(year, awardId) {
+    try {
+        localStorage.setItem(revealKey(year, awardId), '1');
+    } catch {
+        /* a private browser can still show the popup once in this visit */
+    }
 }
 
 function render() {
@@ -334,14 +483,17 @@ function renderYear(year, years) {
                     <h2>Voted awards</h2>
                     ${isAdmin ? `<div class="admin-only hof-bar-status">${voteVisibilityNote(season.votesPublished)}</div>` : ''}
                 </div>
+                <h3 class="hof-vote-kind">Voted on field awards</h3>
                 <div class="hof-grid hof-grid-votes">
-                    ${VOTE_AWARDS.map((award) => renderVoteCard(year, award, season, leaders, isAdmin)).join('')}
+                    ${fieldAwards().map((award) => renderVoteCard(year, award, season, leaders, isAdmin)).join('')}
                 </div>
+                ${renderCreativeBlock(year, season, leaders, isAdmin)}
             </section>
             ${renderClosingVideo(year, season, isAdmin)}
             ${isAdmin ? renderAdmin(year, roster, season, admin, agg, leaders) : ''}
         </div>
-    </section>`;
+    </section>
+    ${renderRevealModal(year, season)}`;
 }
 
 function statApproval(year, published) {
@@ -449,17 +601,75 @@ function renderStatCard(year, award, roster, published, isAdmin) {
     return cardShell(year, award, body, winners.length === 1 && showWinner);
 }
 
+function renderCreativeBlock(year, season, leaders, isAdmin) {
+    const awards = creativeCatalog(year);
+    if (!awards.length) return '';
+    return `<h3 class="hof-vote-kind">Voted creative awards</h3>
+        <div class="hof-grid hof-grid-creative">
+            ${awards.map((award) => renderVoteCard(year, award, season, leaders, isAdmin)).join('')}
+        </div>`;
+}
+
 function renderVoteCard(year, award, season, leaders, isAdmin) {
     const published = !!season.votesPublished;
-    const snapshot = (season.publicResults && season.publicResults[award.id]) || [];
+    const report = unpackReport(season.publicResults && season.publicResults[award.id]);
+    const publishedWinners = report ? report.winners : [];
+    if (!isAdmin && published && publishedWinners.length) {
+        const revealed = isRevealed(year, award.id);
+        const body = revealed
+            ? winnerList(publishedWinners, null)
+            : `<button type="button" class="hof-reveal-btn" data-action="reveal" data-year="${year}" data-award="${esc(award.id)}">Reveal</button>`;
+        return cardShell(year, award, body, revealed && publishedWinners.length === 1);
+    }
     const people = published
-        ? snapshot.map((person) => decoratePerson(person.id, { [person.id]: person }))
+        ? publishedWinners
         : (isAdmin ? (leaders[award.id] || []) : []);
     const showWinner = people.length > 0 && (published || isAdmin);
     const body = showWinner
         ? winnerList(people, null)
         : '<p class="hof-tba">To be Announced</p>';
     return cardShell(year, award, body, people.length === 1 && showWinner);
+}
+
+function renderRevealModal(year, season) {
+    if (!revealOpen || revealOpen.year !== year) return '';
+    const awardId = revealOpen.awardId;
+    const award = [...fieldAwards(), ...creativeCatalog(year)].find((item) => item.id === awardId);
+    const report = unpackReport(season.publicResults && season.publicResults[awardId]);
+    if (!award || !report || !report.winners.length) return '';
+    const kindLabel = award.kind === 'creative' ? 'Voted creative awards' : 'Voted on field awards';
+    const winnerBlocks = report.winners.map((person) => `<div class="hof-reveal-winner">
+        ${photoHtml(person, 'is-lg')}
+        <div>
+            <div class="hof-reveal-name">${esc(person.name)}</div>
+            ${person.description ? `<div class="hof-reveal-desc">${esc(person.description)}</div>` : ''}
+            ${voteLabel(person.votes)}
+        </div>
+    </div>`).join('');
+    const nomineeBlocks = report.nominees.map((person) => `<div class="hof-reveal-row${report.winners.some((winner) => winner.id === person.id) ? ' is-winner' : ''}">
+        ${photoHtml(person)}
+        <div>
+            <div class="hof-reveal-name">${esc(person.name)}</div>
+            ${person.description ? `<div class="hof-reveal-desc">${esc(person.description)}</div>` : ''}
+        </div>
+        ${voteLabel(person.votes)}
+    </div>`).join('');
+    return `<div class="hof-reveal-back" data-action="close-reveal">
+        <div class="hof-reveal" role="dialog" aria-modal="true" aria-labelledby="hofRevealTitle">
+            <p class="hof-reveal-kicker">${esc(kindLabel)}</p>
+            <h3 id="hofRevealTitle">${esc(report.winners.length > 1 ? `${award.title} · tie` : award.title)}</h3>
+            ${winnerBlocks}
+            <h4>Nominees</h4>
+            <div class="hof-reveal-list">${nomineeBlocks}</div>
+            <button type="button" class="hof-btn hof-btn-gold" data-action="close-reveal">Close</button>
+        </div>
+    </div>`;
+}
+
+function voteLabel(votes) {
+    if (votes === null || votes === undefined || !Number.isFinite(Number(votes))) return '';
+    const count = Number(votes);
+    return `<div class="hof-reveal-votes">${count} vote${count === 1 ? '' : 's'}</div>`;
 }
 
 function cardShell(year, award, body, solo) {
@@ -489,7 +699,7 @@ function winnerList(people, statFor) {
 function renderAdmin(year, roster, season, admin, agg, leaders) {
     const votingOpen = admin.voteStatus === 'open';
     const published = !!season.votesPublished;
-    const stale = published && signature(season.publicResults) !== signature(leaders);
+    const stale = published && signature(season.publicResults) !== signature(publicShape(agg));
     const opened = formatOpened(admin.openedAt);
 
     return `<div class="admin-only"><div class="hof-admin">
@@ -504,15 +714,42 @@ function renderSetup(year, roster) {
     const picks = picksFor(year);
     const needsPlayers = roster.length < NOMINEE_COUNT;
     const saved = savedNoteYear === year;
-    return `<p class="hof-help">Choose the 4 players on the ballot for each award, then open voting. Save keeps the shortlist if you leave this page. Each player gets a private link that expires after they submit.</p>
+    const creative = picks.creativeAwards || [];
+    return `<p class="hof-help">Voted on field awards use 4 players each. Voted creative awards are categories you name, with 4 descriptions and a player tied to each description. Save keeps this if you leave the page. Each player gets a private link that expires after they submit.</p>
         ${needsPlayers ? '<p class="hof-help">Add at least 4 players before opening a vote.</p>' : ''}
+        <h4 class="hof-setup-kind">Voted on field awards</h4>
         <div class="hof-picks">
             ${VOTE_AWARDS.map((award) => pickRow(year, award, roster, picks[award.id] || NOMINEE_SLOTS.map(() => ''))).join('')}
         </div>
+        <h4 class="hof-setup-kind">Voted creative awards</h4>
+        <div class="hof-creatives">
+            ${creative.map((award, index) => creativeEditor(year, award, index, roster)).join('') || '<p class="hof-help">No creative categories yet.</p>'}
+        </div>
         <div class="hof-actions">
+            <button type="button" class="hof-btn hof-btn-quiet" data-action="add-creative" data-year="${year}" ${creative.length >= CREATIVE_LIMIT ? 'disabled' : ''}>Add category</button>
             <button type="button" class="hof-btn hof-btn-primary${saved ? ' is-saved' : ''}" data-action="save-draft" data-year="${year}">${saved ? 'Saved' : 'Save'}</button>
             <button type="button" class="hof-btn hof-btn-gold" data-action="open-voting" data-year="${year}" ${needsPlayers ? 'disabled' : ''}>Open Voting</button>
         </div>`;
+}
+
+function creativeEditor(year, award, index, roster) {
+    return `<div class="hof-creative" data-year="${year}" data-index="${index}">
+        <div class="hof-creative-head">
+            <input type="text" maxlength="80" placeholder="Category, for example Biggest Upset" data-creative-title data-year="${year}" value="${esc(award.title)}" aria-label="Creative category ${index + 1}">
+            <button type="button" class="hof-btn hof-btn-quiet" data-action="remove-creative" data-year="${year}" data-index="${index}">Remove</button>
+        </div>
+        ${NOMINEE_SLOTS.map((slot) => {
+            const row = award.nominees[slot] || blankCreativeNominee();
+            return `<div class="hof-creative-row">
+                <input type="text" maxlength="160" placeholder="Description" data-creative-desc data-year="${year}" data-slot="${slot}" value="${esc(row.description)}" aria-label="Description ${slot + 1}">
+                <select data-creative-player data-year="${year}" data-slot="${slot}" aria-label="Player ${slot + 1}">
+                    <option value="">Select player</option>
+                    ${roster.map((player) => `<option value="${esc(player.id)}"${row.playerId === player.id ? ' selected' : ''}>${esc(player.name)}</option>`).join('')}
+                    ${row.playerId && !roster.some((player) => player.id === row.playerId) ? `<option value="${esc(row.playerId)}" selected>Removed player</option>` : ''}
+                </select>
+            </div>`;
+        }).join('')}
+    </div>`;
 }
 
 function pickRow(year, award, roster, selected) {
@@ -527,7 +764,8 @@ function pickRow(year, award, roster, selected) {
 }
 
 function renderOpenPoll(year, agg, published, stale, opened) {
-    const maxVotes = Math.max(1, ...VOTE_AWARDS.flatMap((award) => Object.values(agg.tally[award.id] || {})));
+    const awards = agg.awards || fieldAwards();
+    const maxVotes = Math.max(1, ...awards.flatMap((award) => Object.values(agg.tally[award.id] || {})));
     return `<p class="hof-help">Voting is open${opened ? ` · opened ${esc(opened)}` : ''}. ${agg.ballots} of ${agg.links.length} ballots submitted. Totals below do not show who voted for whom. Send each player only their own link.</p>
         ${stale ? '<p class="hof-visibility">New votes have come in since the Hall of Fame was updated.</p>' : ''}
         <div class="hof-actions">
@@ -538,7 +776,7 @@ function renderOpenPoll(year, agg, published, stale, opened) {
             <button type="button" class="hof-btn hof-btn-danger" data-action="delete-poll" data-year="${year}">Delete voting poll</button>
         </div>
         <div class="hof-tally-grid">
-            ${VOTE_AWARDS.map((award) => renderTally(award, agg, maxVotes)).join('')}
+            ${awards.map((award) => renderTally(award, agg, maxVotes)).join('')}
         </div>
         <h3 class="hof-links-title">Player links</h3>
         <div class="hof-links">
@@ -554,19 +792,19 @@ function renderOpenPoll(year, agg, published, stale, opened) {
 }
 
 function renderTally(award, agg, maxVotes) {
-    const counts = agg.tally[award.id] || {};
-    const rows = Object.entries(counts)
-        .map(([id, count]) => ({ person: decoratePerson(id, agg.names), count }))
-        .sort((a, b) => b.count - a.count || a.person.name.localeCompare(b.person.name));
-    const top = rows.reduce((best, row) => Math.max(best, row.count), 0);
+    const rows = nomineeRows(award.id, agg);
+    const top = rows.reduce((best, row) => Math.max(best, row.votes), 0);
+    const kind = award.kind === 'creative' ? 'Creative' : 'On field';
     return `<div class="hof-tally-card">
         <h4>${esc(award.title)}</h4>
-        ${rows.map((row) => `<div class="hof-bar${row.count > 0 && row.count === top ? ' is-leader' : ''}">
+        <p class="hof-tally-kind">${kind}</p>
+        ${rows.map((row) => `<div class="hof-bar${row.votes > 0 && row.votes === top ? ' is-leader' : ''}">
             <div>
-                <span>${esc(row.person.name)}</span>
-                <div class="hof-bar-track"><div class="hof-bar-fill" style="width:${Math.round((row.count / maxVotes) * 100)}%"></div></div>
+                <span>${esc(row.name)}</span>
+                ${row.description ? `<em class="hof-bar-desc">${esc(row.description)}</em>` : ''}
+                <div class="hof-bar-track"><div class="hof-bar-fill" style="width:${Math.round((row.votes / maxVotes) * 100)}%"></div></div>
             </div>
-            <strong>${row.count}</strong>
+            <strong>${row.votes}</strong>
         </div>`).join('') || '<p class="hof-help">No nominees.</p>'}
     </div>`;
 }
@@ -595,6 +833,11 @@ function onDraftChange(event) {
         render();
         return;
     }
+    const creativeSelect = event.target.closest('select[data-creative-player]');
+    if (creativeSelect) {
+        syncCreativeFromDom(creativeSelect.dataset.year);
+        return;
+    }
     const select = event.target.closest('select[data-award]');
     if (!select) return;
     const year = select.dataset.year;
@@ -613,6 +856,10 @@ function onDraftChange(event) {
 }
 
 function onVideoInput(event) {
+    if (event.target.closest('[data-creative-title], [data-creative-desc]')) {
+        syncCreativeFromDom(event.target.dataset.year);
+        return;
+    }
     const input = event.target.closest('input[data-action="video-link"]');
     if (!input) return;
     const year = Number(input.dataset.year);
@@ -634,6 +881,43 @@ async function onClick(event) {
 
     if (action === 'toggle-year') {
         yearOpen = !yearOpen;
+        lastHtml = '';
+        render();
+        return;
+    }
+    if (action === 'reveal') {
+        markRevealed(year, button.dataset.award);
+        revealOpen = { year, awardId: button.dataset.award };
+        lastHtml = '';
+        render();
+        return;
+    }
+    if (action === 'close-reveal') {
+        if (event.target.closest('.hof-reveal') && !event.target.closest('button[data-action="close-reveal"]')) return;
+        revealOpen = null;
+        lastHtml = '';
+        render();
+        return;
+    }
+    if (action === 'add-creative') {
+        const picks = picksFor(year);
+        picks.creativeAwards = readCreative(year);
+        if (picks.creativeAwards.length >= CREATIVE_LIMIT) return;
+        picks.creativeAwards.push({
+            title: '',
+            nominees: NOMINEE_SLOTS.map(() => blankCreativeNominee())
+        });
+        rememberDraft(year, picks);
+        lastHtml = '';
+        render();
+        return;
+    }
+    if (action === 'remove-creative') {
+        const picks = picksFor(year);
+        const next = readCreative(year);
+        next.splice(Number(button.dataset.index), 1);
+        picks.creativeAwards = next;
+        rememberDraft(year, picks);
         lastHtml = '';
         render();
         return;
@@ -688,8 +972,37 @@ async function run(task) {
     }
 }
 
+function readCreative(year) {
+    const blocks = [...root().querySelectorAll(`.hof-creative[data-year="${year}"]`)];
+    if (!blocks.length) return normalizeCreative(picksFor(year).creativeAwards);
+    return normalizeCreative(blocks.map((block) => ({
+        title: block.querySelector('[data-creative-title]')?.value || '',
+        nominees: NOMINEE_SLOTS.map((slot) => ({
+            description: block.querySelector(`[data-creative-desc][data-slot="${slot}"]`)?.value || '',
+            playerId: block.querySelector(`[data-creative-player][data-slot="${slot}"]`)?.value || ''
+        }))
+    })));
+}
+
+function syncCreativeFromDom(year) {
+    const picks = picksFor(year);
+    picks.creativeAwards = readCreative(year);
+    rememberDraft(year, picks);
+    if (savedNoteYear === Number(year)) {
+        savedNoteYear = null;
+        const button = root().querySelector(`button[data-action="save-draft"][data-year="${year}"]`);
+        if (button) {
+            button.textContent = 'Save';
+            button.classList.remove('is-saved');
+        }
+    }
+}
+
 async function saveDraft(year) {
-    const picks = rememberDraft(year, readPicks(year));
+    const picks = picksFor(year);
+    Object.assign(picks, readPicks(year));
+    picks.creativeAwards = readCreative(year);
+    rememberDraft(year, picks);
     await run(async () => {
         const batch = writeBatch(db);
         batch.set(doc(db, 'hofAdmin', String(year)), {
@@ -771,7 +1084,9 @@ async function openVoting(year) {
         alert('Voting is already open. Delete the poll first if you need a new set of links.');
         return;
     }
-    const picks = readPicks(year);
+    const picks = picksFor(year);
+    Object.assign(picks, readPicks(year));
+    picks.creativeAwards = readCreative(year);
     const roster = playersForYear(year);
     const byId = {};
     roster.forEach((player) => { byId[player.id] = player; });
@@ -783,7 +1098,24 @@ async function openVoting(year) {
             return;
         }
     }
-    if (!confirm(`Open voting for ${year}? A private link will be created for every player. Each link stops working after that player submits one choice for every award.`)) return;
+    const creative = normalizeCreative(picks.creativeAwards);
+    for (const award of creative) {
+        if (!award.title.trim()) {
+            alert('Name every creative category.');
+            return;
+        }
+        const chosen = award.nominees.map((row) => row.playerId);
+        if (award.nominees.some((row) => !row.description.trim())) {
+            alert(`Write all 4 descriptions for ${award.title}.`);
+            return;
+        }
+        if (chosen.some((id) => !id || !byId[id]) || new Set(chosen).size !== NOMINEE_COUNT) {
+            alert(`Pick 4 different players for ${award.title}.`);
+            return;
+        }
+    }
+    const creativeNote = creative.length ? ` ${creative.length} creative categor${creative.length === 1 ? 'y' : 'ies'} will be on the ballot too.` : '';
+    if (!confirm(`Open voting for ${year}? A private link will be created for every player. Each link stops working after that player submits one choice for every award.${creativeNote}`)) return;
 
     await run(async () => {
         await deleteTokens(year);
@@ -800,6 +1132,22 @@ async function openVoting(year) {
             }));
             nomineeIds[award.id] = picks[award.id].slice();
         });
+        creative.forEach((award) => {
+            nominees[award.id] = award.nominees.map((row) => ({
+                id: row.playerId,
+                name: byId[row.playerId].name,
+                firstName: byId[row.playerId].firstName || '',
+                lastName: byId[row.playerId].lastName || '',
+                headshot: byId[row.playerId].headshotLink || '',
+                description: row.description.trim()
+            }));
+            nomineeIds[award.id] = award.nominees.map((row) => row.playerId);
+        });
+        const creativeAwards = creative.map((award) => ({
+            id: award.id,
+            title: award.title.trim(),
+            nominees: nominees[award.id]
+        }));
 
         const tokenDocs = roster.map((player) => ({
             id: newToken(),
@@ -811,6 +1159,7 @@ async function openVoting(year) {
                 used: false,
                 nomineeIds,
                 nominees,
+                creativeAwards,
                 createdAt: serverTimestamp()
             }
         }));
@@ -839,31 +1188,22 @@ async function publishVotes(year) {
         alert('Open voting before publishing winners.');
         return;
     }
-    const leaders = liveLeaders(aggregate(year));
-    const publicResults = {};
-    const missing = [];
-    VOTE_AWARDS.forEach((award) => {
-        const winners = leaders[award.id] || [];
-        if (!winners.length) {
-            missing.push(award.title);
-            return;
-        }
-        publicResults[award.id] = winners.map((person) => ({
-            id: person.id,
-            name: person.name,
-            firstName: person.firstName || '',
-            lastName: person.lastName || '',
-            headshot: person.headshotLink || ''
-        }));
-    });
-    if (!Object.keys(publicResults).length) {
+    const agg = aggregate(year);
+    const publicResults = publicShape(agg);
+    const withVotes = Object.values(publicResults).some((award) => (award.nominees || []).some((person) => person.votes > 0));
+    if (!withVotes) {
         alert('No votes have been cast yet.');
         return;
     }
+    const missing = (agg.awards || []).filter((award) => {
+        const rows = publicResults[award.id]?.nominees || [];
+        return !rows.some((person) => person.votes > 0);
+    }).map((award) => award.title);
     const extra = missing.length ? `\n\nThese awards have no votes yet and will stay To be Announced: ${missing.join(', ')}.` : '';
     const season = seasonOf(year);
     const updating = !!season.votesPublished;
-    if (!confirm(`${updating ? `Update the ${year} Hall of Fame to match the latest votes?` : `Show the current ${year} vote winners on the Hall of Fame?`}${extra}`)) return;
+    const revealNote = updating ? '' : '\n\nPlayers get a Reveal button on each award. Each person can open that result once.';
+    if (!confirm(`${updating ? `Update the ${year} Hall of Fame to match the latest votes?` : `Show the current ${year} voted awards on the Hall of Fame?`}${revealNote}${extra}`)) return;
 
     await run(() => writeSeason(year, { year, votesPublished: true, publicResults }));
 }

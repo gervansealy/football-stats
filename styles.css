@@ -4916,6 +4916,206 @@ body.admin .hof-bar-status.admin-only {
     grid-template-columns: repeat(10, minmax(0, 1fr));
 }
 
+.hof-grid-creative {
+    grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+}
+
+.hof-vote-kind,
+.hof-setup-kind {
+    margin: 16px 0 0;
+    color: #1b427c;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.hof-setup-kind {
+    margin-top: 18px;
+}
+
+.hof-reveal-btn {
+    border: 1px solid #c4963a;
+    border-radius: 999px;
+    padding: 5px 12px;
+    background: linear-gradient(180deg, #fbe7a4 0%, #e7c15a 48%, #d0a63a 100%);
+    color: #6a4e12;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.hof-grid-votes .hof-reveal-btn {
+    font-size: 10px;
+    padding: 4px 8px;
+}
+
+.hof-creative {
+    display: grid;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 12px;
+    border: 1.5px solid #e4c56e;
+    border-radius: 14px;
+    background: #fffdf8;
+}
+
+.hof-creative-head,
+.hof-creative-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+}
+
+.hof-creative-row {
+    grid-template-columns: minmax(0, 1.4fr) minmax(140px, 0.8fr);
+}
+
+.hof-creative input,
+.hof-creative select {
+    width: 100%;
+    min-width: 0;
+    padding: 8px 10px;
+    border: 1px solid #e4d3a4;
+    border-radius: 10px;
+    background: #fff;
+    color: #14284b;
+    font: inherit;
+}
+
+.hof-tally-kind,
+.hof-bar-desc {
+    display: block;
+    color: #8a8278;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 650;
+}
+
+.hof-tally-kind {
+    margin: -4px 0 8px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.hof-reveal-back {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(8, 16, 32, 0.62);
+}
+
+.hof-reveal {
+    width: min(520px, 100%);
+    max-height: min(86vh, 760px);
+    overflow: auto;
+    padding: 18px 16px 16px;
+    border-radius: 18px;
+    border: 1.5px solid #e4c56e;
+    background: linear-gradient(180deg, #fffdf8 0%, #fbf6ea 100%);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+}
+
+.hof-reveal-kicker {
+    margin: 0;
+    color: #8a5a00;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.hof-reveal h3 {
+    margin: 4px 0 12px;
+    color: #102a56;
+    font-size: 1.35rem;
+}
+
+.hof-reveal h4 {
+    margin: 16px 0 8px;
+    color: #1b427c;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.hof-reveal-winner,
+.hof-reveal-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hof-reveal-winner {
+    margin-top: 10px;
+}
+
+.hof-reveal-winner .hof-photo-wrap {
+    width: 84px;
+    height: 84px;
+}
+
+.hof-reveal-name {
+    color: #14284b;
+    font-weight: 800;
+    font-size: 1.15rem;
+    line-height: 1.2;
+}
+
+.hof-reveal-desc,
+.hof-reveal-votes {
+    color: #8a5a00;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.hof-reveal-list {
+    display: grid;
+    gap: 8px;
+}
+
+.hof-reveal-row {
+    padding: 8px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.hof-reveal-row.is-winner {
+    background: #fff3cc;
+}
+
+.hof-reveal-row .hof-reveal-name {
+    font-size: 15px;
+}
+
+.hof-reveal-row .hof-reveal-votes {
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+.vote-group-title {
+    margin: 18px 0 8px;
+    color: #1b427c;
+    font-size: 0.82rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.vote-desc {
+    color: #5c5348;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.vote-player {
+    color: #102a56;
+}
+
 .hof-card {
     display: flex;
     flex-direction: column;
@@ -5568,7 +5768,8 @@ body.admin .hof-bar-status.admin-only {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
-    .hof-grid-votes {
+    .hof-grid-votes,
+    .hof-grid-creative {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
@@ -5603,8 +5804,14 @@ body.admin .hof-bar-status.admin-only {
     }
 
     .hof-grid-stats,
-    .hof-grid-votes {
+    .hof-grid-votes,
+    .hof-grid-creative {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .hof-creative-head,
+    .hof-creative-row {
+        grid-template-columns: 1fr;
     }
 
     .hof-grid-votes .hof-card h3,

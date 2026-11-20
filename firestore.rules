@@ -78,8 +78,9 @@ service cloud.firestore {
       return resource.data.used == false
         && request.resource.data.used == true
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used', 'votes'])
-        && request.resource.data.votes.keys().hasOnly(hofVoteCategories())
+        && request.resource.data.votes is map
         && request.resource.data.votes.keys().hasAll(hofVoteCategories())
+        && request.resource.data.votes.keys().hasOnly(hofAllowedKeys())
         && hofVoteOk('bestKeeper')
         && hofVoteOk('bestCenterBack')
         && hofVoteOk('bestRightBack')
@@ -89,7 +90,19 @@ service cloud.firestore {
         && hofVoteOk('bestLeftWinger')
         && hofVoteOk('bestRightWinger')
         && hofVoteOk('bestStriker')
-        && hofVoteOk('mostImproved');
+        && hofVoteOk('mostImproved')
+        && creativeSlotOk('creative1')
+        && creativeSlotOk('creative2')
+        && creativeSlotOk('creative3')
+        && creativeSlotOk('creative4')
+        && creativeSlotOk('creative5')
+        && creativeSlotOk('creative6')
+        && creativeSlotOk('creative7')
+        && creativeSlotOk('creative8')
+        && creativeSlotOk('creative9')
+        && creativeSlotOk('creative10')
+        && creativeSlotOk('creative11')
+        && creativeSlotOk('creative12');
     }
 
     function hofVoteCategories() {
@@ -107,9 +120,23 @@ service cloud.firestore {
       ];
     }
 
+    function hofAllowedKeys() {
+      return hofVoteCategories().concat([
+        'creative1', 'creative2', 'creative3', 'creative4',
+        'creative5', 'creative6', 'creative7', 'creative8',
+        'creative9', 'creative10', 'creative11', 'creative12'
+      ]);
+    }
+
     function hofVoteOk(category) {
       return request.resource.data.votes[category] is string
         && request.resource.data.votes[category] in resource.data.nomineeIds[category];
+    }
+
+    function creativeSlotOk(category) {
+      return !(category in resource.data.nomineeIds)
+        ? !(category in request.resource.data.votes)
+        : hofVoteOk(category);
     }
 
     // Deny all other access

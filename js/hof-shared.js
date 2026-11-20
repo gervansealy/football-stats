@@ -90,6 +90,7 @@ export const VOTE_AWARDS = [
 
 export const VOTE_AWARD_IDS = VOTE_AWARDS.map((award) => award.id);
 export const NOMINEE_COUNT = 4;
+export const CREATIVE_LIMIT = 12;
 
 
 export function formatNumber(n) {

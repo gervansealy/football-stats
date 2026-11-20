@@ -50,35 +50,59 @@ async function boot() {
     }
 }
 
+function creativeAwards(data) {
+    return Array.isArray(data?.creativeAwards) ? data.creativeAwards : [];
+}
+
+function ballotAwards(data) {
+    return [
+        ...VOTE_AWARDS.map((award) => ({ ...award, kind: 'field' })),
+        ...creativeAwards(data).map((award) => ({ id: award.id, title: award.title, kind: 'creative' }))
+    ];
+}
+
 function ballotReady(data) {
-    return VOTE_AWARDS.every((award) => Array.isArray(data.nominees?.[award.id]) && data.nominees[award.id].length === NOMINEE_COUNT);
+    const onField = VOTE_AWARDS.every((award) => Array.isArray(data.nominees?.[award.id]) && data.nominees[award.id].length === NOMINEE_COUNT);
+    const creative = creativeAwards(data).every((award) => Array.isArray(data.nominees?.[award.id]) && data.nominees[award.id].length === NOMINEE_COUNT);
+    return onField && creative;
+}
+
+function choiceButton(award, nominee) {
+    const description = nominee.description ? `<span class="vote-desc">${esc(nominee.description)}</span>` : '';
+    return `<button type="button" class="vote-choice" data-award="${esc(award.id)}" data-player="${esc(nominee.id)}">
+        ${photoHtml(nominee, 'is-lg')}
+        ${description}
+        <span class="vote-player">${esc(personName(nominee))}</span>
+    </button>`;
+}
+
+function awardSection(award, year) {
+    return `<section class="vote-award">
+        <div class="vote-award-head">
+            ${awardArt(award.id, `vote${award.id}`)}
+            <div>
+                <h2>${esc(award.title)}</h2>
+                <p>${esc(year)} Hall of Fame</p>
+            </div>
+        </div>
+        <div class="vote-choices">
+            ${(tokenData.nominees[award.id] || []).map((nominee) => choiceButton(award, nominee)).join('')}
+        </div>
+    </section>`;
 }
 
 function renderBallot() {
     finished = true;
     clearTimeout(slowTimer);
     const year = tokenData.year || '';
+    const awards = ballotAwards(tokenData);
+    const field = awards.filter((award) => award.kind !== 'creative');
+    const creative = awards.filter((award) => award.kind === 'creative');
     ballot.innerHTML = `
-        <p class="vote-hello">Hi ${esc(tokenData.voterName || 'there')}. Pick one player for each award. You can submit once.</p>
-        ${VOTE_AWARDS.map((award) => `
-            <section class="vote-award">
-                <div class="vote-award-head">
-                    ${awardArt(award.id, `vote${award.id}`)}
-                    <div>
-                        <h2>${esc(award.title)}</h2>
-                        <p>${esc(year)} Hall of Fame</p>
-                    </div>
-                </div>
-                <div class="vote-choices">
-                    ${tokenData.nominees[award.id].map((nominee) => `
-                        <button type="button" class="vote-choice" data-award="${esc(award.id)}" data-player="${esc(nominee.id)}">
-                            ${photoHtml(nominee, 'is-lg')}
-                            <span>${esc(personName(nominee))}</span>
-                        </button>
-                    `).join('')}
-                </div>
-            </section>
-        `).join('')}`;
+        <p class="vote-hello">Hi ${esc(tokenData.voterName || 'there')}. Pick one for each award. You can submit once.</p>
+        <h2 class="vote-group-title">Voted on field awards</h2>
+        ${field.map((award) => awardSection(award, year)).join('')}
+        ${creative.length ? `<h2 class="vote-group-title">Voted creative awards</h2>${creative.map((award) => awardSection(award, year)).join('')}` : ''}`;
     bar.hidden = false;
     updateProgress();
 }
@@ -98,14 +122,16 @@ ballot.addEventListener('click', (event) => {
 submitBtn.addEventListener('click', submitBallot);
 
 function updateProgress() {
-    const count = VOTE_AWARDS.filter((award) => picks[award.id]).length;
-    progress.textContent = `${count} of ${VOTE_AWARDS.length} awards picked`;
-    submitBtn.disabled = count !== VOTE_AWARDS.length;
+    const awards = ballotAwards(tokenData || {});
+    const count = awards.filter((award) => picks[award.id]).length;
+    progress.textContent = `${count} of ${awards.length} awards picked`;
+    submitBtn.disabled = count !== awards.length;
 }
 
 async function submitBallot() {
+    const awards = ballotAwards(tokenData || {});
     const votes = {};
-    for (const award of VOTE_AWARDS) {
+    for (const award of awards) {
         const choice = picks[award.id];
         const allowed = (tokenData.nomineeIds?.[award.id] || tokenData.nominees[award.id].map((nominee) => nominee.id));
         if (!choice || !allowed.includes(choice)) {
