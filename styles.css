@@ -4999,6 +4999,30 @@ body.admin .hof-bar-status.admin-only {
     text-transform: uppercase;
 }
 
+.hof-grid-creative .hof-card-foot {
+    align-items: center;
+    padding-bottom: 16px;
+}
+
+.hof-grid-creative .hof-winner {
+    justify-content: center;
+    max-width: 460px;
+}
+
+.hof-winner-why {
+    margin-top: 2px;
+    color: #8a5a00;
+    font-size: 13px;
+    font-weight: 700;
+    font-style: italic;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
+.hof-grid-creative .hof-winner-why {
+    font-size: 15px;
+}
+
 .hof-reveal-back {
     position: fixed;
     inset: 0;
@@ -5007,7 +5031,93 @@ body.admin .hof-bar-status.admin-only {
     align-items: center;
     justify-content: center;
     padding: 18px;
-    background: rgba(8, 16, 32, 0.62);
+    background: rgba(8, 16, 32, 0.72);
+}
+
+.hof-reveal-stage {
+    display: flex;
+    min-height: 240px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-align: center;
+}
+
+.hof-reveal.is-live .hof-reveal-stage {
+    display: none;
+}
+
+.hof-reveal-result {
+    display: none;
+}
+
+.hof-reveal.is-live .hof-reveal-result {
+    display: block;
+    animation: hofRevealIn 0.72s cubic-bezier(0.16, 0.84, 0.24, 1);
+}
+
+.hof-spin {
+    width: 120px;
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: hofSpin 0.55s linear infinite;
+    filter: drop-shadow(0 8px 10px rgba(90, 60, 10, 0.25));
+}
+
+.hof-spin .hof-art {
+    width: 78px;
+    height: auto;
+}
+
+.hof-roll-label {
+    margin: 8px 0 0;
+    color: #8a5a00;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    animation: hofPulse 0.35s ease-in-out infinite alternate;
+}
+
+.hof-roll-title {
+    margin: 0;
+    color: #102a56;
+    font-size: 1.35rem;
+    font-weight: 800;
+}
+
+.hof-reveal-why {
+    margin-top: 4px;
+    color: #243e6e;
+    font-size: 1.05rem;
+    font-weight: 700;
+    font-style: italic;
+    line-height: 1.35;
+}
+
+@keyframes hofSpin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes hofPulse {
+    from { opacity: 0.45; }
+    to { opacity: 1; }
+}
+
+@keyframes hofRevealIn {
+    from { opacity: 0; transform: rotateY(78deg) scale(0.82); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hof-spin,
+    .hof-roll-label,
+    .hof-reveal.is-live .hof-reveal-result {
+        animation: none;
+    }
 }
 
 .hof-reveal {

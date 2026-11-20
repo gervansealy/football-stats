@@ -33,6 +33,8 @@ let savedVideoYear = null;
 let savedVideoTimer = 0;
 const videoDrafts = {};
 let revealOpen = null;
+let revealTimer = 0;
+let revealAudio = null;
 
 const root = () => document.getElementById('hofRoot');
 
@@ -441,6 +443,7 @@ function render() {
     root().innerHTML = html;
     lastHtml = html;
     window.scrollTo(0, scrollY);
+    armReveal();
 }
 
 function renderYear(year, years) {
@@ -642,7 +645,7 @@ function renderRevealModal(year, season) {
         ${photoHtml(person, 'is-lg')}
         <div>
             <div class="hof-reveal-name">${esc(person.name)}</div>
-            ${person.description ? `<div class="hof-reveal-desc">${esc(person.description)}</div>` : ''}
+            ${person.description ? `<div class="hof-reveal-why">${esc(person.description)}</div>` : ''}
             ${voteLabel(person.votes)}
         </div>
     </div>`).join('');
@@ -654,16 +657,118 @@ function renderRevealModal(year, season) {
         </div>
         ${voteLabel(person.votes)}
     </div>`).join('');
+    const title = report.winners.length > 1 ? `${award.title} · tie` : award.title;
     return `<div class="hof-reveal-back" data-action="close-reveal">
         <div class="hof-reveal" role="dialog" aria-modal="true" aria-labelledby="hofRevealTitle">
-            <p class="hof-reveal-kicker">${esc(kindLabel)}</p>
-            <h3 id="hofRevealTitle">${esc(report.winners.length > 1 ? `${award.title} · tie` : award.title)}</h3>
-            ${winnerBlocks}
-            <h4>Nominees</h4>
-            <div class="hof-reveal-list">${nomineeBlocks}</div>
-            <button type="button" class="hof-btn hof-btn-gold" data-action="close-reveal">Close</button>
+            <div class="hof-reveal-stage">
+                <div class="hof-spin">${awardArt(award.id, `spin${year}${award.id}`)}</div>
+                <p class="hof-roll-label">Drum roll</p>
+                <p class="hof-roll-title">${esc(title)}</p>
+            </div>
+            <div class="hof-reveal-result">
+                <p class="hof-reveal-kicker">${esc(kindLabel)}</p>
+                <h3 id="hofRevealTitle">${esc(title)}</h3>
+                ${winnerBlocks}
+                <h4>Nominees</h4>
+                <div class="hof-reveal-list">${nomineeBlocks}</div>
+                <button type="button" class="hof-btn hof-btn-gold" data-action="close-reveal">Close</button>
+            </div>
         </div>
     </div>`;
+}
+
+function armReveal() {
+    if (!revealOpen) return;
+    const modal = root().querySelector('.hof-reveal');
+    if (!modal) return;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const wait = reduced ? 0 : Math.max(0, 2300 - (performance.now() - revealOpen.started));
+    window.clearTimeout(revealTimer);
+    const show = () => {
+        if (modal.isConnected) modal.classList.add('is-live');
+    };
+    if (wait === 0) show();
+    else revealTimer = window.setTimeout(show, wait);
+}
+
+function playDrumRoll() {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    stopRevealAudio();
+    const ctx = new AudioCtx();
+    revealAudio = ctx;
+    const begin = ctx.currentTime + 0.03;
+    let at = 0;
+    let gap = 0.13;
+    while (at < 2.05) {
+        drumHit(ctx, begin + at, 0.28 + (at / 2.05) * 0.55);
+        at += gap;
+        gap = Math.max(0.042, gap * 0.88);
+    }
+    drumHit(ctx, begin + 2.12, 0.9);
+    cymbalHit(ctx, begin + 2.16);
+    window.setTimeout(() => {
+        if (revealAudio === ctx) stopRevealAudio();
+    }, 3400);
+}
+
+function drumHit(ctx, time, amount) {
+    const frames = Math.floor(ctx.sampleRate * 0.09);
+    const buffer = ctx.createBuffer(1, frames, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < frames; i += 1) data[i] = (Math.random() * 2 - 1) * (1 - i / frames);
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'highpass';
+    filter.frequency.value = 1400;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(amount * 0.42, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    noise.start(time);
+    noise.stop(time + 0.09);
+
+    const body = ctx.createOscillator();
+    body.type = 'triangle';
+    body.frequency.setValueAtTime(190, time);
+    body.frequency.exponentialRampToValueAtTime(70, time + 0.05);
+    const bodyGain = ctx.createGain();
+    bodyGain.gain.setValueAtTime(amount * 0.22, time);
+    bodyGain.gain.exponentialRampToValueAtTime(0.001, time + 0.06);
+    body.connect(bodyGain);
+    bodyGain.connect(ctx.destination);
+    body.start(time);
+    body.stop(time + 0.07);
+}
+
+function cymbalHit(ctx, time) {
+    const frames = Math.floor(ctx.sampleRate * 0.7);
+    const buffer = ctx.createBuffer(1, frames, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < frames; i += 1) data[i] = Math.random() * 2 - 1;
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'highpass';
+    filter.frequency.value = 5000;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.22, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.65);
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    noise.start(time);
+    noise.stop(time + 0.7);
+}
+
+function stopRevealAudio() {
+    if (!revealAudio) return;
+    const ctx = revealAudio;
+    revealAudio = null;
+    ctx.close().catch(() => {});
 }
 
 function voteLabel(votes) {
@@ -686,10 +791,12 @@ function winnerList(people, statFor) {
     if (!people.length) return '<p class="hof-empty">Not decided yet</p>';
     return `<div class="hof-winners">${people.map((person) => {
         const stat = statFor ? statFor(person) : '';
+        const why = person.description ? `<div class="hof-winner-why">${esc(person.description)}</div>` : '';
         return `<div class="hof-winner">
             ${photoHtml(person)}
             <div class="hof-winner-text">
                 <div class="hof-winner-name">${esc(person.name)}</div>
+                ${why}
                 ${stat ? `<div class="hof-winner-stat">${esc(stat)}</div>` : ''}
             </div>
         </div>`;
@@ -887,13 +994,16 @@ async function onClick(event) {
     }
     if (action === 'reveal') {
         markRevealed(year, button.dataset.award);
-        revealOpen = { year, awardId: button.dataset.award };
+        revealOpen = { year, awardId: button.dataset.award, started: performance.now() };
+        playDrumRoll();
         lastHtml = '';
         render();
         return;
     }
     if (action === 'close-reveal') {
         if (event.target.closest('.hof-reveal') && !event.target.closest('button[data-action="close-reveal"]')) return;
+        window.clearTimeout(revealTimer);
+        stopRevealAudio();
         revealOpen = null;
         lastHtml = '';
         render();
