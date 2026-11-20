@@ -120,9 +120,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     hofRoot.addEventListener('input', onVideoInput);
     document.addEventListener('keydown', (event) => {
         if (event.key !== 'Escape' || !revealOpen) return;
-        revealOpen = null;
-        lastHtml = '';
-        render();
+        dismissCeremony(true);
     });
 });
 
@@ -414,7 +412,7 @@ function signature(results) {
 }
 
 function revealKey(year, awardId) {
-    return `hof-reveal-${year}-${awardId}`;
+    return `hof-ceremony-${year}-${awardId}`;
 }
 
 function isRevealed(year, awardId) {
@@ -495,8 +493,7 @@ function renderYear(year, years) {
             ${renderClosingVideo(year, season, isAdmin)}
             ${isAdmin ? renderAdmin(year, roster, season, admin, agg, leaders) : ''}
         </div>
-    </section>
-    ${renderRevealModal(year, season)}`;
+    </section>`;
 }
 
 function statApproval(year, published) {
@@ -617,29 +614,21 @@ function renderVoteCard(year, award, season, leaders, isAdmin) {
     const published = !!season.votesPublished;
     const report = unpackReport(season.publicResults && season.publicResults[award.id]);
     const publishedWinners = report ? report.winners : [];
-    if (!isAdmin && published && publishedWinners.length) {
+    if (published && publishedWinners.length) {
         const revealed = isRevealed(year, award.id);
         const body = revealed
             ? winnerList(publishedWinners, null)
             : `<button type="button" class="hof-reveal-btn" data-action="reveal" data-year="${year}" data-award="${esc(award.id)}">Reveal</button>`;
         return cardShell(year, award, body, revealed && publishedWinners.length === 1);
     }
-    const people = published
-        ? publishedWinners
-        : (isAdmin ? (leaders[award.id] || []) : []);
-    const showWinner = people.length > 0 && (published || isAdmin);
-    const body = showWinner
+    const people = isAdmin ? (leaders[award.id] || []) : [];
+    const body = people.length
         ? winnerList(people, null)
         : '<p class="hof-tba">To be Announced</p>';
-    return cardShell(year, award, body, people.length === 1 && showWinner);
+    return cardShell(year, award, body, people.length === 1);
 }
 
-function renderRevealModal(year, season) {
-    if (!revealOpen || revealOpen.year !== year) return '';
-    const awardId = revealOpen.awardId;
-    const award = [...fieldAwards(), ...creativeCatalog(year)].find((item) => item.id === awardId);
-    const report = unpackReport(season.publicResults && season.publicResults[awardId]);
-    if (!award || !report || !report.winners.length) return '';
+function ceremonyDialog(award, report) {
     const kindLabel = award.kind === 'creative' ? 'Voted creative awards' : 'Voted on field awards';
     const winnerBlocks = report.winners.map((person) => `<div class="hof-reveal-winner">
         ${photoHtml(person, 'is-lg')}
@@ -658,10 +647,10 @@ function renderRevealModal(year, season) {
         ${voteLabel(person.votes)}
     </div>`).join('');
     const title = report.winners.length > 1 ? `${award.title} · tie` : award.title;
-    return `<div class="hof-reveal-back" data-action="close-reveal">
-        <div class="hof-reveal" role="dialog" aria-modal="true" aria-labelledby="hofRevealTitle">
+    return `<div class="hof-reveal" role="dialog" aria-modal="true" aria-labelledby="hofRevealTitle">
             <div class="hof-reveal-stage">
-                <div class="hof-spin">${awardArt(award.id, `spin${year}${award.id}`)}</div>
+                <div class="hof-spin-glow"></div>
+                <div class="hof-spin">${awardArt(award.id, `spin${award.id}`)}</div>
                 <p class="hof-roll-label">Drum roll</p>
                 <p class="hof-roll-title">${esc(title)}</p>
             </div>
@@ -673,13 +662,50 @@ function renderRevealModal(year, season) {
                 <div class="hof-reveal-list">${nomineeBlocks}</div>
                 <button type="button" class="hof-btn hof-btn-gold" data-action="close-reveal">Close</button>
             </div>
-        </div>
-    </div>`;
+        </div>`;
+}
+
+function openCeremony(year, awardId) {
+    const season = seasonOf(year);
+    const award = [...fieldAwards(), ...creativeCatalog(year)].find((item) => item.id === awardId);
+    const report = unpackReport(season.publicResults && season.publicResults[awardId]);
+    if (!award || !report || !report.winners.length) return;
+    dismissCeremony(false);
+    const overlay = document.createElement('div');
+    overlay.className = 'hof-reveal-back';
+    overlay.innerHTML = ceremonyDialog(award, report);
+    document.body.appendChild(overlay);
+    markRevealed(year, awardId);
+    revealOpen = { year, awardId, started: performance.now() };
+    overlay.addEventListener('click', (event) => {
+        if (!revealOpen || performance.now() - revealOpen.started < 900) return;
+        const dialog = event.target.closest('.hof-reveal');
+        if (dialog && !event.target.closest('[data-action="close-reveal"]')) return;
+        dismissCeremony(true);
+    });
+    try {
+        playDrumRoll();
+    } catch (error) {
+        console.error(error);
+        stopRevealAudio();
+    }
+    lastHtml = '';
+    render();
+}
+
+function dismissCeremony(renderAfter) {
+    window.clearTimeout(revealTimer);
+    stopRevealAudio();
+    revealOpen = null;
+    document.querySelectorAll('.hof-reveal-back').forEach((node) => node.remove());
+    if (!renderAfter) return;
+    lastHtml = '';
+    render();
 }
 
 function armReveal() {
     if (!revealOpen) return;
-    const modal = root().querySelector('.hof-reveal');
+    const modal = document.querySelector('.hof-reveal');
     if (!modal) return;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const wait = reduced ? 0 : Math.max(0, 2300 - (performance.now() - revealOpen.started));
@@ -697,6 +723,7 @@ function playDrumRoll() {
     stopRevealAudio();
     const ctx = new AudioCtx();
     revealAudio = ctx;
+    if (ctx.state === 'suspended') ctx.resume();
     const begin = ctx.currentTime + 0.03;
     let at = 0;
     let gap = 0.13;
@@ -993,20 +1020,13 @@ async function onClick(event) {
         return;
     }
     if (action === 'reveal') {
-        markRevealed(year, button.dataset.award);
-        revealOpen = { year, awardId: button.dataset.award, started: performance.now() };
-        playDrumRoll();
-        lastHtml = '';
-        render();
+        event.preventDefault();
+        openCeremony(Number(button.dataset.year) || selectedYear, button.dataset.award);
         return;
     }
     if (action === 'close-reveal') {
         if (event.target.closest('.hof-reveal') && !event.target.closest('button[data-action="close-reveal"]')) return;
-        window.clearTimeout(revealTimer);
-        stopRevealAudio();
-        revealOpen = null;
-        lastHtml = '';
-        render();
+        dismissCeremony(true);
         return;
     }
     if (action === 'add-creative') {

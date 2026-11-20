@@ -5023,10 +5023,18 @@ body.admin .hof-bar-status.admin-only {
     font-size: 15px;
 }
 
+.hof-grid-creative .hof-reveal-btn {
+    min-width: 148px;
+    padding: 12px 28px;
+    font-size: 16px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
 .hof-reveal-back {
     position: fixed;
     inset: 0;
-    z-index: 3000;
+    z-index: 5000;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -5057,14 +5065,31 @@ body.admin .hof-bar-status.admin-only {
     animation: hofRevealIn 0.72s cubic-bezier(0.16, 0.84, 0.24, 1);
 }
 
+.hof-spin-glow {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: 180px;
+    height: 180px;
+    margin-left: -90px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(244, 208, 111, 0.85) 0%, rgba(244, 208, 111, 0) 70%);
+    animation: hofPulse 0.35s ease-in-out infinite alternate;
+}
+
+.hof-reveal-stage {
+    position: relative;
+}
+
 .hof-spin {
-    width: 120px;
-    height: 140px;
+    position: relative;
+    width: 150px;
+    height: 170px;
     display: flex;
     align-items: center;
     justify-content: center;
-    animation: hofSpin 0.55s linear infinite;
-    filter: drop-shadow(0 8px 10px rgba(90, 60, 10, 0.25));
+    animation: hofSpin 0.45s linear infinite;
+    filter: drop-shadow(0 10px 14px rgba(90, 60, 10, 0.28));
 }
 
 .hof-spin .hof-art {
