@@ -1,7 +1,7 @@
 import { db } from './firebase-config.js';
 import { checkAuth } from './auth.js';
 import {
-    collection, doc, onSnapshot, getDocs, query, where, writeBatch, serverTimestamp, deleteField
+    collection, doc, onSnapshot, getDocs, query, where, writeBatch, serverTimestamp, deleteField, arrayUnion
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import {
     STAT_AWARDS, VOTE_AWARDS, VOTE_AWARD_IDS, NOMINEE_COUNT, CREATIVE_LIMIT, normalizePoints, calculateSeasonStats,
@@ -411,24 +411,9 @@ function signature(results) {
     return JSON.stringify(normalized);
 }
 
-function revealKey(year, awardId) {
-    return `hof-ceremony-${year}-${awardId}`;
-}
-
 function isRevealed(year, awardId) {
-    try {
-        return localStorage.getItem(revealKey(year, awardId)) === '1';
-    } catch {
-        return false;
-    }
-}
-
-function markRevealed(year, awardId) {
-    try {
-        localStorage.setItem(revealKey(year, awardId), '1');
-    } catch {
-        /* a private browser can still show the popup once in this visit */
-    }
+    const saved = seasonOf(year).revealedAwards;
+    return Array.isArray(saved) && saved.includes(awardId);
 }
 
 function render() {
@@ -588,7 +573,7 @@ function youtubeVideoId(host, url) {
 
 function voteVisibilityNote(published) {
     return `<p class="hof-visibility${published ? ' is-live' : ''}">${published
-        ? 'Players can see the published vote winners.'
+        ? 'Players see an award after you reveal it. The result then stays on the Hall of Fame.'
         : 'Players still see “To be Announced” for the voted awards.'}</p>`;
 }
 
@@ -615,11 +600,14 @@ function renderVoteCard(year, award, season, leaders, isAdmin) {
     const report = unpackReport(season.publicResults && season.publicResults[award.id]);
     const publishedWinners = report ? report.winners : [];
     if (published && publishedWinners.length) {
-        const revealed = isRevealed(year, award.id);
-        const body = revealed
-            ? winnerList(publishedWinners, null)
-            : `<button type="button" class="hof-reveal-btn" data-action="reveal" data-year="${year}" data-award="${esc(award.id)}">Reveal</button>`;
-        return cardShell(year, award, body, revealed && publishedWinners.length === 1);
+        if (isRevealed(year, award.id)) {
+            return cardShell(year, award, winnerList(publishedWinners, null), publishedWinners.length === 1);
+        }
+        if (isAdmin) {
+            const body = `<button type="button" class="hof-reveal-btn" data-action="reveal" data-year="${year}" data-award="${esc(award.id)}">Reveal</button>`;
+            return cardShell(year, award, body, false);
+        }
+        return cardShell(year, award, '<p class="hof-tba">To be Announced</p>', false);
     }
     const people = isAdmin ? (leaders[award.id] || []) : [];
     const body = people.length
@@ -666,6 +654,7 @@ function ceremonyDialog(award, report) {
 }
 
 function openCeremony(year, awardId) {
+    if (role !== 'admin' || isRevealed(year, awardId)) return;
     const season = seasonOf(year);
     const award = [...fieldAwards(), ...creativeCatalog(year)].find((item) => item.id === awardId);
     const report = unpackReport(season.publicResults && season.publicResults[awardId]);
@@ -675,8 +664,7 @@ function openCeremony(year, awardId) {
     overlay.className = 'hof-reveal-back';
     overlay.innerHTML = ceremonyDialog(award, report);
     document.body.appendChild(overlay);
-    markRevealed(year, awardId);
-    revealOpen = { year, awardId, started: performance.now() };
+    revealOpen = { year, awardId, started: performance.now(), saved: false };
     overlay.addEventListener('click', (event) => {
         if (!revealOpen || performance.now() - revealOpen.started < 900) return;
         const dialog = event.target.closest('.hof-reveal');
@@ -712,9 +700,37 @@ function armReveal() {
     window.clearTimeout(revealTimer);
     const show = () => {
         if (modal.isConnected) modal.classList.add('is-live');
+        publishReveal();
     };
     if (wait === 0) show();
     else revealTimer = window.setTimeout(show, wait);
+}
+
+async function publishReveal() {
+    if (!revealOpen || revealOpen.saved || role !== 'admin') return;
+    const { year, awardId } = revealOpen;
+    revealOpen.saved = true;
+    const key = String(year);
+    const current = seasons[key] || { year };
+    const existing = Array.isArray(current.revealedAwards) ? current.revealedAwards : [];
+    if (!existing.includes(awardId)) {
+        seasons[key] = { ...current, revealedAwards: [...existing, awardId] };
+        lastHtml = '';
+        render();
+    }
+    try {
+        await writeSeason(year, { revealedAwards: arrayUnion(awardId) });
+    } catch (error) {
+        console.error(error);
+        const latest = seasons[key];
+        if (latest && Array.isArray(latest.revealedAwards)) {
+            seasons[key] = { ...latest, revealedAwards: latest.revealedAwards.filter((id) => id !== awardId) };
+        }
+        if (revealOpen && revealOpen.awardId === awardId) revealOpen.saved = false;
+        lastHtml = '';
+        render();
+        alert('The presentation finished, but the result did not go live. Close this and click Reveal again.');
+    }
 }
 
 function playDrumRoll() {
@@ -1077,7 +1093,7 @@ async function onClick(event) {
         await publishVotes(year);
     } else if (action === 'hide-votes') {
         if (!confirm(`Hide the ${year} voted awards? The ballots stay saved, and the cards go back to To be Announced.`)) return;
-        await run(() => writeSeason(year, { votesPublished: false, publicResults: deleteField() }));
+        await run(() => writeSeason(year, { votesPublished: false, publicResults: deleteField(), revealedAwards: deleteField() }));
     } else if (action === 'delete-poll') {
         if (!confirm(`Delete the entire ${year} voting poll? Every link will stop working and all votes will be erased. You can fix the shortlist and open voting again.`)) return;
         await run(() => deletePoll(year));
@@ -1294,7 +1310,7 @@ async function openVoting(year) {
             }
         }));
 
-        const seasonPayload = { year, votesPublished: false };
+        const seasonPayload = { year, votesPublished: false, revealedAwards: deleteField() };
         if (seasons[String(year)]) seasonPayload.publicResults = deleteField();
         const adminPayload = {
             voteStatus: 'open',
@@ -1332,7 +1348,7 @@ async function publishVotes(year) {
     const extra = missing.length ? `\n\nThese awards have no votes yet and will stay To be Announced: ${missing.join(', ')}.` : '';
     const season = seasonOf(year);
     const updating = !!season.votesPublished;
-    const revealNote = updating ? '' : '\n\nPlayers get a Reveal button on each award. Each person can open that result once.';
+    const revealNote = updating ? '' : '\n\nPlayers still see To be Announced. Reveal each award here, and that result goes live for everyone.';
     if (!confirm(`${updating ? `Update the ${year} Hall of Fame to match the latest votes?` : `Show the current ${year} voted awards on the Hall of Fame?`}${revealNote}${extra}`)) return;
 
     await run(() => writeSeason(year, { year, votesPublished: true, publicResults }));
@@ -1350,7 +1366,8 @@ async function deletePoll(year) {
     batch.set(doc(db, 'hofSeasons', String(year)), {
         year,
         votesPublished: false,
-        publicResults: deleteField()
+        publicResults: deleteField(),
+        revealedAwards: deleteField()
     }, { merge: true });
     await batch.commit();
 }

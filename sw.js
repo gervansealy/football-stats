@@ -1,4 +1,4 @@
-const CACHE = 'sweat-squad-v29';
+const CACHE = 'sweat-squad-v30';
 
 const SHELL = [
     './',
