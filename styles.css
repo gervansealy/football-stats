@@ -5302,6 +5302,128 @@ body.admin .hof-bar-status.admin-only {
     white-space: nowrap;
 }
 
+.hof-reveal-next {
+    display: block;
+    width: 100%;
+    margin-top: 16px;
+    padding: 12px 18px;
+    font-size: 16px;
+    letter-spacing: 0.04em;
+}
+
+.hof-place-spot {
+    animation: hofPlaceIn 0.45s cubic-bezier(0.16, 0.84, 0.24, 1);
+}
+
+.hof-place-kicker,
+.hof-place-tag {
+    color: #8a5a00;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.hof-place-kicker {
+    margin: 0 0 4px;
+    font-size: 13px;
+}
+
+.hof-place-tag {
+    display: inline-block;
+    margin-bottom: 6px;
+    font-size: 11px;
+}
+
+.hof-called {
+    padding: 8px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.45);
+}
+
+.hof-called-people {
+    display: grid;
+    gap: 8px;
+}
+
+.hof-reveal.is-champion .hof-reveal-result {
+    position: relative;
+}
+
+.hof-champion-art {
+    display: flex;
+    justify-content: center;
+}
+
+.hof-champion-art .hof-art {
+    width: 64px;
+    height: auto;
+    filter: drop-shadow(0 8px 10px rgba(180, 130, 20, 0.35));
+    animation: hofChampionPop 0.7s cubic-bezier(0.16, 0.84, 0.24, 1);
+}
+
+.hof-place-spot.is-champion {
+    margin-top: 4px;
+    padding: 8px 8px 4px;
+    border-radius: 16px;
+    background:
+        radial-gradient(circle at 50% 18%, rgba(255, 246, 212, 0.95) 0%, rgba(243, 215, 138, 0.55) 38%, rgba(243, 215, 138, 0) 70%);
+    animation: hofChampionIn 0.7s cubic-bezier(0.16, 0.84, 0.24, 1);
+}
+
+.hof-place-spot.is-champion .hof-place-kicker {
+    text-align: center;
+    font-size: 15px;
+    letter-spacing: 0.28em;
+}
+
+.hof-confetti {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.hof-confetti i {
+    position: absolute;
+    top: -16px;
+    width: 8px;
+    height: 12px;
+    border-radius: 2px;
+    animation-name: hofConfetti;
+    animation-timing-function: ease-in;
+    animation-fill-mode: forwards;
+}
+
+@keyframes hofPlaceIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.96); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes hofChampionIn {
+    from { opacity: 0; transform: scale(0.84); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes hofChampionPop {
+    0% { transform: scale(0.4) rotate(-12deg); }
+    70% { transform: scale(1.08) rotate(3deg); }
+    100% { transform: none; }
+}
+
+@keyframes hofConfetti {
+    to { transform: translate(var(--hof-drift), 560px) rotate(280deg); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hof-place-spot,
+    .hof-place-spot.is-champion,
+    .hof-champion-art .hof-art,
+    .hof-confetti i {
+        animation: none;
+    }
+}
+
 .vote-group-title {
     margin: 18px 0 8px;
     color: #1b427c;

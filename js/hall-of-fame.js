@@ -680,24 +680,64 @@ function renderVoteCard(year, award, season, leaders, isAdmin) {
     return cardShell(year, award, body, people.length === 1);
 }
 
+function placeWord(rank) {
+    const mod100 = rank % 100;
+    const mod10 = rank % 10;
+    const suffix = mod100 >= 11 && mod100 <= 13 ? 'th' : mod10 === 1 ? 'st' : mod10 === 2 ? 'nd' : mod10 === 3 ? 'rd' : 'th';
+    return `${rank}${suffix}`;
+}
+
+function placeGroups(nominees) {
+    const sorted = nominees.slice().sort((a, b) => (Number(b.votes) || 0) - (Number(a.votes) || 0) || nomineeLabel(a).localeCompare(nomineeLabel(b)));
+    let lastVotes = null;
+    let lastRank = 0;
+    const ranked = sorted.map((person, index) => {
+        const votes = Number(person.votes) || 0;
+        const rank = lastVotes === votes ? lastRank : index + 1;
+        lastVotes = votes;
+        lastRank = rank;
+        return { person, rank };
+    });
+    const groups = [];
+    ranked.forEach((row) => {
+        const found = groups.find((group) => group.rank === row.rank);
+        if (found) found.people.push(row.person);
+        else groups.push({ rank: row.rank, people: [row.person] });
+    });
+    return groups.reverse();
+}
+
+function placeKicker(group) {
+    if (group.rank === 1) return group.people.length > 1 ? 'Co-champions' : 'Champion';
+    const word = placeWord(group.rank);
+    return group.people.length > 1 ? `Tied for ${word}` : `${word} place`;
+}
+
+function nextPlaceLabel(group) {
+    if (group.rank === 1) return group.people.length > 1 ? 'Reveal champions' : 'Reveal 1st place';
+    const word = placeWord(group.rank);
+    return group.people.length > 1 ? `Reveal tied ${word}` : `Reveal ${word} place`;
+}
+
+function revealPerson(person, large) {
+    return `<div class="${large ? 'hof-reveal-winner' : 'hof-reveal-row'}">
+        ${pairPhotos(person, large ? 'is-lg' : '')}
+        <div>
+            <div class="hof-reveal-name">${esc(nomineeLabel(person))}</div>
+            ${person.description ? `<div class="${large ? 'hof-reveal-why' : 'hof-reveal-desc'}">${esc(person.description)}</div>` : ''}
+            ${large ? voteLabel(person.votes) : ''}
+        </div>
+        ${large ? '' : voteLabel(person.votes)}
+    </div>`;
+}
+
 function ceremonyDialog(award, report) {
     const kindLabel = award.kind === 'creative' ? 'Voted creative awards' : 'Voted on field awards';
-    const winnerBlocks = report.winners.map((person) => `<div class="hof-reveal-winner">
-        ${pairPhotos(person, 'is-lg')}
-        <div>
-            <div class="hof-reveal-name">${esc(nomineeLabel(person))}</div>
-            ${person.description ? `<div class="hof-reveal-why">${esc(person.description)}</div>` : ''}
-            ${voteLabel(person.votes)}
-        </div>
-    </div>`).join('');
-    const nomineeBlocks = report.nominees.map((person) => `<div class="hof-reveal-row${report.winners.some((winner) => winner.id === person.id) ? ' is-winner' : ''}">
-        ${pairPhotos(person)}
-        <div>
-            <div class="hof-reveal-name">${esc(nomineeLabel(person))}</div>
-            ${person.description ? `<div class="hof-reveal-desc">${esc(person.description)}</div>` : ''}
-        </div>
-        ${voteLabel(person.votes)}
-    </div>`).join('');
+    const winnerBlocks = report.winners.map((person) => revealPerson(person, true)).join('');
+    const nomineeBlocks = report.nominees.map((person) => {
+        const row = revealPerson(person, false);
+        return report.winners.some((winner) => winner.id === person.id) ? row.replace('hof-reveal-row', 'hof-reveal-row is-winner') : row;
+    }).join('');
     const title = report.winners.length > 1 ? `${award.title} · tie` : award.title;
     return `<div class="hof-reveal" role="dialog" aria-modal="true" aria-labelledby="hofRevealTitle">
             <div class="hof-reveal-stage">
@@ -717,19 +757,101 @@ function ceremonyDialog(award, report) {
         </div>`;
 }
 
+function countdownShell(award) {
+    return `<div class="hof-reveal hof-reveal-countdown" role="dialog" aria-modal="true" aria-labelledby="hofRevealTitle">
+            <div class="hof-reveal-stage">
+                <div class="hof-spin-glow"></div>
+                <div class="hof-spin">${awardArt(award.id, `spin${award.id}`)}</div>
+                <p class="hof-roll-label">Drum roll</p>
+                <p class="hof-roll-title">${esc(award.title)}</p>
+            </div>
+            <div class="hof-reveal-result"></div>
+        </div>`;
+}
+
+function confettiHtml() {
+    const colors = ['#e2b340', '#f6e3a4', '#1a3d78', '#fff8e4', '#c6a03a', '#8e1d24'];
+    const pieces = Array.from({ length: 40 }, (_, index) => {
+        const color = colors[index % colors.length];
+        const left = (index * 37) % 100;
+        const delay = ((index % 8) * 0.08).toFixed(2);
+        const duration = (1.7 + (index % 5) * 0.22).toFixed(2);
+        const drift = ((index % 7) - 3) * 14;
+        return `<i style="left:${left}%;background:${color};animation-delay:${delay}s;animation-duration:${duration}s;--hof-drift:${drift}px"></i>`;
+    }).join('');
+    return `<div class="hof-confetti" aria-hidden="true">${pieces}</div>`;
+}
+
+function showPlace(step) {
+    if (!revealOpen || !revealOpen.groups) return;
+    const modal = document.querySelector('.hof-reveal-countdown');
+    const result = modal && modal.querySelector('.hof-reveal-result');
+    const group = revealOpen.groups[step];
+    if (!modal || !result || !group) return;
+    const award = revealOpen.award;
+    const kindLabel = award.kind === 'creative' ? 'Voted creative awards' : 'Voted on field awards';
+    const next = revealOpen.groups[step + 1];
+    const earlier = revealOpen.groups.slice(0, step).reverse();
+    const champion = group.rank === 1;
+    const kicker = placeKicker(group);
+    const earlierBlocks = earlier.map((place) => `<div class="hof-called">
+        <span class="hof-place-tag">${esc(place.people.length > 1 ? `Tied ${placeWord(place.rank)}` : placeWord(place.rank))}</span>
+        <div class="hof-called-people">${place.people.map((person) => revealPerson(person, false)).join('')}</div>
+    </div>`).join('');
+    const action = next
+        ? `<button type="button" class="hof-btn hof-btn-gold hof-reveal-next" data-action="reveal-next">${esc(nextPlaceLabel(next))}</button>`
+        : `<button type="button" class="hof-btn hof-btn-gold hof-reveal-next" data-action="close-reveal">Close</button>`;
+    result.innerHTML = `
+        ${champion ? confettiHtml() : ''}
+        <p class="hof-reveal-kicker">${esc(kindLabel)}</p>
+        <h3 id="hofRevealTitle">${esc(award.title)}</h3>
+        <div class="hof-place-spot${champion ? ' is-champion' : ''}">
+            ${champion ? `<div class="hof-champion-art">${awardArt(award.id, `champ${award.id}`)}</div>` : ''}
+            <p class="hof-place-kicker">${esc(kicker)}</p>
+            ${group.people.map((person) => revealPerson(person, true)).join('')}
+        </div>
+        ${action}
+        ${earlierBlocks ? `<h4>Already called</h4><div class="hof-reveal-list">${earlierBlocks}</div>` : ''}`;
+    modal.classList.add('is-live');
+    if (champion) modal.classList.add('is-champion');
+    revealOpen.step = step;
+    revealOpen.placed = true;
+    if (!champion) return;
+    try {
+        playChampion();
+    } catch (error) {
+        console.error(error);
+    }
+    publishReveal();
+}
+
+function advanceReveal() {
+    if (!revealOpen || revealOpen.history || !revealOpen.placed) return;
+    const next = revealOpen.step + 1;
+    if (!revealOpen.groups || next >= revealOpen.groups.length) return;
+    showPlace(next);
+}
+
 function openCeremony(year, awardId) {
     if (role !== 'admin' || isRevealed(year, awardId)) return;
     const season = seasonOf(year);
     const award = [...fieldAwards(), ...creativeCatalog(year)].find((item) => item.id === awardId);
     const report = unpackReport(season.publicResults && season.publicResults[awardId]);
     if (!award || !report || !report.winners.length) return;
+    const groups = placeGroups(report.nominees);
+    if (!groups.length) return;
     dismissCeremony(false);
     const overlay = document.createElement('div');
     overlay.className = 'hof-reveal-back';
-    overlay.innerHTML = ceremonyDialog(award, report);
+    overlay.innerHTML = countdownShell(award);
     document.body.appendChild(overlay);
-    revealOpen = { year, awardId, started: performance.now(), saved: false };
+    revealOpen = { year, awardId, award, started: performance.now(), saved: false, groups, step: -1, placed: false };
     overlay.addEventListener('click', (event) => {
+        if (event.target.closest('[data-action="reveal-next"]')) {
+            event.preventDefault();
+            advanceReveal();
+            return;
+        }
         if (!revealOpen || performance.now() - revealOpen.started < 900) return;
         const dialog = event.target.closest('.hof-reveal');
         if (dialog && !event.target.closest('[data-action="close-reveal"]')) return;
@@ -777,15 +899,14 @@ function openVoteHistory(year, awardId) {
 }
 
 function armReveal() {
-    if (!revealOpen || revealOpen.history) return;
-    const modal = document.querySelector('.hof-reveal');
+    if (!revealOpen || revealOpen.history || revealOpen.placed) return;
+    const modal = document.querySelector('.hof-reveal-countdown');
     if (!modal) return;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const wait = reduced ? 0 : Math.max(0, 2300 - (performance.now() - revealOpen.started));
     window.clearTimeout(revealTimer);
     const show = () => {
-        if (modal.isConnected) modal.classList.add('is-live');
-        publishReveal();
+        if (modal.isConnected) showPlace(0);
     };
     if (wait === 0) show();
     else revealTimer = window.setTimeout(show, wait);
@@ -816,6 +937,34 @@ async function publishReveal() {
         render();
         alert('The presentation finished, but the result did not go live. Close this and click Reveal again.');
     }
+}
+
+function playChampion() {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    stopRevealAudio();
+    const ctx = new AudioCtx();
+    revealAudio = ctx;
+    if (ctx.state === 'suspended') ctx.resume();
+    const now = ctx.currentTime + 0.02;
+    [523, 659, 784, 1046].forEach((freq, index) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const at = now + index * 0.11;
+        osc.type = 'triangle';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.0001, at);
+        gain.gain.exponentialRampToValueAtTime(0.16, at + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, at + 0.32);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(at);
+        osc.stop(at + 0.34);
+    });
+    cymbalHit(ctx, now + 0.36);
+    window.setTimeout(() => {
+        if (revealAudio === ctx) stopRevealAudio();
+    }, 1800);
 }
 
 function playDrumRoll() {
