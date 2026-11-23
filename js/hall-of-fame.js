@@ -708,13 +708,13 @@ function placeGroups(nominees) {
 }
 
 function placeKicker(group) {
-    if (group.rank === 1) return group.people.length > 1 ? 'Co-champions' : 'Champion';
+    if (group.rank === 1) return group.people.length > 1 ? 'Winners' : 'Winner';
     const word = placeWord(group.rank);
     return group.people.length > 1 ? `Tied for ${word}` : `${word} place`;
 }
 
 function nextPlaceLabel(group) {
-    if (group.rank === 1) return group.people.length > 1 ? 'Reveal champions' : 'Reveal 1st place';
+    if (group.rank === 1) return group.people.length > 1 ? 'Reveal winners' : 'Reveal 1st place';
     const word = placeWord(group.rank);
     return group.people.length > 1 ? `Reveal tied ${word}` : `Reveal ${word} place`;
 }
@@ -826,10 +826,25 @@ function showPlace(step) {
 }
 
 function advanceReveal() {
-    if (!revealOpen || revealOpen.history || !revealOpen.placed) return;
+    if (!revealOpen || revealOpen.history || !revealOpen.placed || revealOpen.rolling) return;
     const next = revealOpen.step + 1;
     if (!revealOpen.groups || next >= revealOpen.groups.length) return;
-    showPlace(next);
+    const modal = document.querySelector('.hof-reveal-countdown');
+    if (!modal) return;
+    revealOpen.rolling = true;
+    modal.classList.remove('is-live');
+    try {
+        playDrumRoll();
+    } catch (error) {
+        console.error(error);
+    }
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.clearTimeout(revealTimer);
+    revealTimer = window.setTimeout(() => {
+        if (!revealOpen) return;
+        revealOpen.rolling = false;
+        if (modal.isConnected) showPlace(next);
+    }, reduced ? 0 : 2300);
 }
 
 function openCeremony(year, awardId) {
