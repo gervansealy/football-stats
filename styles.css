@@ -4934,6 +4934,30 @@ body.admin .hof-bar-status.admin-only {
     margin-top: 18px;
 }
 
+.hof-history-btn {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: inherit;
+    cursor: pointer;
+}
+
+.hof-history-btn:hover .hof-winner-name,
+.hof-history-btn:focus-visible .hof-winner-name {
+    text-decoration: underline;
+}
+
+.hof-history-btn:focus-visible {
+    outline: 2px solid #1a3d78;
+    outline-offset: 2px;
+    border-radius: 10px;
+}
+
 .hof-reveal-btn {
     border: 1px solid #c4963a;
     border-radius: 999px;
