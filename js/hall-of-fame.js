@@ -11,6 +11,7 @@ import {
 mountHofBanner();
 
 const CURRENT_YEAR = new Date().getFullYear();
+const MIN_VOTER_GAMES = 9;
 const NOMINEE_SLOTS = Array.from({ length: NOMINEE_COUNT }, (_, slot) => slot);
 
 let role = 'viewer';
@@ -949,7 +950,7 @@ function renderSetup(year, roster) {
     const needsPlayers = roster.length < NOMINEE_COUNT;
     const saved = savedNoteYear === year;
     const creative = picks.creativeAwards || [];
-    return `<p class="hof-help">Voted on field awards use 4 players each. Voted creative awards are categories you name, with 4 descriptions and a player for each one. Add a second player only when you want a pair, such as Best Rivalry. Save keeps this if you leave the page. Each player gets a private link that expires after they submit.</p>
+    return `<p class="hof-help">Voted on field awards use 4 players each. Voted creative awards are categories you name, with 4 descriptions and a player for each one. Add a second player only when you want a pair, such as Best Rivalry. Save keeps this if you leave the page. A private link is created only for players with ${MIN_VOTER_GAMES} or more games this year, and it expires after they submit.</p>
         ${needsPlayers ? '<p class="hof-help">Add at least 4 players before opening a vote.</p>' : ''}
         <h4 class="hof-setup-kind">Voted on field awards</h4>
         <div class="hof-picks">
@@ -1370,8 +1371,13 @@ async function openVoting(year) {
             return;
         }
     }
+    const voters = roster.filter((player) => (player.games || 0) >= MIN_VOTER_GAMES);
+    if (!voters.length) {
+        alert(`Nobody has ${MIN_VOTER_GAMES} or more games in ${year}, so there is nobody to send a voting link to.`);
+        return;
+    }
     const creativeNote = creative.length ? ` ${creative.length} creative categor${creative.length === 1 ? 'y' : 'ies'} will be on the ballot too.` : '';
-    if (!confirm(`Open voting for ${year}? A private link will be created for every player. Each link stops working after that player submits one choice for every award.${creativeNote}`)) return;
+    if (!confirm(`Open voting for ${year}? A private link will be created for the ${voters.length} player${voters.length === 1 ? '' : 's'} with ${MIN_VOTER_GAMES} or more games. Players with fewer games do not get a link. Each link stops working after that player submits one choice for every award.${creativeNote}`)) return;
 
     await run(async () => {
         await deleteTokens(year);
@@ -1420,7 +1426,7 @@ async function openVoting(year) {
             nominees: nominees[award.id]
         }));
 
-        const tokenDocs = roster.map((player) => ({
+        const tokenDocs = voters.map((player) => ({
             id: newToken(),
             data: {
                 year,
