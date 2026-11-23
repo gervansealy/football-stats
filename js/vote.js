@@ -67,12 +67,22 @@ function ballotReady(data) {
     return onField && creative;
 }
 
+function choiceLabel(nominee) {
+    if (!nominee?.partner) return personName(nominee);
+    return `${personName(nominee)} & ${personName(nominee.partner)}`;
+}
+
+function choicePhotos(nominee) {
+    if (!nominee?.partner) return photoHtml(nominee, 'is-lg');
+    return `<span class="vote-pair">${photoHtml(nominee, 'is-lg')}${photoHtml(nominee.partner, 'is-lg')}</span>`;
+}
+
 function choiceButton(award, nominee) {
     const description = nominee.description ? `<span class="vote-desc">${esc(nominee.description)}</span>` : '';
-    return `<button type="button" class="vote-choice" data-award="${esc(award.id)}" data-player="${esc(nominee.id)}">
-        ${photoHtml(nominee, 'is-lg')}
+    return `<button type="button" class="vote-choice${nominee.partner ? ' is-pair' : ''}" data-award="${esc(award.id)}" data-player="${esc(nominee.id)}">
+        ${choicePhotos(nominee)}
         ${description}
-        <span class="vote-player">${esc(personName(nominee))}</span>
+        <span class="vote-player">${esc(choiceLabel(nominee))}</span>
     </button>`;
 }
 
@@ -135,7 +145,7 @@ async function submitBallot() {
         const choice = picks[award.id];
         const allowed = (tokenData.nomineeIds?.[award.id] || tokenData.nominees[award.id].map((nominee) => nominee.id));
         if (!choice || !allowed.includes(choice)) {
-            alert(`Pick one player for ${award.title}.`);
+            alert(`Pick one for ${award.title}.`);
             return;
         }
         votes[award.id] = choice;

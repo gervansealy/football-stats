@@ -4969,7 +4969,7 @@ body.admin .hof-bar-status.admin-only {
 }
 
 .hof-creative-row {
-    grid-template-columns: minmax(0, 1.4fr) minmax(140px, 0.8fr);
+    grid-template-columns: minmax(0, 1.4fr) minmax(140px, 0.8fr) minmax(150px, 0.8fr);
 }
 
 .hof-creative input,
@@ -5007,6 +5007,41 @@ body.admin .hof-bar-status.admin-only {
 .hof-grid-creative .hof-winner {
     justify-content: center;
     max-width: 460px;
+}
+
+.hof-grid-creative .hof-winner.is-pair {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+}
+
+.hof-grid-creative .hof-winner.is-pair .hof-winner-text {
+    text-align: center;
+}
+
+.hof-grid-creative .hof-pair .hof-photo-wrap {
+    width: 42px;
+    height: 42px;
+}
+
+.hof-pair,
+.vote-pair {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+}
+
+.hof-pair .hof-photo-wrap + .hof-photo-wrap,
+.vote-pair .hof-photo-wrap + .hof-photo-wrap {
+    margin-left: -8px;
+}
+
+.hof-pair .hof-photo,
+.hof-pair .hof-photo-fallback,
+.vote-pair .hof-photo,
+.vote-pair .hof-photo-fallback {
+    box-shadow: 0 0 0 2px #fffdf8;
 }
 
 .hof-winner-why {
@@ -5193,6 +5228,16 @@ body.admin .hof-bar-status.admin-only {
 .hof-reveal-winner .hof-photo-wrap {
     width: 84px;
     height: 84px;
+}
+
+.hof-reveal-winner .hof-pair .hof-photo-wrap {
+    width: 64px;
+    height: 64px;
+}
+
+.hof-reveal-winner > div,
+.hof-reveal-row > div {
+    min-width: 0;
 }
 
 .hof-reveal-name {
@@ -5848,6 +5893,11 @@ body.admin .hof-bar-status.admin-only {
     border-color: #c9a24a;
     background: #fff6dc;
     box-shadow: 0 0 0 3px rgba(226, 179, 64, 0.35);
+}
+
+.vote-pair .hof-photo-wrap.is-lg {
+    width: 58px;
+    height: 58px;
 }
 
 .vote-bar[hidden] {

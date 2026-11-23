@@ -173,7 +173,50 @@ function normalizeDraft(raw) {
 }
 
 function blankCreativeNominee() {
-    return { description: '', playerId: '' };
+    return { description: '', playerId: '', playerId2: '' };
+}
+
+function creativePlayerId(row) {
+    if (typeof row?.playerId === 'string' && row.playerId) return row.playerId;
+    if (typeof row?.id === 'string' && row.id && !row.id.includes('::')) return row.id;
+    return '';
+}
+
+function creativePartnerId(row) {
+    if (typeof row?.playerId2 === 'string' && row.playerId2) return row.playerId2;
+    if (typeof row?.partner?.id === 'string') return row.partner.id;
+    return '';
+}
+
+function creativeOptionId(row) {
+    const primary = creativePlayerId(row);
+    const partner = creativePartnerId(row);
+    if (!partner || partner === primary) return primary;
+    return [primary, partner].sort().join('::');
+}
+
+function nomineeLabel(person) {
+    if (!person?.partner?.name) return person?.name || 'Player';
+    return `${person.name} & ${person.partner.name}`;
+}
+
+function pairPhotos(person, extraClass) {
+    if (!person?.partner) return photoHtml(person, extraClass);
+    return `<span class="hof-pair">${photoHtml(person, extraClass)}${photoHtml(person.partner, extraClass)}</span>`;
+}
+
+function partnerFrom(raw) {
+    if (!raw || typeof raw !== 'object' || typeof raw.id !== 'string' || !raw.id) return null;
+    const live = playerMap()[raw.id];
+    const firstName = live?.firstName || raw.firstName || '';
+    const lastName = live?.lastName || raw.lastName || '';
+    return {
+        id: raw.id,
+        firstName,
+        lastName,
+        name: live?.name || raw.name || `${firstName} ${lastName}`.trim() || 'Player',
+        headshotLink: live?.headshotLink || raw.headshot || raw.headshotLink || ''
+    };
 }
 
 function normalizeCreative(raw) {
@@ -186,9 +229,8 @@ function normalizeCreative(raw) {
             kind: 'creative',
             nominees: NOMINEE_SLOTS.map((slot) => ({
                 description: String(nominees[slot]?.description || '').slice(0, 160),
-                playerId: typeof nominees[slot]?.playerId === 'string' && nominees[slot].playerId
-                    ? nominees[slot].playerId
-                    : (typeof nominees[slot]?.id === 'string' ? nominees[slot].id : '')
+                playerId: creativePlayerId(nominees[slot]),
+                playerId2: creativePartnerId(nominees[slot])
             }))
         };
     });
@@ -203,7 +245,7 @@ function draftScore(raw) {
     }, 0);
     return field + normalizeCreative(raw.creativeAwards).reduce((sum, award) => {
         const title = award.title.trim() ? 1 : 0;
-        const rows = award.nominees.filter((row) => row.description.trim() || row.playerId).length;
+        const rows = award.nominees.filter((row) => row.description.trim() || row.playerId || row.playerId2).length;
         return sum + title + rows;
     }, 0);
 }
@@ -318,8 +360,8 @@ function aggregate(year) {
 }
 
 function decoratePerson(id, names, votes) {
-    const live = playerMap()[id];
     const snap = names[id] || {};
+    const live = playerMap()[id] || (typeof snap.playerId === 'string' ? playerMap()[snap.playerId] : undefined);
     const firstName = live?.firstName || snap.firstName || '';
     const lastName = live?.lastName || snap.lastName || '';
     return {
@@ -336,13 +378,18 @@ function nomineeRows(awardId, agg) {
     const counts = agg.tally[awardId] || {};
     return Object.entries(counts)
         .map(([id, count]) => {
-            const person = decoratePerson(id, agg.names, count);
-            const snap = agg.detail?.[awardId]?.[id] || {};
+            const snap = agg.detail?.[awardId]?.[id] || agg.names[id] || {};
+            const person = decoratePerson(id, { [id]: snap }, count);
             person.description = snap.description || '';
+            const partner = partnerFrom(snap.partner);
+            if (partner) {
+                person.partner = partner;
+                if (typeof snap.playerId === 'string' && snap.playerId) person.playerId = snap.playerId;
+            }
             person.votes = count;
             return person;
         })
-        .sort((a, b) => b.votes - a.votes || a.name.localeCompare(b.name));
+        .sort((a, b) => b.votes - a.votes || nomineeLabel(a).localeCompare(nomineeLabel(b)));
 }
 
 function liveLeaders(agg) {
@@ -364,15 +411,28 @@ function publicShape(agg) {
         results[award.id] = {
             title: award.title,
             kind: award.kind || 'field',
-            nominees: rows.map((person) => ({
-                id: person.id,
-                name: person.name,
-                firstName: person.firstName || '',
-                lastName: person.lastName || '',
-                headshot: person.headshotLink || '',
-                votes: person.votes,
-                description: person.description || ''
-            }))
+            nominees: rows.map((person) => {
+                const packed = {
+                    id: person.id,
+                    name: person.name,
+                    firstName: person.firstName || '',
+                    lastName: person.lastName || '',
+                    headshot: person.headshotLink || '',
+                    votes: person.votes,
+                    description: person.description || ''
+                };
+                if (person.partner) {
+                    packed.playerId = person.playerId || '';
+                    packed.partner = {
+                        id: person.partner.id,
+                        name: person.partner.name,
+                        firstName: person.partner.firstName || '',
+                        lastName: person.partner.lastName || '',
+                        headshot: person.partner.headshotLink || ''
+                    };
+                }
+                return packed;
+            })
         };
     });
     return results;
@@ -387,6 +447,8 @@ function unpackReport(raw) {
     const nominees = raw.nominees.map((person) => {
         const packed = decoratePerson(person.id, { [person.id]: person }, person.votes);
         packed.description = person.description || '';
+        const partner = partnerFrom(person.partner);
+        if (partner) packed.partner = partner;
         packed.votes = Number.isFinite(Number(person.votes)) ? Number(person.votes) : null;
         return packed;
     });
@@ -619,17 +681,17 @@ function renderVoteCard(year, award, season, leaders, isAdmin) {
 function ceremonyDialog(award, report) {
     const kindLabel = award.kind === 'creative' ? 'Voted creative awards' : 'Voted on field awards';
     const winnerBlocks = report.winners.map((person) => `<div class="hof-reveal-winner">
-        ${photoHtml(person, 'is-lg')}
+        ${pairPhotos(person, 'is-lg')}
         <div>
-            <div class="hof-reveal-name">${esc(person.name)}</div>
+            <div class="hof-reveal-name">${esc(nomineeLabel(person))}</div>
             ${person.description ? `<div class="hof-reveal-why">${esc(person.description)}</div>` : ''}
             ${voteLabel(person.votes)}
         </div>
     </div>`).join('');
     const nomineeBlocks = report.nominees.map((person) => `<div class="hof-reveal-row${report.winners.some((winner) => winner.id === person.id) ? ' is-winner' : ''}">
-        ${photoHtml(person)}
+        ${pairPhotos(person)}
         <div>
-            <div class="hof-reveal-name">${esc(person.name)}</div>
+            <div class="hof-reveal-name">${esc(nomineeLabel(person))}</div>
             ${person.description ? `<div class="hof-reveal-desc">${esc(person.description)}</div>` : ''}
         </div>
         ${voteLabel(person.votes)}
@@ -835,10 +897,10 @@ function winnerList(people, statFor) {
     return `<div class="hof-winners">${people.map((person) => {
         const stat = statFor ? statFor(person) : '';
         const why = person.description ? `<div class="hof-winner-why">${esc(person.description)}</div>` : '';
-        return `<div class="hof-winner">
-            ${photoHtml(person)}
+        return `<div class="hof-winner${person.partner ? ' is-pair' : ''}">
+            ${pairPhotos(person)}
             <div class="hof-winner-text">
-                <div class="hof-winner-name">${esc(person.name)}</div>
+                <div class="hof-winner-name">${esc(nomineeLabel(person))}</div>
                 ${why}
                 ${stat ? `<div class="hof-winner-stat">${esc(stat)}</div>` : ''}
             </div>
@@ -865,7 +927,7 @@ function renderSetup(year, roster) {
     const needsPlayers = roster.length < NOMINEE_COUNT;
     const saved = savedNoteYear === year;
     const creative = picks.creativeAwards || [];
-    return `<p class="hof-help">Voted on field awards use 4 players each. Voted creative awards are categories you name, with 4 descriptions and a player tied to each description. Save keeps this if you leave the page. Each player gets a private link that expires after they submit.</p>
+    return `<p class="hof-help">Voted on field awards use 4 players each. Voted creative awards are categories you name, with 4 descriptions and a player for each one. Add a second player only when you want a pair, such as Best Rivalry. Save keeps this if you leave the page. Each player gets a private link that expires after they submit.</p>
         ${needsPlayers ? '<p class="hof-help">Add at least 4 players before opening a vote.</p>' : ''}
         <h4 class="hof-setup-kind">Voted on field awards</h4>
         <div class="hof-picks">
@@ -896,6 +958,11 @@ function creativeEditor(year, award, index, roster) {
                     <option value="">Select player</option>
                     ${roster.map((player) => `<option value="${esc(player.id)}"${row.playerId === player.id ? ' selected' : ''}>${esc(player.name)}</option>`).join('')}
                     ${row.playerId && !roster.some((player) => player.id === row.playerId) ? `<option value="${esc(row.playerId)}" selected>Removed player</option>` : ''}
+                </select>
+                <select data-creative-partner data-year="${year}" data-slot="${slot}" aria-label="Optional second player ${slot + 1}">
+                    <option value="">2nd player (optional)</option>
+                    ${roster.map((player) => `<option value="${esc(player.id)}"${row.playerId2 === player.id ? ' selected' : ''}>${esc(player.name)}</option>`).join('')}
+                    ${row.playerId2 && !roster.some((player) => player.id === row.playerId2) ? `<option value="${esc(row.playerId2)}" selected>Removed player</option>` : ''}
                 </select>
             </div>`;
         }).join('')}
@@ -950,7 +1017,7 @@ function renderTally(award, agg, maxVotes) {
         <p class="hof-tally-kind">${kind}</p>
         ${rows.map((row) => `<div class="hof-bar${row.votes > 0 && row.votes === top ? ' is-leader' : ''}">
             <div>
-                <span>${esc(row.name)}</span>
+                <span>${esc(nomineeLabel(row))}</span>
                 ${row.description ? `<em class="hof-bar-desc">${esc(row.description)}</em>` : ''}
                 <div class="hof-bar-track"><div class="hof-bar-fill" style="width:${Math.round((row.votes / maxVotes) * 100)}%"></div></div>
             </div>
@@ -983,7 +1050,7 @@ function onDraftChange(event) {
         render();
         return;
     }
-    const creativeSelect = event.target.closest('select[data-creative-player]');
+    const creativeSelect = event.target.closest('select[data-creative-player], select[data-creative-partner]');
     if (creativeSelect) {
         syncCreativeFromDom(creativeSelect.dataset.year);
         return;
@@ -1125,7 +1192,8 @@ function readCreative(year) {
         title: block.querySelector('[data-creative-title]')?.value || '',
         nominees: NOMINEE_SLOTS.map((slot) => ({
             description: block.querySelector(`[data-creative-desc][data-slot="${slot}"]`)?.value || '',
-            playerId: block.querySelector(`[data-creative-player][data-slot="${slot}"]`)?.value || ''
+            playerId: block.querySelector(`[data-creative-player][data-slot="${slot}"]`)?.value || '',
+            playerId2: block.querySelector(`[data-creative-partner][data-slot="${slot}"]`)?.value || ''
         }))
     })));
 }
@@ -1250,13 +1318,28 @@ async function openVoting(year) {
             alert('Name every creative category.');
             return;
         }
-        const chosen = award.nominees.map((row) => row.playerId);
         if (award.nominees.some((row) => !row.description.trim())) {
             alert(`Write all 4 descriptions for ${award.title}.`);
             return;
         }
-        if (chosen.some((id) => !id || !byId[id]) || new Set(chosen).size !== NOMINEE_COUNT) {
-            alert(`Pick 4 different players for ${award.title}.`);
+        for (const row of award.nominees) {
+            if (!row.playerId || !byId[row.playerId]) {
+                alert(`Pick a player for every option in ${award.title}. The second player can stay empty.`);
+                return;
+            }
+            if (!row.playerId2) continue;
+            if (row.playerId2 === row.playerId) {
+                alert(`The second player has to be a different person in ${award.title}.`);
+                return;
+            }
+            if (!byId[row.playerId2]) {
+                alert(`Pick a real second player in ${award.title}, or leave that box empty.`);
+                return;
+            }
+        }
+        const optionIds = award.nominees.map((row) => creativeOptionId(row));
+        if (new Set(optionIds).size !== NOMINEE_COUNT) {
+            alert(`Each option in ${award.title} needs a different player or pair.`);
             return;
         }
     }
@@ -1279,15 +1362,30 @@ async function openVoting(year) {
             nomineeIds[award.id] = picks[award.id].slice();
         });
         creative.forEach((award) => {
-            nominees[award.id] = award.nominees.map((row) => ({
-                id: row.playerId,
-                name: byId[row.playerId].name,
-                firstName: byId[row.playerId].firstName || '',
-                lastName: byId[row.playerId].lastName || '',
-                headshot: byId[row.playerId].headshotLink || '',
-                description: row.description.trim()
-            }));
-            nomineeIds[award.id] = award.nominees.map((row) => row.playerId);
+            nominees[award.id] = award.nominees.map((row) => {
+                const primary = byId[row.playerId];
+                const entry = {
+                    id: creativeOptionId(row),
+                    playerId: primary.id,
+                    name: primary.name,
+                    firstName: primary.firstName || '',
+                    lastName: primary.lastName || '',
+                    headshot: primary.headshotLink || '',
+                    description: row.description.trim()
+                };
+                if (row.playerId2) {
+                    const partner = byId[row.playerId2];
+                    entry.partner = {
+                        id: partner.id,
+                        name: partner.name,
+                        firstName: partner.firstName || '',
+                        lastName: partner.lastName || '',
+                        headshot: partner.headshotLink || ''
+                    };
+                }
+                return entry;
+            });
+            nomineeIds[award.id] = nominees[award.id].map((entry) => entry.id);
         });
         const creativeAwards = creative.map((award) => ({
             id: award.id,
