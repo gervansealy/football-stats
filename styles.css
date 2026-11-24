@@ -4756,6 +4756,20 @@ body.vote-page {
     text-decoration: none;
 }
 
+.hof-video-reveal {
+    display: flex;
+    justify-content: center;
+    padding: 22px 0 6px;
+}
+
+.hof-video-reveal .hof-reveal-btn {
+    min-width: 160px;
+    padding: 12px 28px;
+    font-size: 16px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
 .hof-close-form {
     display: flex;
     flex-wrap: wrap;

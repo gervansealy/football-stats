@@ -560,10 +560,14 @@ function savedClosingVideo(season) {
 
 function renderClosingVideo(year, season, isAdmin) {
     const saved = savedClosingVideo(season);
-    if (!isAdmin && !saved) return '';
+    const revealed = season.videoRevealed === true;
+    if (!isAdmin && !(saved && revealed)) return '';
     const draft = Object.prototype.hasOwnProperty.call(videoDrafts, String(year)) ? videoDrafts[String(year)] : saved;
     const savedNote = savedVideoYear === year;
-    const player = saved ? closingPlayer(saved) : '';
+    const player = saved && revealed ? closingPlayer(saved) : '';
+    const reveal = isAdmin && saved && !revealed
+        ? `<div class="hof-video-reveal"><button type="button" class="hof-reveal-btn" data-action="reveal-video" data-year="${year}">Reveal</button></div>`
+        : '';
     const form = isAdmin ? `<div class="admin-only"><div class="hof-close-form">
         <label class="hof-close-label" for="hofVideo${year}">Video link</label>
         <input id="hofVideo${year}" class="hof-close-input" type="url" inputmode="url" placeholder="https://..." data-action="video-link" data-year="${year}" value="${esc(draft)}">
@@ -576,6 +580,7 @@ function renderClosingVideo(year, season, isAdmin) {
             <h2>End of year video</h2>
         </div>
         ${player}
+        ${reveal}
         ${form}
     </section>`;
 }
@@ -927,10 +932,73 @@ function armReveal() {
     else revealTimer = window.setTimeout(show, wait);
 }
 
+function openVideoCeremony(year) {
+    if (role !== 'admin' || seasonOf(year).videoRevealed === true) return;
+    if (!savedClosingVideo(seasonOf(year))) return;
+    dismissCeremony(false);
+    const overlay = document.createElement('div');
+    overlay.className = 'hof-reveal-back';
+    overlay.innerHTML = `<div class="hof-reveal" role="dialog" aria-modal="true" aria-labelledby="hofVideoRevealTitle">
+        <div class="hof-reveal-stage">
+            <div class="hof-spin-glow"></div>
+            <div class="hof-spin">${awardArt('closingVideo', 'spinVideo')}</div>
+            <p class="hof-roll-label">Drum roll</p>
+            <p class="hof-roll-title">End of year video</p>
+        </div>
+        <div class="hof-reveal-result">
+            <p class="hof-reveal-kicker">Sweat Squad</p>
+            <h3 id="hofVideoRevealTitle">End of year video</h3>
+            <p class="hof-reveal-why">The highlights are live.</p>
+            <button type="button" class="hof-btn hof-btn-gold" data-action="close-reveal">Close</button>
+        </div>
+    </div>`;
+    document.body.appendChild(overlay);
+    revealOpen = { year, awardId: 'closingVideo', kind: 'video', started: performance.now(), saved: false, placed: true };
+    overlay.addEventListener('click', (event) => {
+        if (!revealOpen || performance.now() - revealOpen.started < 900) return;
+        const dialog = event.target.closest('.hof-reveal');
+        if (dialog && !event.target.closest('[data-action="close-reveal"]')) return;
+        dismissCeremony(true);
+    });
+    try {
+        playDrumRoll();
+    } catch (error) {
+        console.error(error);
+        stopRevealAudio();
+    }
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.clearTimeout(revealTimer);
+    revealTimer = window.setTimeout(() => {
+        const modal = overlay.querySelector('.hof-reveal');
+        if (!modal || !modal.isConnected || !revealOpen || revealOpen.kind !== 'video') return;
+        modal.classList.add('is-live');
+        publishReveal();
+    }, reduced ? 0 : 2300);
+}
+
+async function publishVideoReveal() {
+    const { year } = revealOpen;
+    const key = String(year);
+    seasons[key] = { ...(seasons[key] || { year }), videoRevealed: true };
+    lastHtml = '';
+    render();
+    try {
+        await writeSeason(year, { videoRevealed: true });
+    } catch (error) {
+        console.error(error);
+        if (seasons[key]) seasons[key] = { ...seasons[key], videoRevealed: false };
+        if (revealOpen && revealOpen.kind === 'video') revealOpen.saved = false;
+        lastHtml = '';
+        render();
+        alert('The presentation finished, but the video did not go live. Close this and click Reveal again.');
+    }
+}
+
 async function publishReveal() {
     if (!revealOpen || revealOpen.saved || role !== 'admin') return;
-    const { year, awardId } = revealOpen;
     revealOpen.saved = true;
+    if (revealOpen.kind === 'video') return publishVideoReveal();
+    const { year, awardId } = revealOpen;
     const key = String(year);
     const current = seasons[key] || { year };
     const existing = Array.isArray(current.revealedAwards) ? current.revealedAwards : [];
@@ -1294,6 +1362,11 @@ async function onClick(event) {
         openCeremony(Number(button.dataset.year) || selectedYear, button.dataset.award);
         return;
     }
+    if (action === 'reveal-video') {
+        event.preventDefault();
+        openVideoCeremony(Number(button.dataset.year) || selectedYear);
+        return;
+    }
     if (action === 'vote-history') {
         event.preventDefault();
         openVoteHistory(Number(button.dataset.year) || selectedYear, button.dataset.award);
@@ -1361,7 +1434,7 @@ async function onClick(event) {
     } else if (action === 'remove-video') {
         if (!confirm(`Remove the ${year} end of year video?`)) return;
         delete videoDrafts[String(year)];
-        await run(() => writeSeason(year, { closingVideo: deleteField() }));
+        await run(() => writeSeason(year, { closingVideo: deleteField(), videoRevealed: deleteField() }));
     }
 }
 
