@@ -938,17 +938,19 @@ function openVideoCeremony(year) {
     dismissCeremony(false);
     const overlay = document.createElement('div');
     overlay.className = 'hof-reveal-back';
-    overlay.innerHTML = `<div class="hof-reveal" role="dialog" aria-modal="true" aria-labelledby="hofVideoRevealTitle">
+    overlay.innerHTML = `<div class="hof-reveal is-celebrate" role="dialog" aria-modal="true" aria-labelledby="hofVideoRevealTitle">
         <div class="hof-reveal-stage">
             <div class="hof-spin-glow"></div>
             <div class="hof-spin">${awardArt('closingVideo', 'spinVideo')}</div>
-            <p class="hof-roll-label">Drum roll</p>
+            <p class="hof-roll-label">Celebrate</p>
             <p class="hof-roll-title">End of year video</p>
         </div>
         <div class="hof-reveal-result">
+            ${confettiHtml()}
+            <div class="hof-champion-art">${awardArt('closingVideo', 'liveVideo')}</div>
             <p class="hof-reveal-kicker">Sweat Squad</p>
-            <h3 id="hofVideoRevealTitle">End of year video</h3>
-            <p class="hof-reveal-why">The highlights are live.</p>
+            <h3 id="hofVideoRevealTitle">The highlights are live</h3>
+            <p class="hof-reveal-why">End of year video</p>
             <button type="button" class="hof-btn hof-btn-gold" data-action="close-reveal">Close</button>
         </div>
     </div>`;
@@ -961,7 +963,7 @@ function openVideoCeremony(year) {
         dismissCeremony(true);
     });
     try {
-        playDrumRoll();
+        playCelebrate();
     } catch (error) {
         console.error(error);
         stopRevealAudio();
@@ -971,9 +973,14 @@ function openVideoCeremony(year) {
     revealTimer = window.setTimeout(() => {
         const modal = overlay.querySelector('.hof-reveal');
         if (!modal || !modal.isConnected || !revealOpen || revealOpen.kind !== 'video') return;
-        modal.classList.add('is-live');
+        modal.classList.add('is-live', 'is-champion');
+        try {
+            playChampion();
+        } catch (error) {
+            console.error(error);
+        }
         publishReveal();
-    }, reduced ? 0 : 2300);
+    }, reduced ? 0 : 1400);
 }
 
 async function publishVideoReveal() {
@@ -1020,6 +1027,34 @@ async function publishReveal() {
         render();
         alert('The presentation finished, but the result did not go live. Close this and click Reveal again.');
     }
+}
+
+function playCelebrate() {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    stopRevealAudio();
+    const ctx = new AudioCtx();
+    revealAudio = ctx;
+    if (ctx.state === 'suspended') ctx.resume();
+    const now = ctx.currentTime + 0.02;
+    [392, 494, 587, 784].forEach((freq, index) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const at = now + index * 0.16;
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, at);
+        osc.frequency.exponentialRampToValueAtTime(freq * 1.5, at + 0.28);
+        gain.gain.setValueAtTime(0.0001, at);
+        gain.gain.exponentialRampToValueAtTime(0.12, at + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.001, at + 0.42);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(at);
+        osc.stop(at + 0.44);
+    });
+    window.setTimeout(() => {
+        if (revealAudio === ctx) stopRevealAudio();
+    }, 1600);
 }
 
 function playChampion() {

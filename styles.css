@@ -5359,6 +5359,21 @@ body.admin .hof-bar-status.admin-only {
     gap: 8px;
 }
 
+.hof-reveal.is-celebrate .hof-spin {
+    animation: hofChampionPop 0.9s cubic-bezier(0.16, 0.84, 0.24, 1) both;
+}
+
+.hof-reveal.is-celebrate .hof-roll-label {
+    letter-spacing: 0.22em;
+    animation: none;
+}
+
+.hof-reveal.is-celebrate.is-live .hof-reveal-result {
+    position: relative;
+    text-align: center;
+    animation: hofChampionIn 0.7s cubic-bezier(0.16, 0.84, 0.24, 1);
+}
+
 .hof-reveal.is-champion .hof-reveal-result {
     position: relative;
 }
