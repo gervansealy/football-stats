@@ -1,4 +1,4 @@
-const CACHE = 'sweat-squad-v37';
+const CACHE = 'sweat-squad-v38';
 
 const SHELL = [
     './',
@@ -86,7 +86,7 @@ self.addEventListener('fetch', (event) => {
     if (request.method !== 'GET') return;
 
     const url = new URL(request.url);
-    if (isLiveData(url)) return;
+    if (isLiveData(url) || /\.(mp4|webm|ogg)$/i.test(url.pathname)) return;
 
     event.respondWith(networkFirst(request));
 });

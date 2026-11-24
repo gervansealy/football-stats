@@ -592,16 +592,19 @@ function closeMark() {
     </svg>`;
 }
 
+function highlightsVideoSrc() {
+    return new URL('videos/sweat-squad-end-of-year-highlights.mp4', window.location.href).href;
+}
+
 function closingPlayer(raw) {
     const media = videoEmbed(raw);
-    if (!media) return '';
-    if (media.kind === 'iframe') {
-        return `<div class="hof-close-player"><iframe src="${esc(media.src)}" title="End of year video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
+    const playable = media && (media.kind === 'iframe' || media.kind === 'video')
+        ? media
+        : { kind: 'video', src: highlightsVideoSrc() };
+    if (playable.kind === 'iframe') {
+        return `<div class="hof-close-player"><iframe src="${esc(playable.src)}" title="End of year video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
     }
-    if (media.kind === 'video') {
-        return `<div class="hof-close-player"><video src="${esc(media.src)}" controls playsinline preload="metadata"></video></div>`;
-    }
-    return `<p class="hof-close-link"><a href="${esc(media.href)}" target="_blank" rel="noopener noreferrer">Watch the end of year video</a></p>`;
+    return `<div class="hof-close-player"><video src="${esc(playable.src)}" controls playsinline preload="metadata" title="Sweat Squad End of Year Highlights"></video></div>`;
 }
 
 function videoEmbed(raw) {
