@@ -5157,6 +5157,96 @@ body.admin .hof-bar-status.admin-only {
     animation: hofRevealIn 0.72s cubic-bezier(0.16, 0.84, 0.24, 1);
 }
 
+.hof-reveal-countdown.is-live:not(.is-settled) .hof-reveal-result {
+    display: none;
+    animation: none;
+}
+
+.hof-reveal-countdown.is-settled .hof-reveal-result {
+    display: block;
+    animation: hofPlaceIn 0.35s ease;
+}
+
+.hof-envelope {
+    position: relative;
+    width: min(380px, 100%);
+    margin: 8px auto 0;
+}
+
+.hof-envelope-card {
+    position: relative;
+    z-index: 1;
+    width: calc(100% - 48px);
+    margin: 0 auto -22px;
+    padding: 14px 12px 18px;
+    border-radius: 14px;
+    border: 1.5px solid #e4c56e;
+    background: linear-gradient(180deg, #fffef9 0%, #f8efd4 100%);
+    box-shadow: 0 10px 18px rgba(16, 42, 86, 0.12);
+    transform: translateY(150px);
+}
+
+.hof-envelope.is-open .hof-envelope-card {
+    transform: translateY(0);
+    animation: hofCardPull 1.05s cubic-bezier(0.16, 0.84, 0.24, 1) forwards;
+}
+
+.hof-envelope-shell {
+    position: relative;
+    z-index: 2;
+    height: 96px;
+    margin-top: 0;
+    pointer-events: none;
+    perspective: 700px;
+}
+
+.hof-envelope-pocket {
+    position: absolute;
+    inset: 0;
+    border: 1.5px solid #e4c56e;
+    border-radius: 6px 6px 16px 16px;
+    background: linear-gradient(180deg, #2a5aaa 0%, #102a56 58%);
+    box-shadow: 0 12px 20px rgba(8, 16, 32, 0.28);
+}
+
+.hof-envelope-pocket::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    top: 10px;
+    height: 1px;
+    background: rgba(228, 197, 110, 0.7);
+}
+
+.hof-envelope-flap {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    z-index: 3;
+    height: 58px;
+    background: linear-gradient(180deg, #1b427c, #16356c);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    transform-origin: center top;
+    filter: drop-shadow(0 6px 0 #e4c56e);
+}
+
+.hof-envelope.is-open .hof-envelope-flap {
+    animation: hofFlapOpen 0.42s ease forwards;
+}
+
+@keyframes hofCardPull {
+    from { transform: translateY(150px); }
+    to { transform: translateY(0); }
+}
+
+@keyframes hofFlapOpen {
+    0% { transform: rotateX(0deg); opacity: 1; }
+    55% { transform: rotateX(-110deg); opacity: 1; }
+    100% { transform: rotateX(-170deg); opacity: 0; }
+}
+
 .hof-spin-glow {
     position: absolute;
     top: 8px;
@@ -5232,8 +5322,14 @@ body.admin .hof-bar-status.admin-only {
 @media (prefers-reduced-motion: reduce) {
     .hof-spin,
     .hof-roll-label,
-    .hof-reveal.is-live .hof-reveal-result {
+    .hof-reveal.is-live .hof-reveal-result,
+    .hof-envelope.is-open .hof-envelope-card,
+    .hof-envelope.is-open .hof-envelope-flap {
         animation: none;
+    }
+
+    .hof-envelope.is-open .hof-envelope-card {
+        transform: none;
     }
 }
 

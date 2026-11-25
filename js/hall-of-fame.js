@@ -770,12 +770,16 @@ function ceremonyDialog(award, report) {
 }
 
 function countdownShell(award) {
+    const kindLabel = award.kind === 'creative' ? 'Voted creative awards' : 'Voted on field awards';
     return `<div class="hof-reveal hof-reveal-countdown" role="dialog" aria-modal="true" aria-labelledby="hofRevealTitle">
-            <div class="hof-reveal-stage">
-                <div class="hof-spin-glow"></div>
-                <div class="hof-spin">${awardArt(award.id, `spin${award.id}`)}</div>
-                <p class="hof-roll-label">Drum roll</p>
-                <p class="hof-roll-title">${esc(award.title)}</p>
+            <p class="hof-reveal-kicker">${esc(kindLabel)}</p>
+            <h3 id="hofRevealTitle">${esc(award.title)}</h3>
+            <div class="hof-envelope">
+                <div class="hof-envelope-card"></div>
+                <div class="hof-envelope-shell" aria-hidden="true">
+                    <div class="hof-envelope-flap"></div>
+                    <div class="hof-envelope-pocket"></div>
+                </div>
             </div>
             <div class="hof-reveal-result"></div>
         </div>`;
@@ -797,11 +801,12 @@ function confettiHtml() {
 function showPlace(step) {
     if (!revealOpen || !revealOpen.groups) return;
     const modal = document.querySelector('.hof-reveal-countdown');
+    const envelope = modal && modal.querySelector('.hof-envelope');
+    const card = envelope && envelope.querySelector('.hof-envelope-card');
     const result = modal && modal.querySelector('.hof-reveal-result');
     const group = revealOpen.groups[step];
-    if (!modal || !result || !group) return;
+    if (!modal || !envelope || !card || !result || !group) return;
     const award = revealOpen.award;
-    const kindLabel = award.kind === 'creative' ? 'Voted creative awards' : 'Voted on field awards';
     const next = revealOpen.groups[step + 1];
     const earlier = revealOpen.groups.slice(0, step).reverse();
     const champion = group.rank === 1;
@@ -813,50 +818,51 @@ function showPlace(step) {
     const action = next
         ? `<button type="button" class="hof-btn hof-btn-gold hof-reveal-next" data-action="reveal-next">${esc(nextPlaceLabel(next))}</button>`
         : `<button type="button" class="hof-btn hof-btn-gold hof-reveal-next" data-action="close-reveal">Close</button>`;
-    result.innerHTML = `
-        ${champion ? confettiHtml() : ''}
-        <p class="hof-reveal-kicker">${esc(kindLabel)}</p>
-        <h3 id="hofRevealTitle">${esc(award.title)}</h3>
-        <div class="hof-place-spot${champion ? ' is-champion' : ''}">
-            ${champion ? `<div class="hof-champion-art">${awardArt(award.id, `champ${award.id}`)}</div>` : ''}
-            <p class="hof-place-kicker">${esc(kicker)}</p>
-            ${group.people.map((person) => revealPerson(person, true)).join('')}
-        </div>
-        ${action}
-        ${earlierBlocks ? `<h4>Already called</h4><div class="hof-reveal-list">${earlierBlocks}</div>` : ''}`;
+    card.innerHTML = `<div class="hof-place-spot${champion ? ' is-champion' : ''}">
+        ${champion ? `<div class="hof-champion-art">${awardArt(award.id, `champ${award.id}${step}`)}</div>` : ''}
+        <p class="hof-place-kicker">${esc(kicker)}</p>
+        ${group.people.map((person) => revealPerson(person, true)).join('')}
+    </div>`;
+    result.innerHTML = `${action}${earlierBlocks ? `<h4>Already called</h4><div class="hof-reveal-list">${earlierBlocks}</div>` : ''}`;
+    envelope.classList.remove('is-open');
+    void envelope.offsetWidth;
+    envelope.classList.add('is-open');
     modal.classList.add('is-live');
-    if (champion) modal.classList.add('is-champion');
+    modal.classList.remove('is-settled');
+    if (!champion) modal.classList.remove('is-champion');
+    const burst = modal.querySelector('.hof-confetti');
+    if (burst) burst.remove();
     revealOpen.step = step;
     revealOpen.placed = true;
-    if (!champion) return;
-    try {
-        playChampion();
-    } catch (error) {
-        console.error(error);
-    }
-    publishReveal();
-}
-
-function advanceReveal() {
-    if (!revealOpen || revealOpen.history || !revealOpen.placed || revealOpen.rolling) return;
-    const next = revealOpen.step + 1;
-    if (!revealOpen.groups || next >= revealOpen.groups.length) return;
-    const modal = document.querySelector('.hof-reveal-countdown');
-    if (!modal) return;
     revealOpen.rolling = true;
-    modal.classList.remove('is-live');
     try {
-        playDrumRoll();
+        playPaper();
     } catch (error) {
         console.error(error);
     }
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     window.clearTimeout(revealTimer);
     revealTimer = window.setTimeout(() => {
-        if (!revealOpen) return;
+        if (!revealOpen || !modal.isConnected) return;
         revealOpen.rolling = false;
-        if (modal.isConnected) showPlace(next);
-    }, reduced ? 0 : 2300);
+        modal.classList.add('is-settled');
+        if (!champion) return;
+        modal.classList.add('is-champion');
+        modal.insertAdjacentHTML('afterbegin', confettiHtml());
+        try {
+            playChampion();
+        } catch (error) {
+            console.error(error);
+        }
+        publishReveal();
+    }, reduced ? 0 : 1100);
+}
+
+function advanceReveal() {
+    if (!revealOpen || revealOpen.history || !revealOpen.placed || revealOpen.rolling) return;
+    const next = revealOpen.step + 1;
+    if (!revealOpen.groups || next >= revealOpen.groups.length) return;
+    showPlace(next);
 }
 
 function openCeremony(year, awardId) {
@@ -884,12 +890,6 @@ function openCeremony(year, awardId) {
         if (dialog && !event.target.closest('[data-action="close-reveal"]')) return;
         dismissCeremony(true);
     });
-    try {
-        playDrumRoll();
-    } catch (error) {
-        console.error(error);
-        stopRevealAudio();
-    }
     lastHtml = '';
     render();
 }
@@ -930,7 +930,7 @@ function armReveal() {
     const modal = document.querySelector('.hof-reveal-countdown');
     if (!modal) return;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const wait = reduced ? 0 : Math.max(0, 2300 - (performance.now() - revealOpen.started));
+    const wait = reduced ? 0 : 40;
     window.clearTimeout(revealTimer);
     const show = () => {
         if (modal.isConnected) showPlace(0);
@@ -1130,6 +1130,39 @@ function playChampion() {
     }, 1800);
 }
 
+function playPaper() {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    stopRevealAudio();
+    const ctx = new AudioCtx();
+    revealAudio = ctx;
+    if (ctx.state === 'suspended') ctx.resume();
+    const now = ctx.currentTime + 0.02;
+    const frames = Math.floor(ctx.sampleRate * 0.28);
+    const buffer = ctx.createBuffer(1, frames, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < frames; i += 1) data[i] = (Math.random() * 2 - 1) * Math.sin((i / frames) * Math.PI);
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(900, now);
+    filter.frequency.exponentialRampToValueAtTime(2400, now + 0.22);
+    filter.Q.value = 0.7;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.2, now + 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    noise.start(now);
+    noise.stop(now + 0.3);
+    window.setTimeout(() => {
+        if (revealAudio === ctx) stopRevealAudio();
+    }, 700);
+}
+
 function playDrumRoll() {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -1301,7 +1334,7 @@ function creativeEditor(year, award, index, roster) {
                 </select>
             </div>`;
         }).join('')}
-    </div>`;
+        </div>`;
 }
 
 function pickRow(year, award, roster, selected) {
