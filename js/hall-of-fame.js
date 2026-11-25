@@ -774,6 +774,7 @@ function countdownShell(award) {
     return `<div class="hof-reveal hof-reveal-countdown" role="dialog" aria-modal="true" aria-labelledby="hofRevealTitle">
             <p class="hof-reveal-kicker">${esc(kindLabel)}</p>
             <h3 id="hofRevealTitle">${esc(award.title)}</h3>
+            <p class="hof-spin-caption">First place</p>
             <div class="hof-envelope">
                 <div class="hof-envelope-card"></div>
                 <div class="hof-envelope-shell" aria-hidden="true">
@@ -810,6 +811,10 @@ function showPlace(step) {
     const next = revealOpen.groups[step + 1];
     const earlier = revealOpen.groups.slice(0, step).reverse();
     const champion = group.rank === 1;
+    if (champion && !revealOpen.spun) {
+        beginChampionSpin(step);
+        return;
+    }
     const kicker = placeKicker(group);
     const earlierBlocks = earlier.map((place) => `<div class="hof-called">
         <span class="hof-place-tag">${esc(place.people.length > 1 ? `Tied ${placeWord(place.rank)}` : placeWord(place.rank))}</span>
@@ -856,6 +861,42 @@ function showPlace(step) {
         }
         publishReveal();
     }, reduced ? 0 : 1100);
+}
+
+function beginChampionSpin(step) {
+    const modal = document.querySelector('.hof-reveal-countdown');
+    const envelope = modal && modal.querySelector('.hof-envelope');
+    const card = envelope && envelope.querySelector('.hof-envelope-card');
+    if (!modal || !envelope || !card || !revealOpen) return;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) {
+        revealOpen.spun = true;
+        showPlace(step);
+        return;
+    }
+    card.innerHTML = '';
+    envelope.classList.remove('is-open');
+    envelope.classList.add('is-spinning');
+    modal.classList.add('is-whirling', 'is-live');
+    modal.classList.remove('is-settled', 'is-champion');
+    const burst = modal.querySelector('.hof-confetti');
+    if (burst) burst.remove();
+    revealOpen.rolling = true;
+    revealOpen.placed = true;
+    try {
+        playWhirl();
+    } catch (error) {
+        console.error(error);
+    }
+    window.clearTimeout(revealTimer);
+    revealTimer = window.setTimeout(() => {
+        if (!revealOpen || !modal.isConnected) return;
+        envelope.classList.remove('is-spinning');
+        modal.classList.remove('is-whirling');
+        revealOpen.spun = true;
+        revealOpen.rolling = false;
+        showPlace(step);
+    }, 2200);
 }
 
 function advanceReveal() {
@@ -1128,6 +1169,40 @@ function playChampion() {
     window.setTimeout(() => {
         if (revealAudio === ctx) stopRevealAudio();
     }, 1800);
+}
+
+function playWhirl() {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    stopRevealAudio();
+    const ctx = new AudioCtx();
+    revealAudio = ctx;
+    if (ctx.state === 'suspended') ctx.resume();
+    const begin = ctx.currentTime + 0.03;
+    let at = 0;
+    let gap = 0.28;
+    let note = 0;
+    const tones = [392, 440, 494, 523, 587, 659, 784];
+    while (at < 2.05) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const start = begin + at;
+        osc.type = 'triangle';
+        osc.frequency.value = tones[note % tones.length];
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.11, start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + Math.min(0.22, gap));
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + 0.24);
+        at += gap;
+        gap = Math.max(0.07, gap * 0.78);
+        note += 1;
+    }
+    window.setTimeout(() => {
+        if (revealAudio === ctx) stopRevealAudio();
+    }, 2300);
 }
 
 function playPaper() {
