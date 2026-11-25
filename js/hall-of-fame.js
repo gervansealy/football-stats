@@ -1,7 +1,7 @@
 import { db } from './firebase-config.js';
 import { checkAuth } from './auth.js';
 import {
-    collection, doc, onSnapshot, getDocs, query, where, writeBatch, serverTimestamp, deleteField, arrayUnion
+    collection, doc, onSnapshot, getDocs, query, where, writeBatch, serverTimestamp, deleteField, arrayUnion, arrayRemove
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import {
     STAT_AWARDS, VOTE_AWARDS, VOTE_AWARD_IDS, NOMINEE_COUNT, CREATIVE_LIMIT, normalizePoints, calculateSeasonStats,
@@ -580,6 +580,7 @@ function renderClosingVideo(year, season, isAdmin) {
             <h2>End of year video</h2>
         </div>
         ${player}
+        ${isAdmin && saved && revealed ? `<button type="button" class="hof-undo" data-action="undo-video" data-year="${year}">Undo reveal</button>` : ''}
         ${reveal}
         ${form}
     </section>`;
@@ -672,7 +673,10 @@ function renderVoteCard(year, award, season, leaders, isAdmin) {
     const publishedWinners = report ? report.winners : [];
     if (published && publishedWinners.length) {
         if (isRevealed(year, award.id)) {
-            const body = `<button type="button" class="hof-history-btn" data-action="vote-history" data-year="${year}" data-award="${esc(award.id)}" aria-label="See the votes for ${esc(award.title)}">${winnerList(publishedWinners, null)}</button>`;
+            const undo = isAdmin
+                ? `<button type="button" class="hof-undo" data-action="undo-reveal" data-year="${year}" data-award="${esc(award.id)}">Undo reveal</button>`
+                : '';
+            const body = `<button type="button" class="hof-history-btn" data-action="vote-history" data-year="${year}" data-award="${esc(award.id)}" aria-label="See the votes for ${esc(award.title)}">${winnerList(publishedWinners, null)}</button>${undo}`;
             return cardShell(year, award, body, publishedWinners.length === 1);
         }
         if (isAdmin) {
@@ -1001,6 +1005,44 @@ async function publishVideoReveal() {
         lastHtml = '';
         render();
         alert('The presentation finished, but the video did not go live. Close this and click Reveal again.');
+    }
+}
+
+async function undoAwardReveal(year, awardId) {
+    if (role !== 'admin') return;
+    const key = String(year);
+    const current = seasons[key] || { year };
+    const existing = Array.isArray(current.revealedAwards) ? current.revealedAwards : [];
+    const previous = existing.slice();
+    seasons[key] = { ...current, revealedAwards: existing.filter((id) => id !== awardId) };
+    lastHtml = '';
+    render();
+    try {
+        await writeSeason(year, { revealedAwards: arrayRemove(awardId) });
+    } catch (error) {
+        console.error(error);
+        if (seasons[key]) seasons[key] = { ...seasons[key], revealedAwards: previous };
+        lastHtml = '';
+        render();
+        alert('That reveal could not be undone. Please try again.');
+    }
+}
+
+async function undoVideoReveal(year) {
+    if (role !== 'admin') return;
+    const key = String(year);
+    const current = seasons[key] || { year };
+    seasons[key] = { ...current, videoRevealed: false };
+    lastHtml = '';
+    render();
+    try {
+        await writeSeason(year, { videoRevealed: false });
+    } catch (error) {
+        console.error(error);
+        if (seasons[key]) seasons[key] = { ...seasons[key], videoRevealed: true };
+        lastHtml = '';
+        render();
+        alert('That reveal could not be undone. Please try again.');
     }
 }
 
@@ -1403,6 +1445,23 @@ async function onClick(event) {
     if (action === 'reveal-video') {
         event.preventDefault();
         openVideoCeremony(Number(button.dataset.year) || selectedYear);
+        return;
+    }
+    if (action === 'undo-reveal') {
+        event.preventDefault();
+        const awardId = button.dataset.award;
+        const awardYear = Number(button.dataset.year) || selectedYear;
+        const award = [...fieldAwards(), ...creativeCatalog(awardYear)].find((item) => item.id === awardId);
+        const title = award ? award.title : 'this award';
+        if (!confirm(`Undo the ${title} reveal? Players will see To be Announced until you reveal it again.`)) return;
+        await undoAwardReveal(awardYear, awardId);
+        return;
+    }
+    if (action === 'undo-video') {
+        event.preventDefault();
+        const videoYear = Number(button.dataset.year) || selectedYear;
+        if (!confirm('Undo the end of year video reveal? It leaves the site until you reveal it again.')) return;
+        await undoVideoReveal(videoYear);
         return;
     }
     if (action === 'vote-history') {

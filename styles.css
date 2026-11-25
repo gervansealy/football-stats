@@ -4948,6 +4948,25 @@ body.admin .hof-bar-status.admin-only {
     margin-top: 18px;
 }
 
+.hof-undo {
+    align-self: center;
+    margin-top: 4px;
+    border: 0;
+    background: transparent;
+    color: #8a5a00;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+
+.hof-close .hof-undo {
+    display: block;
+    margin: 10px auto 0;
+}
+
 .hof-history-btn {
     display: block;
     width: 100%;
