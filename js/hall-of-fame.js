@@ -986,16 +986,21 @@ function openVideoCeremony(year) {
     dismissCeremony(false);
     const overlay = document.createElement('div');
     overlay.className = 'hof-reveal-back';
-    overlay.innerHTML = `<div class="hof-reveal is-celebrate" role="dialog" aria-modal="true" aria-labelledby="hofVideoRevealTitle">
-        <div class="hof-reveal-stage">
-            <div class="hof-spin-glow"></div>
-            <div class="hof-spin">${awardArt('closingVideo', 'spinVideo')}</div>
-            <p class="hof-roll-label">Celebrate</p>
+    overlay.innerHTML = `<div class="hof-reveal is-matchnight" role="dialog" aria-modal="true" aria-labelledby="hofVideoRevealTitle">
+        <div class="hof-reveal-stage hof-match">
+            <div class="hof-sky" aria-hidden="true"><span class="hof-light"></span><span class="hof-light"></span></div>
+            <div class="hof-stands" aria-hidden="true"></div>
+            <div class="hof-pitch">
+                <div class="hof-goal" aria-hidden="true"><span></span><span></span><span></span></div>
+                ${footballMark('a')}${footballMark('b')}${footballMark('c')}
+            </div>
+            <div class="hof-match-trophy">${awardArt('mvp', 'matchTrophy')}</div>
+            <p class="hof-roll-label">Full time</p>
             <p class="hof-roll-title">End of year video</p>
         </div>
         <div class="hof-reveal-result">
             ${confettiHtml()}
-            <div class="hof-champion-art">${awardArt('closingVideo', 'liveVideo')}</div>
+            <div class="hof-champion-art">${awardArt('mvp', 'liveTrophy')}</div>
             <p class="hof-reveal-kicker">Sweat Squad</p>
             <h3 id="hofVideoRevealTitle">The highlights are live</h3>
             <p class="hof-reveal-why">End of year video</p>
@@ -1011,7 +1016,7 @@ function openVideoCeremony(year) {
         dismissCeremony(true);
     });
     try {
-        playCelebrate();
+        playMatchNight();
     } catch (error) {
         console.error(error);
         stopRevealAudio();
@@ -1028,7 +1033,7 @@ function openVideoCeremony(year) {
             console.error(error);
         }
         publishReveal();
-    }, reduced ? 0 : 1400);
+    }, reduced ? 0 : 2600);
 }
 
 async function publishVideoReveal() {
@@ -1115,23 +1120,31 @@ async function publishReveal() {
     }
 }
 
-function playCelebrate() {
+function footballMark(which) {
+    return `<span class="hof-ball hof-ball-${which}" aria-hidden="true"><svg viewBox="0 0 64 64">
+        <circle cx="32" cy="32" r="30" fill="#f7f9fc" stroke="#14284b" stroke-width="3"/>
+        <path d="M32 12l9 7-3 10H26l-3-10z" fill="#14284b"/>
+        <path d="M14 27l8 3 4 9-9 6-8-7zM50 27l-8 3-4 9 9 6 8-7zM22 50l10 6 10-6-3-9H25z" fill="none" stroke="#14284b" stroke-width="2.4"/>
+    </svg></span>`;
+}
+
+function playMatchNight() {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     stopRevealAudio();
     const ctx = new AudioCtx();
     revealAudio = ctx;
     if (ctx.state === 'suspended') ctx.resume();
-    const now = ctx.currentTime + 0.02;
-    [392, 494, 587, 784].forEach((freq, index) => {
+    const begin = ctx.currentTime + 0.04;
+    const notes = [262, 330, 392, 523, 392, 523, 659, 784];
+    notes.forEach((freq, index) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        const at = now + index * 0.16;
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, at);
-        osc.frequency.exponentialRampToValueAtTime(freq * 1.5, at + 0.28);
+        const at = begin + index * 0.28;
+        osc.type = 'triangle';
+        osc.frequency.value = freq;
         gain.gain.setValueAtTime(0.0001, at);
-        gain.gain.exponentialRampToValueAtTime(0.12, at + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.09, at + 0.03);
         gain.gain.exponentialRampToValueAtTime(0.001, at + 0.42);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -1140,7 +1153,7 @@ function playCelebrate() {
     });
     window.setTimeout(() => {
         if (revealAudio === ctx) stopRevealAudio();
-    }, 1600);
+    }, 2800);
 }
 
 function playChampion() {

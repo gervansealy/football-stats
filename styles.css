@@ -5354,7 +5354,9 @@ body.admin .hof-bar-status.admin-only {
     .hof-reveal.is-live .hof-reveal-result,
     .hof-envelope.is-open .hof-envelope-card,
     .hof-envelope.is-open .hof-envelope-flap,
-    .hof-envelope.is-spinning {
+    .hof-envelope.is-spinning,
+    .hof-ball,
+    .hof-match-trophy {
         animation: none;
     }
 
@@ -5504,6 +5506,150 @@ body.admin .hof-bar-status.admin-only {
     gap: 8px;
 }
 
+.hof-reveal.is-matchnight {
+    width: min(560px, 100%);
+}
+
+.hof-match {
+    position: relative;
+    gap: 0;
+    min-height: 0;
+}
+
+.hof-sky {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    height: 36px;
+    padding: 8px 28px 0;
+    border-radius: 12px 12px 0 0;
+    background: linear-gradient(180deg, #071428 0%, #16315f 100%);
+}
+
+.hof-light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff6d0;
+    box-shadow: 0 0 16px 7px rgba(255, 236, 170, 0.9);
+}
+
+.hof-stands {
+    width: 100%;
+    height: 34px;
+    background: repeating-linear-gradient(90deg, #102a56 0 14px, #1a3d78 14px 24px, #8e1d24 24px 34px, #e2b340 34px 42px);
+}
+
+.hof-pitch {
+    position: relative;
+    width: 100%;
+    height: 148px;
+    overflow: hidden;
+    border: 3px solid #f4f7fb;
+    border-top: 0;
+    border-radius: 0 0 12px 12px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 30%),
+        repeating-linear-gradient(90deg, #248a45 0 42px, #217d3f 42px 84px);
+}
+
+.hof-pitch::before,
+.hof-pitch::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.85);
+}
+
+.hof-pitch::before {
+    top: 0;
+    bottom: 0;
+    width: 0;
+}
+
+.hof-pitch::after {
+    top: 42px;
+    width: 54px;
+    height: 54px;
+    margin-left: -27px;
+    border-radius: 50%;
+}
+
+.hof-goal {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 78px;
+    height: 54px;
+}
+
+.hof-goal span {
+    position: absolute;
+    background: #f4f7fb;
+}
+
+.hof-goal span:nth-child(1),
+.hof-goal span:nth-child(2) {
+    top: 0;
+    bottom: 0;
+    width: 4px;
+}
+
+.hof-goal span:nth-child(2) { right: 0; }
+.hof-goal span:nth-child(3) {
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+}
+
+.hof-goal::after {
+    content: "";
+    position: absolute;
+    inset: 4px 4px 0 4px;
+    background:
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.45) 0 1px, transparent 1px 8px),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.45) 0 1px, transparent 1px 8px);
+}
+
+.hof-ball {
+    position: absolute;
+    bottom: 16px;
+    left: 8px;
+    width: 28px;
+    height: 28px;
+}
+
+.hof-ball svg { width: 100%; height: 100%; display: block; }
+.hof-ball-a { animation: hofBallA 1.55s cubic-bezier(0.16, 0.84, 0.24, 1) both; }
+.hof-ball-b { bottom: 34px; animation: hofBallB 1.45s 0.28s cubic-bezier(0.16, 0.84, 0.24, 1) both; }
+.hof-ball-c { bottom: 8px; animation: hofBallC 1.35s 0.52s cubic-bezier(0.16, 0.84, 0.24, 1) both; }
+
+.hof-match-trophy {
+    margin-top: 8px;
+    animation: hofChampionPop 0.8s 1.1s cubic-bezier(0.16, 0.84, 0.24, 1) both;
+}
+
+.hof-match-trophy .hof-art { width: 54px; height: auto; }
+
+@keyframes hofBallA {
+    0% { transform: translate(0, 18px) rotate(0deg); opacity: 0; }
+    16% { opacity: 1; }
+    100% { transform: translate(400px, -58px) rotate(340deg); opacity: 1; }
+}
+
+@keyframes hofBallB {
+    0% { transform: translate(0, 10px) rotate(0deg); opacity: 0; }
+    16% { opacity: 1; }
+    100% { transform: translate(360px, -24px) rotate(-280deg); opacity: 1; }
+}
+
+@keyframes hofBallC {
+    0% { transform: translate(0, 22px) rotate(0deg); opacity: 0; }
+    16% { opacity: 1; }
+    100% { transform: translate(420px, -40px) rotate(260deg); opacity: 1; }
+}
+
 .hof-reveal.is-celebrate .hof-spin {
     animation: hofChampionPop 0.9s cubic-bezier(0.16, 0.84, 0.24, 1) both;
 }
@@ -5513,6 +5659,7 @@ body.admin .hof-bar-status.admin-only {
     animation: none;
 }
 
+.hof-reveal.is-matchnight.is-live .hof-reveal-result,
 .hof-reveal.is-celebrate.is-live .hof-reveal-result {
     position: relative;
     text-align: center;
